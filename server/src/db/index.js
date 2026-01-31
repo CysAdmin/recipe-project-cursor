@@ -21,4 +21,19 @@ try {
   if (!e.message.includes('duplicate column name')) throw e;
 }
 
+// Ensure is_admin column exists on users; migrate existing users to admin
+try {
+  db.exec('ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0');
+} catch (e) {
+  if (!e.message.includes('duplicate column name')) throw e;
+}
+db.exec('UPDATE users SET is_admin = 1 WHERE is_admin = 0 OR is_admin IS NULL');
+
+// Drop instructions column from recipes if present (SQLite 3.35+)
+try {
+  db.exec('ALTER TABLE recipes DROP COLUMN instructions');
+} catch (e) {
+  if (!e.message?.includes('no such column') && !e.message?.includes('syntax error')) throw e;
+}
+
 export default db;

@@ -11,6 +11,12 @@ import RecipeDetail from './pages/RecipeDetail';
 import Search from './pages/Search';
 import MealPlan from './pages/MealPlan';
 import ShoppingList from './pages/ShoppingList';
+import Profile from './pages/Profile';
+import AdminLayout from './pages/admin/AdminLayout';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminUserForm from './pages/admin/AdminUserForm';
+import AdminRecipes from './pages/admin/AdminRecipes';
+import AdminRecipeEdit from './pages/admin/AdminRecipeEdit';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -39,6 +45,15 @@ function AppRoutes() {
         <Route path="search" element={<Search />} />
         <Route path="meal-plan" element={<MealPlan />} />
         <Route path="shopping-list" element={<ShoppingList />} />
+        <Route path="profile" element={<Profile />} />
+        <Route path="admin" element={<AdminLayout />}>
+          <Route index element={<Navigate to="users" replace />} />
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="users/new" element={<AdminUserForm />} />
+          <Route path="users/:id" element={<AdminUserForm />} />
+          <Route path="recipes" element={<AdminRecipes />} />
+          <Route path="recipes/:id" element={<AdminRecipeEdit />} />
+        </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
