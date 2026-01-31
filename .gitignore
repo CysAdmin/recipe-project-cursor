@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+
+# Environment (keep .env.example)
+.env
+.env.local
+.env.*.local
+
+# SQLite database (server/data/)
+server/data/*.db
+server/data/*.db-shm
+server/data/*.db-wal
+*.db
+*.db-shm
+*.db-wal
+
+# Build output
+dist/
+build/
+.vite/
+client/dist/
+server/dist/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE / Editor (uncomment if you don’t want to share)
+# .idea/
+# .vscode/
+# *.sublime-*
+
+# Test / Coverage
+coverage/
+.nyc_output/
+*.lcov
+
+# Misc
+.cache/
+*.local
+.turbo
+TODO_OR_IDEAS.md
+cursorignore
