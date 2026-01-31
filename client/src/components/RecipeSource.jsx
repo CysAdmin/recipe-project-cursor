@@ -6,6 +6,7 @@ import React from 'react';
  */
 export default function RecipeSource({ recipe, className = '' }) {
   const domain = recipe?.source_domain;
+  const displayDomain = domain ? domain.replace(/^www\./i, '') : '';
   const faviconUrl = recipe?.favicon_url
     || (domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=32` : null);
 
@@ -22,7 +23,7 @@ export default function RecipeSource({ recipe, className = '' }) {
           height={16}
         />
       )}
-      <span className="truncate">{domain}</span>
+      <span className="truncate">{displayDomain}</span>
     </span>
   );
 }

@@ -42,6 +42,9 @@ export const recipes = {
   save: (id) => api(`/recipes/${id}/save`, { method: 'POST' }),
   unsave: (id) => api(`/recipes/${id}/save`, { method: 'DELETE' }),
   updateUserRecipe: (id, body) => api(`/recipes/${id}/user-recipe`, { method: 'PATCH', body: JSON.stringify(body) }),
+  /** Single-provider external search (so results show as soon as first provider returns) */
+  externalSearch: (query, provider) =>
+    api(`/recipes/external?q=${encodeURIComponent(query)}&provider=${encodeURIComponent(provider)}`),
 };
 
 export const mealSchedules = {

@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import db from '../db/index.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { parseRecipeFromHtml, extractFaviconFromHtml } from '../services/recipeParser.js';
+import { searchExternal, searchExternalByProvider } from '../services/externalSearch.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
 
@@ -120,7 +121,7 @@ router.post('/import', authMiddleware, async (req, res) => {
 });
 
 // GET /api/recipes — list recipes (all for search, or user's collection if ?mine=1)
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   const mine = req.query.mine === '1' || req.query.mine === 'true';
   const userId = getUserIdFromHeader(req);
 
@@ -179,7 +180,29 @@ router.get('/', (req, res) => {
       LIMIT ?
     `).all(limit);
   }
+
+  // If search had a query and no internal results, return empty; frontend will request external per provider (so results show as soon as first provider returns)
+  if (q && rows.length === 0) {
+    return res.json({ recipes: [], external: [] });
+  }
+
   res.json({ recipes: rows.map(rowToRecipe) });
+});
+
+// GET /api/recipes/external — single-provider external search (so frontend can show results as soon as first provider returns)
+router.get('/external', async (req, res) => {
+  const q = (req.query.q ?? '').trim();
+  const provider = (req.query.provider ?? '').toLowerCase();
+  if (!q || !['gutekueche', 'chefkoch'].includes(provider)) {
+    return res.status(400).json({ error: 'Query and provider (gutekueche|chefkoch) required' });
+  }
+  try {
+    const external = await searchExternalByProvider(q, provider, { limit: 30 });
+    return res.json({ external });
+  } catch (err) {
+    console.error('External search (single provider):', err);
+    return res.json({ external: [] });
+  }
 });
 
 function getUserIdFromHeader(req) {
