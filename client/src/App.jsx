@@ -1,0 +1,54 @@
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import Layout from './components/Layout';
+import Landing from './pages/Landing';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Dashboard from './pages/Dashboard';
+import Recipes from './pages/Recipes';
+import RecipeDetail from './pages/RecipeDetail';
+import Search from './pages/Search';
+import MealPlan from './pages/MealPlan';
+import ShoppingList from './pages/ShoppingList';
+
+function PrivateRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="flex items-center justify-center min-h-screen">Loading…</div>;
+  if (!user) return <Navigate to="/login" replace />;
+  return children;
+}
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route
+        path="/app"
+        element={
+          <PrivateRoute>
+            <Layout />
+          </PrivateRoute>
+        }
+      >
+        <Route index element={<Dashboard />} />
+        <Route path="recipes" element={<Recipes />} />
+        <Route path="recipes/:id" element={<RecipeDetail />} />
+        <Route path="search" element={<Search />} />
+        <Route path="meal-plan" element={<MealPlan />} />
+        <Route path="shopping-list" element={<ShoppingList />} />
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
+  );
+}
