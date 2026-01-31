@@ -19,6 +19,7 @@ db.exec(`
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     display_name VARCHAR(255),
+    is_admin INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -28,7 +29,6 @@ db.exec(`
     title VARCHAR(500) NOT NULL,
     description TEXT,
     ingredients TEXT NOT NULL,
-    instructions TEXT,
     prep_time INTEGER,
     cook_time INTEGER,
     servings INTEGER,

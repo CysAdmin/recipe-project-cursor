@@ -9,6 +9,7 @@ const nav = [
   { to: '/app/search', end: true, label: 'Discover' },
   { to: '/app/meal-plan', end: true, label: 'Meal Plan' },
   { to: '/app/shopping-list', end: true, label: 'Shopping List' },
+  { to: '/app/admin', end: false, label: 'Admin', adminOnly: true },
 ];
 
 export default function Layout() {
@@ -32,23 +33,32 @@ export default function Layout() {
             Recipe Planner
           </NavLink>
           <nav className="flex items-center gap-1">
-            {nav.map(({ to, end, label }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={end}
-                className={({ isActive }) =>
-                  `px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive ? 'bg-brand-600/20 text-brand-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                  }`
-                }
-              >
-                {label}
-              </NavLink>
-            ))}
+            {nav.map(({ to, end, label, adminOnly }) =>
+              adminOnly && !user?.is_admin ? null : (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={end}
+                  className={({ isActive }) =>
+                    `px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      isActive ? 'bg-brand-600/20 text-brand-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                    }`
+                  }
+                >
+                  {label}
+                </NavLink>
+              )
+            )}
           </nav>
           <div className="flex items-center gap-3">
-            <span className="text-slate-500 text-sm">{user?.display_name || user?.email}</span>
+            <NavLink
+              to="/app/profile"
+              className={({ isActive }) =>
+                `text-sm transition-colors ${isActive ? 'text-brand-400' : 'text-slate-500 hover:text-slate-200'}`
+              }
+            >
+              {user?.display_name || user?.email}
+            </NavLink>
             <button
               type="button"
               onClick={handleLogout}
