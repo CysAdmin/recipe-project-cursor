@@ -9,6 +9,7 @@ const EXTERNAL_PAGE_SIZE = 20;
 const EXTERNAL_PROVIDERS = [
   { id: 'gutekueche', label: 'GuteKueche' },
   { id: 'chefkoch', label: 'Chefkoch' },
+  { id: 'allrecipes', label: 'Allrecipes' },
 ];
 
 function shuffle(arr) {
@@ -54,18 +55,26 @@ export default function Search() {
     enabled: shouldFetchExternal && selectedProviders.includes('chefkoch'),
     staleTime: 60 * 1000,
   });
+  const externalAr = useQuery({
+    queryKey: ['recipes', 'external', trimmedQ, 'allrecipes'],
+    queryFn: () => recipesApi.externalSearch(trimmedQ, 'allrecipes'),
+    enabled: shouldFetchExternal && selectedProviders.includes('allrecipes'),
+    staleTime: 60 * 1000,
+  });
 
   const external = useMemo(() => {
     const a = selectedProviders.includes('gutekueche') ? (externalGk.data?.external ?? []) : [];
     const b = selectedProviders.includes('chefkoch') ? (externalCk.data?.external ?? []) : [];
-    return shuffle([...a, ...b]);
-  }, [externalGk.data, externalCk.data, selectedProviders]);
+    const c = selectedProviders.includes('allrecipes') ? (externalAr.data?.external ?? []) : [];
+    return shuffle([...a, ...b, ...c]);
+  }, [externalGk.data, externalCk.data, externalAr.data, selectedProviders]);
 
   const externalLoading =
     shouldFetchExternal &&
     selectedProviders.length > 0 &&
     ((selectedProviders.includes('gutekueche') && externalGk.isFetching) ||
-      (selectedProviders.includes('chefkoch') && externalCk.isFetching)) &&
+      (selectedProviders.includes('chefkoch') && externalCk.isFetching) ||
+      (selectedProviders.includes('allrecipes') && externalAr.isFetching)) &&
     external.length === 0;
 
   const saveMutation = useMutation({

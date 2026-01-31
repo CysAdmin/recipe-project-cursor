@@ -6,6 +6,7 @@
 
 import { searchGutekueche } from './providers/gutekueche.js';
 import { searchChefkoch } from './providers/chefkoch.js';
+import { searchAllrecipes } from './providers/allrecipes.js';
 
 /**
  * Normalized external recipe hit (same shape for all providers).
@@ -25,14 +26,14 @@ function shuffle(arr) {
   return arr;
 }
 
-const PROVIDERS = { gutekueche: searchGutekueche, chefkoch: searchChefkoch };
+const PROVIDERS = { gutekueche: searchGutekueche, chefkoch: searchChefkoch, allrecipes: searchAllrecipes };
 
 /**
  * Search a single external provider. Used so the frontend can request each
  * provider separately and show results as soon as the first one returns.
  *
  * @param {string} query - Search term
- * @param {string} providerName - 'gutekueche' | 'chefkoch'
+ * @param {string} providerName - 'gutekueche' | 'chefkoch' | 'allrecipes'
  * @param {{ limit?: number }} options - Optional limit (default 30, max 30)
  * @returns {Promise<ExternalRecipeHit[]>}
  */
