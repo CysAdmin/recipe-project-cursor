@@ -65,12 +65,11 @@ router.post('/import', authMiddleware, async (req, res) => {
     if (existing) {
       recipeId = existing.id;
       db.prepare(
-        'UPDATE recipes SET title = ?, description = ?, ingredients = ?, instructions = ?, prep_time = ?, cook_time = ?, servings = ?, image_url = ?, favicon_url = ? WHERE id = ?'
+        'UPDATE recipes SET title = ?, description = ?, ingredients = ?, prep_time = ?, cook_time = ?, servings = ?, image_url = ?, favicon_url = ? WHERE id = ?'
       ).run(
         parsed.title,
         parsed.description || null,
         ingredientsJson,
-        null,
         parsed.prep_time ?? null,
         parsed.cook_time ?? null,
         parsed.servings ?? null,
@@ -80,15 +79,14 @@ router.post('/import', authMiddleware, async (req, res) => {
       );
     } else {
       const insert = db.prepare(`
-        INSERT INTO recipes (source_url, title, description, ingredients, instructions, prep_time, cook_time, servings, image_url, favicon_url, created_by_user_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO recipes (source_url, title, description, ingredients, prep_time, cook_time, servings, image_url, favicon_url, created_by_user_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
       const result = insert.run(
         parsedUrl.href,
         parsed.title,
         parsed.description || null,
         ingredientsJson,
-        null,
         parsed.prep_time ?? null,
         parsed.cook_time ?? null,
         parsed.servings ?? null,
@@ -105,7 +103,7 @@ router.post('/import', authMiddleware, async (req, res) => {
     ).run(userId, recipeId);
 
     const row = db.prepare(`
-      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.instructions, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
              (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count
       FROM recipes r WHERE r.id = ?
     `).get(recipeId);
@@ -134,7 +132,7 @@ router.get('/', async (req, res) => {
     if (q) {
       const pattern = `%${q.replace(/%/g, '\\%')}%`;
       rows = db.prepare(`
-        SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.instructions, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+        SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
                ur.is_favorite, ur.personal_notes, ur.saved_at,
                (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count
         FROM recipes r
@@ -144,7 +142,7 @@ router.get('/', async (req, res) => {
       `).all(userId, pattern, pattern, pattern);
     } else {
       rows = db.prepare(`
-        SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.instructions, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+        SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
                ur.is_favorite, ur.personal_notes, ur.saved_at,
                (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count
         FROM recipes r
@@ -164,7 +162,7 @@ router.get('/', async (req, res) => {
   if (q) {
     const pattern = `%${q.replace(/%/g, '\\%')}%`;
     rows = db.prepare(`
-      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.instructions, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
              (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count,
              (SELECT 1 FROM user_recipes WHERE user_id = ? AND recipe_id = r.id) AS saved_by_me
       FROM recipes r
@@ -174,7 +172,7 @@ router.get('/', async (req, res) => {
     `).all(userId ?? 0, pattern, pattern, pattern, limit);
   } else {
     rows = db.prepare(`
-      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.instructions, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
              (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count,
              (SELECT 1 FROM user_recipes WHERE user_id = ? AND recipe_id = r.id) AS saved_by_me
       FROM recipes r
@@ -224,7 +222,7 @@ router.get('/:id', (req, res) => {
   if (Number.isNaN(id)) return res.status(400).json({ error: 'Invalid recipe ID' });
 
   const row = db.prepare(`
-    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.instructions, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
            (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count
     FROM recipes r WHERE r.id = ?
   `).get(id);
@@ -262,22 +260,21 @@ router.post('/', authMiddleware, (req, res) => {
       `INSERT OR IGNORE INTO user_recipes (user_id, recipe_id, is_favorite, personal_notes, saved_at) VALUES (?, ?, 0, NULL, datetime('now'))`
     ).run(userId, existing.id);
     const row = db.prepare(`
-      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.instructions, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
              (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count FROM recipes r WHERE r.id = ?
     `).get(existing.id);
     return res.status(200).json({ recipe: rowToRecipe(row) });
   }
 
   const insert = db.prepare(`
-    INSERT INTO recipes (source_url, title, description, ingredients, instructions, prep_time, cook_time, servings, image_url, created_by_user_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO recipes (source_url, title, description, ingredients, prep_time, cook_time, servings, image_url, created_by_user_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   const result = insert.run(
     sourceUrl,
     title,
     body.description?.trim() || null,
     ingredientsJson,
-    null,
     body.prep_time ?? null,
     body.cook_time ?? null,
     body.servings ?? null,
@@ -290,7 +287,7 @@ router.post('/', authMiddleware, (req, res) => {
   ).run(userId, recipeId);
 
   const row = db.prepare(`
-    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.instructions, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
            (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count FROM recipes r WHERE r.id = ?
   `).get(recipeId);
   res.status(201).json({ recipe: rowToRecipe(row) });
@@ -310,7 +307,7 @@ router.post('/:id/save', authMiddleware, (req, res) => {
   ).run(userId, recipeId);
 
   const row = db.prepare(`
-    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.instructions, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
            (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count FROM recipes r WHERE r.id = ?
   `).get(recipeId);
   res.json({ recipe: rowToRecipe(row) });
@@ -338,7 +335,7 @@ router.patch('/:id/user-recipe', authMiddleware, (req, res) => {
   ).run(isFavorite !== undefined ? (isFavorite ? 1 : 0) : undefined, personalNotes !== undefined ? personalNotes : undefined, userId, recipeId);
 
   const row = db.prepare(`
-    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.instructions, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
            (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count FROM recipes r WHERE r.id = ?
   `).get(recipeId);
   res.json({ recipe: rowToRecipe(row) });

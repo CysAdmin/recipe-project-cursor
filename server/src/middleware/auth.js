@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import db from '../db/index.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
 
@@ -35,6 +36,14 @@ export function optionalAuth(req, res, next) {
   } catch {
     // ignore invalid token
   }
+  next();
+}
+
+export function adminMiddleware(req, res, next) {
+  const userId = req.userId;
+  if (!userId) return res.status(401).json({ error: 'Authentication required' });
+  const row = db.prepare('SELECT is_admin FROM users WHERE id = ?').get(userId);
+  if (!row || !row.is_admin) return res.status(403).json({ error: 'Admin access required' });
   next();
 }
 

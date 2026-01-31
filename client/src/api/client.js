@@ -29,6 +29,12 @@ export const auth = {
   register: (body) => api('/auth/register', { method: 'POST', body: JSON.stringify(body) }),
   login: (body) => api('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
   me: () => api('/auth/me'),
+  updateProfile: (body) => api('/auth/me', { method: 'PATCH', body: JSON.stringify(body) }),
+  changePassword: (currentPassword, newPassword) =>
+    api('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+    }),
 };
 
 export const recipes = {
@@ -60,4 +66,23 @@ export const shoppingLists = {
   generate: (start, end) => api(`/shopping-lists/generate?start=${start}&end=${end}`),
   list: () => api('/shopping-lists'),
   save: (body) => api('/shopping-lists', { method: 'POST', body: JSON.stringify(body) }),
+};
+
+export const admin = {
+  users: {
+    list: () => api('/admin/users'),
+    get: (id) => api(`/admin/users/${id}`),
+    create: (body) => api('/admin/users', { method: 'POST', body: JSON.stringify(body) }),
+    update: (id, body) => api(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+    delete: (id) => api(`/admin/users/${id}`, { method: 'DELETE' }),
+  },
+  recipes: {
+    list: (params = {}) => {
+      const q = new URLSearchParams(params).toString();
+      return api(`/admin/recipes${q ? `?${q}` : ''}`);
+    },
+    get: (id) => api(`/admin/recipes/${id}`),
+    update: (id, body) => api(`/admin/recipes/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+    delete: (id) => api(`/admin/recipes/${id}`, { method: 'DELETE' }),
+  },
 };
