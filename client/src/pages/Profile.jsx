@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { auth as authApi } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { STORAGE_KEY, supportedLngs } from '../i18n';
+
+const LANGUAGE_LABELS = { de: 'Deutsch', en: 'English' };
 
 export default function Profile() {
+  const { t, i18n } = useTranslation();
   const { user, refreshUser } = useAuth();
   const [displayName, setDisplayName] = useState(user?.display_name ?? '');
 
@@ -44,50 +49,73 @@ export default function Profile() {
 
   const passwordError =
     newPassword && newPasswordConfirm && newPassword !== newPasswordConfirm
-      ? 'Passwörter stimmen nicht überein'
+      ? t('profile.passwordsMismatch')
       : null;
+
+  const handleLanguageChange = (lng) => {
+    i18n.changeLanguage(lng);
+    try {
+      localStorage.setItem(STORAGE_KEY, lng);
+    } catch (_) {}
+  };
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold text-white mb-2">Profil & Einstellungen</h1>
-      <p className="text-slate-400 mb-8">Nutzername und Passwort verwalten.</p>
+      <h1 className="font-display text-2xl font-bold text-white mb-2">{t('profile.title')}</h1>
+      <p className="text-slate-400 mb-8">{t('profile.subline')}</p>
 
       <div className="max-w-md space-y-10">
         <section>
-          <h2 className="text-lg font-semibold text-white mb-3">Nutzername</h2>
+          <h2 className="text-lg font-semibold text-white mb-3">{t('profile.language')}</h2>
+          <p className="text-slate-500 text-sm mb-3">{t('profile.languageDesc')}</p>
+          <select
+            value={i18n.language || 'de'}
+            onChange={(e) => handleLanguageChange(e.target.value)}
+            className="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+          >
+            {supportedLngs.map((lng) => (
+              <option key={lng} value={lng}>
+                {LANGUAGE_LABELS[lng] ?? lng}
+              </option>
+            ))}
+          </select>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold text-white mb-3">{t('profile.displayName')}</h2>
           <form onSubmit={handleProfileSubmit} className="space-y-3">
             <input
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Anzeigename (optional)"
+              placeholder={t('profile.displayNamePlaceholder')}
               className="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
-            <p className="text-slate-500 text-sm">E-Mail (Login): {user?.email}</p>
+            <p className="text-slate-500 text-sm">{t('profile.emailLogin')} {user?.email}</p>
             <button
               type="submit"
               disabled={profileMutation.isPending}
               className="px-4 py-2 rounded-lg bg-brand-500 text-white font-medium hover:bg-brand-600 transition-colors disabled:opacity-50"
             >
-              {profileMutation.isPending ? 'Speichern…' : 'Speichern'}
+              {profileMutation.isPending ? t('common.saving') : t('common.save')}
             </button>
             {profileMutation.isSuccess && (
-              <p className="text-green-500 text-sm">Nutzername wurde gespeichert.</p>
+              <p className="text-green-500 text-sm">{t('profile.saveSuccess')}</p>
             )}
             {profileMutation.isError && (
-              <p className="text-red-400 text-sm">{profileMutation.error?.message ?? 'Fehler beim Speichern.'}</p>
+              <p className="text-red-400 text-sm">{profileMutation.error?.message ?? t('profile.saveError')}</p>
             )}
           </form>
         </section>
 
         <section>
-          <h2 className="text-lg font-semibold text-white mb-3">Passwort ändern</h2>
+          <h2 className="text-lg font-semibold text-white mb-3">{t('profile.changePassword')}</h2>
           <form onSubmit={handlePasswordSubmit} className="space-y-3">
             <input
               type="password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder="Aktuelles Passwort"
+              placeholder={t('profile.currentPassword')}
               required
               autoComplete="current-password"
               className="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
@@ -96,7 +124,7 @@ export default function Profile() {
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="Neues Passwort"
+              placeholder={t('profile.newPassword')}
               required
               autoComplete="new-password"
               minLength={8}
@@ -106,20 +134,20 @@ export default function Profile() {
               type="password"
               value={newPasswordConfirm}
               onChange={(e) => setNewPasswordConfirm(e.target.value)}
-              placeholder="Neues Passwort bestätigen"
+              placeholder={t('profile.newPasswordConfirm')}
               required
               autoComplete="new-password"
               minLength={8}
               className="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
-            <p className="text-slate-500 text-sm">Mind. 8 Zeichen, Buchstaben und Zahlen.</p>
+            <p className="text-slate-500 text-sm">{t('profile.passwordHint')}</p>
             {(passwordError || passwordMutation.isError) && (
               <p className="text-red-400 text-sm">
                 {passwordError || passwordMutation.error?.message}
               </p>
             )}
             {passwordMutation.isSuccess && (
-              <p className="text-green-500 text-sm">Passwort wurde geändert.</p>
+              <p className="text-green-500 text-sm">{t('profile.passwordSuccess')}</p>
             )}
             <button
               type="submit"
@@ -132,7 +160,7 @@ export default function Profile() {
               }
               className="px-4 py-2 rounded-lg bg-brand-500 text-white font-medium hover:bg-brand-600 transition-colors disabled:opacity-50"
             >
-              {passwordMutation.isPending ? 'Ändern…' : 'Passwort ändern'}
+              {passwordMutation.isPending ? t('profile.changing') : t('profile.changeButton')}
             </button>
           </form>
         </section>

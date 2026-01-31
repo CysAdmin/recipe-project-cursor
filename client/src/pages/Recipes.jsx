@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { recipes as recipesApi } from '../api/client';
 import RecipeSource from '../components/RecipeSource';
 import { useAuth } from '../context/AuthContext';
 
 export default function Recipes() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [importUrl, setImportUrl] = useState('');
   const [importError, setImportError] = useState('');
@@ -26,7 +28,7 @@ export default function Recipes() {
       setImportError('');
     },
     onError: (err) => {
-      setImportError(err.data?.error || err.message || 'Import failed');
+      setImportError(err.data?.error || err.message || t('recipes.errorImport'));
     },
   });
 
@@ -75,14 +77,14 @@ export default function Recipes() {
       </form>
 
       {isLoading ? (
-        <p className="text-slate-500">Loading…</p>
+        <p className="text-slate-500">{t('common.loading')}</p>
       ) : recipes.length === 0 ? (
         <p className="text-slate-500">
-          No recipes in your collection yet. Paste a recipe URL above (e.g. AllRecipes, Food Network, Bon Appétit) or{' '}
+          {t('recipes.noRecipesBefore')}
           <Link to="/app/search" className="text-brand-400 hover:underline">
-            discover
-          </Link>{' '}
-          recipes from others.
+            {t('recipes.discoverLink')}
+          </Link>
+          {t('recipes.noRecipesAfter')}
         </p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -100,7 +102,7 @@ export default function Recipes() {
                 />
               ) : (
                 <div className="w-full h-40 bg-slate-800 flex items-center justify-center text-slate-600">
-                  No image
+                  {t('common.noImage')}
                 </div>
               )}
               <div className="p-4">
@@ -116,11 +118,11 @@ export default function Recipes() {
                     {[r.prep_time, r.cook_time].filter(Boolean).length
                       ? `${[r.prep_time, r.cook_time].filter(Boolean).join(' + ')} min`
                       : '—'}
-                    {r.save_count != null && r.save_count > 1 && ` · ${r.save_count} saved`}
+                    {r.save_count != null && r.save_count > 1 && ` · ${r.save_count} ${t('recipeDetail.saved')}`}
                   </p>
                 </div>
                 {r.is_favorite && (
-                  <span className="inline-block mt-2 text-brand-400 text-sm">★ Favorite</span>
+                  <span className="inline-block mt-2 text-brand-400 text-sm">★ {t('recipes.favorite')}</span>
                 )}
               </div>
             </Link>

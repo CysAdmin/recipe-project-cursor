@@ -1,11 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { recipes as recipesApi } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import RecipeSource from '../components/RecipeSource';
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { data, isLoading } = useQuery({
     queryKey: ['recipes', 'mine', user?.id],
@@ -18,63 +20,59 @@ export default function Dashboard() {
   return (
     <div>
       <h1 className="font-display text-2xl font-bold text-white mb-2">
-        Hi{user?.display_name ? `, ${user.display_name}` : ''}
+        {t('dashboard.hi')}{user?.display_name ? `, ${user.display_name}` : ''}
       </h1>
-      <p className="text-slate-400 mb-8">Here’s your recipe and planning hub.</p>
+      <p className="text-slate-400 mb-8">{t('dashboard.subline')}</p>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-10">
         <Link
           to="/app/recipes"
           className="p-6 rounded-xl border border-slate-800 bg-slate-900/50 hover:border-brand-500/50 hover:bg-slate-900 transition-colors"
         >
-          <h2 className="font-semibold text-white mb-1">My Recipes</h2>
+          <h2 className="font-semibold text-white mb-1">{t('dashboard.myRecipes')}</h2>
           <p className="text-slate-500 text-sm">
-            {isLoading ? '…' : `${(data?.recipes || []).length} saved`}
+            {isLoading ? '…' : `${(data?.recipes || []).length} ${t('dashboard.saved')}`}
           </p>
         </Link>
         <Link
           to="/app/search"
           className="p-6 rounded-xl border border-slate-800 bg-slate-900/50 hover:border-brand-500/50 hover:bg-slate-900 transition-colors"
         >
-          <h2 className="font-semibold text-white mb-1">Discover</h2>
-          <p className="text-slate-500 text-sm">Search and save recipes</p>
+          <h2 className="font-semibold text-white mb-1">{t('dashboard.discover')}</h2>
+          <p className="text-slate-500 text-sm">{t('dashboard.discoverDesc')}</p>
         </Link>
         <Link
           to="/app/meal-plan"
           className="p-6 rounded-xl border border-slate-800 bg-slate-900/50 hover:border-brand-500/50 hover:bg-slate-900 transition-colors"
         >
-          <h2 className="font-semibold text-white mb-1">Meal Plan</h2>
-          <p className="text-slate-500 text-sm">Weekly schedule</p>
+          <h2 className="font-semibold text-white mb-1">{t('dashboard.mealPlan')}</h2>
+          <p className="text-slate-500 text-sm">{t('dashboard.mealPlanDesc')}</p>
         </Link>
         <Link
           to="/app/shopping-list"
           className="p-6 rounded-xl border border-slate-800 bg-slate-900/50 hover:border-brand-500/50 hover:bg-slate-900 transition-colors md:col-span-2 lg:col-span-1"
         >
-          <h2 className="font-semibold text-white mb-1">Shopping List</h2>
-          <p className="text-slate-500 text-sm">Generate from meal plan</p>
+          <h2 className="font-semibold text-white mb-1">{t('dashboard.shoppingList')}</h2>
+          <p className="text-slate-500 text-sm">{t('dashboard.shoppingListDesc')}</p>
         </Link>
       </div>
 
       <section>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-lg font-semibold text-white">Recent recipes</h2>
+          <h2 className="font-display text-lg font-semibold text-white">{t('dashboard.recentRecipes')}</h2>
           <Link to="/app/recipes" className="text-brand-400 hover:underline text-sm">
-            View all
+            {t('dashboard.viewAll')}
           </Link>
         </div>
         {isLoading ? (
-          <p className="text-slate-500">Loading…</p>
+          <p className="text-slate-500">{t('common.loading')}</p>
         ) : recentRecipes.length === 0 ? (
           <p className="text-slate-500">
-            No recipes yet.{' '}
+            {t('dashboard.noRecipesYet')}{' '}
             <Link to="/app/search" className="text-brand-400 hover:underline">
-              Discover
+              {t('dashboard.discover')}
             </Link>{' '}
-            or{' '}
-            <Link to="/app/recipes" className="text-brand-400 hover:underline">
-              import from URL
-            </Link>
-            .
+            {t('dashboard.discoverOrImport')}
           </p>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -92,7 +90,7 @@ export default function Dashboard() {
                   />
                 ) : (
                   <div className="w-full h-32 bg-slate-800 flex items-center justify-center text-slate-600">
-                    No image
+                    {t('common.noImage')}
                   </div>
                 )}
                 <div className="p-3">
@@ -106,8 +104,8 @@ export default function Dashboard() {
                     )}
                     <p className="text-slate-500 text-sm">
                       {r.prep_time != null || r.cook_time != null
-                        ? `${[r.prep_time, r.cook_time].filter(Boolean).join(' + ')} min`
-                        : '—'}
+                        ? `${[r.prep_time, r.cook_time].filter(Boolean).join(' + ')} ${t('recipeDetail.min')}`
+                        : t('common.dash')}
                     </p>
                   </div>
                 </div>

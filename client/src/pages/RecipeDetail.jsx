@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { recipes as recipesApi } from '../api/client';
 import { mealSchedules as scheduleApi } from '../api/client';
@@ -10,6 +11,7 @@ function toYMD(d) {
 }
 
 export default function RecipeDetail() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const [notes, setNotes] = useState('');
   const [scheduleDate, setScheduleDate] = useState(() => toYMD(new Date()));
@@ -59,8 +61,8 @@ export default function RecipeDetail() {
     updateUserRecipe.mutate({ personal_notes: notes });
   };
 
-  if (isLoading) return <p className="text-slate-500">Loading recipe…</p>;
-  if (error || !data?.recipe) return <p className="text-red-400">Recipe not found.</p>;
+  if (isLoading) return <p className="text-slate-500">{t('recipeDetail.loading')}</p>;
+  if (error || !data?.recipe) return <p className="text-red-400">{t('recipeDetail.notFound')}</p>;
 
   const recipe = data.recipe;
   const userRecipe = data.user_recipe;
@@ -71,7 +73,7 @@ export default function RecipeDetail() {
   return (
     <div className="max-w-3xl">
       <Link to="/app/recipes" className="text-slate-400 hover:text-white text-sm mb-4 inline-block">
-        ← Back to My Recipes
+        {t('recipeDetail.backToRecipes')}
       </Link>
 
       <div className="rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden mb-6">
@@ -83,18 +85,18 @@ export default function RecipeDetail() {
           />
         ) : (
           <div className="w-full h-48 bg-slate-800 flex items-center justify-center text-slate-600">
-            No image
+            {t('common.noImage')}
           </div>
         )}
         <div className="p-6">
           <h1 className="font-display text-2xl font-bold text-white mb-2">{recipe.title}</h1>
           <div className="flex flex-wrap items-center gap-4 text-slate-500 text-sm mb-4">
             <RecipeSource recipe={recipe} className="text-slate-400" />
-            {recipe.prep_time != null && <span>Prep: {recipe.prep_time} min</span>}
-            {recipe.cook_time != null && <span>Cook: {recipe.cook_time} min</span>}
-            {recipe.servings != null && <span>{recipe.servings} servings</span>}
+            {recipe.prep_time != null && <span>{t('recipeDetail.prep')}: {recipe.prep_time} {t('recipeDetail.min')}</span>}
+            {recipe.cook_time != null && <span>{t('recipeDetail.cook')}: {recipe.cook_time} {t('recipeDetail.min')}</span>}
+            {recipe.servings != null && <span>{recipe.servings} {t('recipeDetail.servings')}</span>}
             {recipe.save_count != null && recipe.save_count > 1 && (
-              <span>{recipe.save_count} saved</span>
+              <span>{recipe.save_count} {t('recipeDetail.saved')}</span>
             )}
           </div>
           {recipe.description && (
@@ -107,7 +109,7 @@ export default function RecipeDetail() {
               rel="noopener noreferrer"
               className="text-brand-400 hover:underline text-sm"
             >
-              View original source →
+              {t('recipeDetail.viewOriginal')}
             </a>
           )}
         </div>
@@ -123,12 +125,12 @@ export default function RecipeDetail() {
               : 'border-slate-700 text-slate-400 hover:border-slate-600'
           }`}
         >
-          {isFavorite ? '★ Favorited' : '☆ Favorite'}
+          {isFavorite ? t('recipeDetail.favorited') : t('recipeDetail.favorite')}
         </button>
 
         <div className="flex flex-wrap items-center gap-2">
           <label htmlFor="schedule-date" className="text-slate-400 text-sm">
-            Add to meal plan:
+            {t('recipeDetail.addToMealPlan')}
           </label>
           <input
             id="schedule-date"
@@ -143,13 +145,13 @@ export default function RecipeDetail() {
             disabled={addToMealPlanMutation.isPending}
             className="px-4 py-2 rounded-lg bg-brand-500 text-white font-medium hover:bg-brand-600 disabled:opacity-50 transition-colors"
           >
-            {addToMealPlanMutation.isPending ? 'Adding…' : 'Add to day'}
+            {addToMealPlanMutation.isPending ? t('recipeDetail.adding') : t('recipeDetail.addToDay')}
           </button>
           {addToPlanSuccess && (
             <span className="text-brand-400 text-sm">
-              Added.{' '}
+              {t('recipeDetail.added')}{' '}
               <Link to="/app/meal-plan" className="underline">
-                View meal plan
+                {t('recipeDetail.viewMealPlan')}
               </Link>
             </span>
           )}
@@ -160,7 +162,7 @@ export default function RecipeDetail() {
       </div>
 
       <section className="mb-8">
-        <h2 className="font-display text-lg font-semibold text-white mb-3">Ingredients</h2>
+        <h2 className="font-display text-lg font-semibold text-white mb-3">{t('recipeDetail.ingredients')}</h2>
         <ul className="list-disc list-inside text-slate-300 space-y-1">
           {(recipe.ingredients || []).map((ing, i) => (
             <li key={i}>{ing}</li>
@@ -169,12 +171,12 @@ export default function RecipeDetail() {
       </section>
 
       <section className="border-t border-slate-800 pt-6">
-        <h2 className="font-display text-lg font-semibold text-white mb-2">Personal notes</h2>
+        <h2 className="font-display text-lg font-semibold text-white mb-2">{t('recipeDetail.personalNotes')}</h2>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           onBlur={saveNotes}
-          placeholder="Your private notes…"
+          placeholder={t('recipeDetail.placeholderNotes')}
           rows={3}
           className="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
         />

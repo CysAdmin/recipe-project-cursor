@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { recipes as recipesApi } from '../api/client';
 import RecipeSource from '../components/RecipeSource';
@@ -23,6 +24,7 @@ function shuffle(arr) {
 }
 
 export default function Search() {
+  const { t } = useTranslation();
   const [q, setQ] = useState('');
   const [selectedProviders, setSelectedProviders] = useState(EXTERNAL_PROVIDERS.map((p) => p.id));
   const [externalVisibleCount, setExternalVisibleCount] = useState(EXTERNAL_PAGE_SIZE);
@@ -121,32 +123,30 @@ export default function Search() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold text-white mb-2">Discover recipes</h1>
-      <p className="text-slate-400 mb-6">Search all recipes and save any to your collection.</p>
+      <h1 className="font-display text-2xl font-bold text-white mb-2">{t('search.title')}</h1>
+      <p className="text-slate-400 mb-6">{t('search.subline')}</p>
 
       <div className="mb-6">
         <input
           type="search"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search by name, ingredients, keywords…"
+          placeholder={t('search.placeholder')}
           className="w-full max-w-md px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
         />
       </div>
 
       {isLoading || isFetching ? (
-        <p className="text-slate-500">Loading…</p>
+        <p className="text-slate-500">{t('common.loading')}</p>
       ) : emptyState ? (
         <p className="text-slate-500">
-          {trimmedQ
-            ? 'No recipes found. Try a different search or import from URL in My Recipes.'
-            : 'No recipes in the community yet. Import from URL in My Recipes to get started.'}
+          {trimmedQ ? t('search.noResultsQuery') : t('search.noResultsEmpty')}
         </p>
       ) : (
         <>
           {recipes.length > 0 && (
             <div className="mb-8">
-              <h2 className="text-lg font-semibold text-white mb-3">Interne Rezepte</h2>
+              <h2 className="text-lg font-semibold text-white mb-3">{t('search.internalRecipes')}</h2>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {recipes.map((r) => (
                   <div
@@ -162,7 +162,7 @@ export default function Search() {
                         />
                       ) : (
                         <div className="w-full h-40 bg-slate-800 flex items-center justify-center text-slate-600">
-                          No image
+                          {t('common.noImage')}
                         </div>
                       )}
                       <div className="p-4">
@@ -176,16 +176,16 @@ export default function Search() {
                           )}
                           <p className="text-slate-500 text-sm">
                             {[r.prep_time, r.cook_time].filter(Boolean).length
-                              ? `${[r.prep_time, r.cook_time].filter(Boolean).join(' + ')} min`
-                              : '—'}
-                            {r.save_count != null && r.save_count > 1 && ` · ${r.save_count} saved`}
+                              ? `${[r.prep_time, r.cook_time].filter(Boolean).join(' + ')} ${t('recipeDetail.min')}`
+                              : t('common.dash')}
+                            {r.save_count != null && r.save_count > 1 && ` · ${r.save_count} ${t('recipeDetail.saved')}`}
                           </p>
                         </div>
                       </div>
                     </Link>
                     <div className="p-4 pt-0">
                       {r.saved_by_me ? (
-                        <p className="text-slate-500 text-sm py-2">In deinen Rezepten</p>
+                        <p className="text-slate-500 text-sm py-2">{t('search.inYourRecipes')}</p>
                       ) : (
                         <button
                           type="button"
@@ -193,7 +193,7 @@ export default function Search() {
                           disabled={saveMutation.isPending}
                           className="w-full py-2 rounded-lg border border-brand-500 text-brand-400 font-medium hover:bg-brand-500/10 transition-colors disabled:opacity-50"
                         >
-                          {saveMutation.isPending && saveMutation.variables === r.id ? 'Saving…' : 'Save to my recipes'}
+                          {saveMutation.isPending && saveMutation.variables === r.id ? t('common.saving') : t('search.saveToMine')}
                         </button>
                       )}
                     </div>
@@ -205,8 +205,8 @@ export default function Search() {
 
           {trimmedQ && (
             <div className="mb-6">
-              <h2 className="text-lg font-semibold text-white mb-2">Externe Anbieter</h2>
-              <p className="text-slate-400 text-sm mb-3">Quellen für die externe Suche auswählen:</p>
+              <h2 className="text-lg font-semibold text-white mb-2">{t('search.externalProviders')}</h2>
+              <p className="text-slate-400 text-sm mb-3">{t('search.externalProvidersDesc')}</p>
               <div className="flex flex-wrap gap-3">
                 {EXTERNAL_PROVIDERS.map((p) => (
                   <label
@@ -228,9 +228,9 @@ export default function Search() {
 
           {showExternalSection && (
             <div>
-              <h2 className="text-lg font-semibold text-white mb-3">Externe Suchergebnisse</h2>
+              <h2 className="text-lg font-semibold text-white mb-3">{t('search.externalResults')}</h2>
               {externalLoading ? (
-                <p className="text-slate-500">Loading external results…</p>
+                <p className="text-slate-500">{t('search.loadingExternal')}</p>
               ) : (
                 <>
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -253,7 +253,7 @@ export default function Search() {
                             />
                           ) : (
                             <div className="w-full h-40 bg-slate-800 flex items-center justify-center text-slate-600">
-                              No image
+                              {t('common.noImage')}
                             </div>
                           )}
                           <div className="p-4">
@@ -290,7 +290,7 @@ export default function Search() {
                         onClick={() => setExternalVisibleCount((prev) => prev + EXTERNAL_PAGE_SIZE)}
                         className="px-6 py-2 rounded-lg border border-slate-600 text-slate-300 font-medium hover:bg-slate-800 transition-colors"
                       >
-                        Load more
+                        {t('search.loadMore')}
                       </button>
                     </div>
                   )}

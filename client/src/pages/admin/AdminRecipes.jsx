@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { admin } from '../../api/client';
 
 export default function AdminRecipes() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [q, setQ] = useState('');
   const [deleteId, setDeleteId] = useState(null);
@@ -23,16 +25,16 @@ export default function AdminRecipes() {
 
   const recipes = data?.recipes ?? [];
 
-  if (isLoading) return <p className="text-slate-400">Lade Rezepte…</p>;
+  if (isLoading) return <p className="text-slate-400">{t('admin.loadingRecipes')}</p>;
   if (error) return <p className="text-red-400">{error.message}</p>;
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center gap-4 flex-wrap">
-        <h2 className="text-lg font-semibold text-white">Rezepte</h2>
+        <h2 className="text-lg font-semibold text-white">{t('admin.recipes')}</h2>
         <input
           type="search"
-          placeholder="Suchen…"
+          placeholder={t('admin.searchPlaceholder')}
           value={q}
           onChange={(e) => setQ(e.target.value)}
           className="px-3 py-2 rounded-lg bg-slate-800 border border-slate-600 text-white w-48"
@@ -42,11 +44,11 @@ export default function AdminRecipes() {
         <table className="w-full text-sm text-left">
           <thead className="bg-slate-800/50 text-slate-300">
             <tr>
-              <th className="px-4 py-3">ID</th>
-              <th className="px-4 py-3">Titel</th>
-              <th className="px-4 py-3">Gespeichert</th>
-              <th className="px-4 py-3">Erstellt</th>
-              <th className="px-4 py-3">Aktionen</th>
+              <th className="px-4 py-3">{t('admin.id')}</th>
+              <th className="px-4 py-3">{t('admin.recipeTitle')}</th>
+              <th className="px-4 py-3">{t('admin.savedCount')}</th>
+              <th className="px-4 py-3">{t('admin.created')}</th>
+              <th className="px-4 py-3">{t('admin.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-700">
@@ -55,13 +57,13 @@ export default function AdminRecipes() {
                 <td className="px-4 py-2">{r.id}</td>
                 <td className="px-4 py-2 max-w-xs truncate" title={r.title}>{r.title}</td>
                 <td className="px-4 py-2">{r.save_count ?? 0}</td>
-                <td className="px-4 py-2">{r.created_at ? new Date(r.created_at).toLocaleDateString() : '–'}</td>
+                <td className="px-4 py-2">{r.created_at ? new Date(r.created_at).toLocaleDateString() : t('common.dash')}</td>
                 <td className="px-4 py-2 flex gap-2">
                   <Link
                     to={`/app/admin/recipes/${r.id}`}
                     className="text-brand-400 hover:underline"
                   >
-                    Bearbeiten
+                    {t('admin.editRecipe')}
                   </Link>
                   {deleteId === r.id ? (
                     <span className="flex gap-2">
@@ -70,14 +72,14 @@ export default function AdminRecipes() {
                         onClick={() => deleteMutation.mutate(r.id)}
                         className="text-red-400 hover:underline"
                       >
-                        Löschen bestätigen
+                        {t('common.confirmDelete')}
                       </button>
                       <button
                         type="button"
                         onClick={() => setDeleteId(null)}
                         className="text-slate-400 hover:underline"
                       >
-                        Abbrechen
+                        {t('common.cancel')}
                       </button>
                     </span>
                   ) : (
@@ -86,7 +88,7 @@ export default function AdminRecipes() {
                       onClick={() => setDeleteId(r.id)}
                       className="text-red-400 hover:underline"
                     >
-                      Löschen
+                      {t('common.delete')}
                     </button>
                   )}
                 </td>

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   DndContext,
@@ -63,7 +64,11 @@ function DroppableDay({ date, children }) {
   );
 }
 
+const localeForLanguage = (lng) => (lng === 'de' ? 'de-DE' : 'en-US');
+
 export default function MealPlan() {
+  const { t, i18n } = useTranslation();
+  const dateLocale = localeForLanguage(i18n.language);
   const [weekStart, setWeekStart] = useState(() => {
     const d = new Date();
     const day = d.getDay();
@@ -161,13 +166,13 @@ export default function MealPlan() {
       onDragEnd={handleDragEnd}
     >
       <div>
-        <h1 className="font-display text-2xl font-bold text-white mb-2">Meal Plan</h1>
-        <p className="text-slate-400 mb-6">Search your recipes above, then drag them into the week below.</p>
+        <h1 className="font-display text-2xl font-bold text-white mb-2">{t('mealPlan.title')}</h1>
+        <p className="text-slate-400 mb-6">{t('mealPlan.subline')}</p>
 
         {/* Rezeptsuche oben, volle Breite */}
         <section className="mb-8 p-4 rounded-xl border border-slate-800 bg-slate-900/50">
           <label htmlFor="meal-plan-recipe-search" className="block text-slate-400 text-sm font-medium mb-3">
-            Search &amp; pick recipes
+            {t('mealPlan.searchPick')}
           </label>
           <div className="flex flex-wrap items-center gap-3 mb-4">
             <input
@@ -175,7 +180,7 @@ export default function MealPlan() {
               type="search"
               value={recipeSearch}
               onChange={(e) => setRecipeSearch(e.target.value)}
-              placeholder="Search my recipes by name or ingredients…"
+              placeholder={t('mealPlan.placeholderSearch')}
               className="flex-1 min-w-[200px] px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
             <label className="flex items-center gap-2 cursor-pointer select-none shrink-0">
@@ -188,17 +193,17 @@ export default function MealPlan() {
                 />
                 <span className="pointer-events-none absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow transition-transform peer-checked:translate-x-5" />
               </span>
-              <span className="text-slate-300 text-sm font-medium">Favorites only</span>
+              <span className="text-slate-300 text-sm font-medium">{t('mealPlan.favoritesOnly')}</span>
             </label>
           </div>
           <div className="min-h-[140px] max-h-[220px] overflow-y-auto overflow-x-hidden">
             {myRecipes.length === 0 ? (
               <p className="text-slate-500 text-sm py-4">
                 {recipeSearch.trim()
-                  ? 'No recipes match your search.'
+                  ? t('mealPlan.noMatch')
                   : favoritesOnly
-                    ? 'No favorites yet. Mark recipes as favorite in My Recipes.'
-                    : <><Link to="/app/recipes" className="text-brand-400 hover:underline">Add recipes</Link> to drag into your week.</>
+                    ? t('mealPlan.noFavorites')
+                    : <><Link to="/app/recipes" className="text-brand-400 hover:underline">{t('mealPlan.addRecipes')}</Link> {t('mealPlan.addRecipesToDrag')}</>
                 }
               </p>
             ) : (
@@ -215,13 +220,13 @@ export default function MealPlan() {
                         />
                       ) : (
                         <div className="w-14 h-14 rounded-lg bg-slate-700 shrink-0 flex items-center justify-center text-slate-500 text-xs">
-                          No img
+                          {t('mealPlan.noImg')}
                         </div>
                       )}
                       <div className="min-w-0 flex-1">
                         <span className="block truncate text-white font-medium text-sm">{r.title}</span>
                         {r.servings != null && (
-                          <span className="text-slate-500 text-xs">{r.servings} servings</span>
+                          <span className="text-slate-500 text-xs">{r.servings} {t('recipeDetail.servings')}</span>
                         )}
                       </div>
                     </div>
@@ -230,7 +235,7 @@ export default function MealPlan() {
                 </div>
                 {myRecipes.length > 12 && (
                   <p className="text-slate-500 text-sm mt-2">
-                    Showing 12 of {myRecipes.length}. Narrow your search to see fewer.
+                    {t('mealPlan.showingN', { count: myRecipes.length })}
                   </p>
                 )}
               </>
@@ -246,25 +251,25 @@ export default function MealPlan() {
               onClick={goPrevWeek}
               className="px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800"
             >
-              ← Previous
+              {t('mealPlan.previous')}
             </button>
             <button
               type="button"
               onClick={goNextWeek}
               className="px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800"
             >
-              Next →
+              {t('mealPlan.next')}
             </button>
           </div>
           <span className="text-slate-500 text-sm">
-            {weekDates[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} –{' '}
-            {weekDates[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            {weekDates[0].toLocaleDateString(dateLocale, { month: 'short', day: 'numeric', year: 'numeric' })} –{' '}
+            {weekDates[6].toLocaleDateString(dateLocale, { month: 'short', day: 'numeric', year: 'numeric' })}
           </span>
           <Link
             to="/app/shopping-list"
             className="ml-auto px-4 py-2 rounded-lg bg-brand-500 text-white font-medium hover:bg-brand-600"
           >
-            Generate shopping list
+            {t('mealPlan.generateList')}
           </Link>
         </div>
 
@@ -276,7 +281,7 @@ export default function MealPlan() {
               return (
                 <div key={dateStr} className="flex flex-col">
                   <div className="text-center text-slate-500 text-sm font-medium p-2 mb-1">
-                    {d.toLocaleDateString('en-US', { weekday: 'short' })}
+                    {d.toLocaleDateString(dateLocale, { weekday: 'short' })}
                     <br />
                     <span className="text-slate-600">{d.getDate()}</span>
                   </div>
@@ -296,7 +301,7 @@ export default function MealPlan() {
                           type="button"
                           onClick={() => removeMutation.mutate(s.id)}
                           className="text-slate-500 hover:text-red-400 shrink-0"
-                          title="Remove"
+                          title={t('common.remove')}
                         >
                           ×
                         </button>
@@ -310,8 +315,8 @@ export default function MealPlan() {
         </div>
 
         <p className="mt-6 text-slate-500 text-sm">
-          Drag recipes into a day. Remove with ×.{' '}
-          <Link to="/app/shopping-list" className="text-brand-400 hover:underline">Shopping List</Link> uses this week.
+          {t('mealPlan.dragHint')}{' '}
+          <Link to="/app/shopping-list" className="text-brand-400 hover:underline">{t('nav.shoppingList')}</Link> {t('mealPlan.shoppingListUses')}
         </p>
       </div>
 
@@ -330,7 +335,7 @@ export default function MealPlan() {
             <div className="min-w-0">
               <span className="block truncate text-white font-medium">{activeRecipe.title}</span>
               {activeRecipe.servings != null && (
-                <span className="text-slate-500 text-xs">{activeRecipe.servings} servings</span>
+                <span className="text-slate-500 text-xs">{activeRecipe.servings} {t('recipeDetail.servings')}</span>
               )}
             </div>
           </div>

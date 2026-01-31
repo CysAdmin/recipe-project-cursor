@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { auth } from '../api/client';
 
 export default function Login() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -20,7 +22,7 @@ export default function Login() {
       login(token, userData);
       navigate('/app');
     } catch (err) {
-      setError(err.data?.error || err.message || 'Login failed');
+      setError(err.data?.error || err.message || t('login.errorLogin'));
     } finally {
       setLoading(false);
     }
@@ -29,7 +31,7 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
-        <h1 className="font-display text-2xl font-bold text-white mb-6 text-center">Log in</h1>
+        <h1 className="font-display text-2xl font-bold text-white mb-6 text-center">{t('login.title')}</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
@@ -38,7 +40,7 @@ export default function Login() {
           )}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-slate-400 mb-1">
-              Email
+              {t('login.email')}
             </label>
             <input
               id="email"
@@ -47,12 +49,12 @@ export default function Login() {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
-              placeholder="you@example.com"
+              placeholder={t('login.placeholderEmail')}
             />
           </div>
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-slate-400 mb-1">
-              Password
+              {t('login.password')}
             </label>
             <input
               id="password"
@@ -68,13 +70,13 @@ export default function Login() {
             disabled={loading}
             className="w-full py-2.5 rounded-lg bg-brand-500 text-white font-medium hover:bg-brand-600 disabled:opacity-50 transition-colors"
           >
-            {loading ? 'Logging in…' : 'Log in'}
+            {loading ? t('login.submitting') : t('login.submit')}
           </button>
         </form>
         <p className="mt-4 text-center text-slate-500 text-sm">
-          Don't have an account?{' '}
+          {t('login.noAccount')}{' '}
           <Link to="/register" className="text-brand-400 hover:underline">
-            Sign up
+            {t('login.signUpLink')}
           </Link>
         </p>
       </div>

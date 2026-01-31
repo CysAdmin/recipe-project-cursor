@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { admin } from '../../api/client';
 
 export default function AdminUserForm() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -43,7 +45,7 @@ export default function AdminUserForm() {
     setError('');
     if (isNew) {
       if (!password.trim()) {
-        setError('Passwort ist erforderlich.');
+        setError(t('admin.passwordRequired'));
         return;
       }
       saveMutation.mutate({ email: email.trim(), password, display_name: displayName.trim() || null, is_admin: isAdmin });
@@ -54,11 +56,11 @@ export default function AdminUserForm() {
     }
   };
 
-  if (!isNew && isLoading) return <p className="text-slate-400">Laden…</p>;
+  if (!isNew && isLoading) return <p className="text-slate-400">{t('admin.loading')}</p>;
 
   return (
     <div className="max-w-md space-y-4">
-      <h2 className="text-lg font-semibold text-white">{isNew ? 'Benutzer anlegen' : 'Benutzer bearbeiten'}</h2>
+      <h2 className="text-lg font-semibold text-white">{isNew ? t('admin.createUserTitle') : t('admin.editUser')}</h2>
       {error && (
         <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
           {error}
@@ -66,7 +68,7 @@ export default function AdminUserForm() {
       )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-slate-400 mb-1">E-Mail</label>
+          <label className="block text-sm font-medium text-slate-400 mb-1">{t('admin.email')}</label>
           <input
             type="email"
             value={email}
@@ -76,7 +78,7 @@ export default function AdminUserForm() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-400 mb-1">Anzeigename</label>
+          <label className="block text-sm font-medium text-slate-400 mb-1">{t('admin.displayName')}</label>
           <input
             type="text"
             value={displayName}
@@ -86,7 +88,7 @@ export default function AdminUserForm() {
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-400 mb-1">
-            Passwort {isNew ? '' : '(leer lassen = unverändert)'}
+            {t('login.password')} {isNew ? '' : t('admin.passwordOptional')}
           </label>
           <input
             type="password"
@@ -104,7 +106,7 @@ export default function AdminUserForm() {
             onChange={(e) => setIsAdmin(e.target.checked)}
             className="rounded border-slate-600 bg-slate-800 text-brand-500"
           />
-          <label htmlFor="is_admin" className="text-sm text-slate-300">Admin</label>
+          <label htmlFor="is_admin" className="text-sm text-slate-300">{t('admin.admin')}</label>
         </div>
         <div className="flex gap-2">
           <button
@@ -112,14 +114,14 @@ export default function AdminUserForm() {
             disabled={saveMutation.isPending}
             className="px-4 py-2 rounded-lg bg-brand-600 text-white font-medium hover:bg-brand-500 disabled:opacity-50"
           >
-            {saveMutation.isPending ? 'Speichern…' : 'Speichern'}
+            {saveMutation.isPending ? t('common.saving') : t('common.save')}
           </button>
           <button
             type="button"
             onClick={() => navigate('/app/admin/users')}
             className="px-4 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600"
           >
-            Abbrechen
+            {t('common.cancel')}
           </button>
         </div>
       </form>

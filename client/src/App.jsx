@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
@@ -19,8 +20,9 @@ import AdminRecipes from './pages/admin/AdminRecipes';
 import AdminRecipeEdit from './pages/admin/AdminRecipeEdit';
 
 function PrivateRoute({ children }) {
+  const { t } = useTranslation();
   const { user, loading } = useAuth();
-  if (loading) return <div className="flex items-center justify-center min-h-screen">Loading…</div>;
+  if (loading) return <div className="flex items-center justify-center min-h-screen">{t('app.loading')}</div>;
   if (!user) return <Navigate to="/login" replace />;
   return children;
 }

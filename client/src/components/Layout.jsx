@@ -1,21 +1,23 @@
 import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 
-const nav = [
-  { to: '/app', end: true, label: 'Dashboard' },
-  { to: '/app/recipes', end: false, label: 'My Recipes' },
-  { to: '/app/search', end: true, label: 'Discover' },
-  { to: '/app/meal-plan', end: true, label: 'Meal Plan' },
-  { to: '/app/shopping-list', end: true, label: 'Shopping List' },
-  { to: '/app/admin', end: false, label: 'Admin', adminOnly: true },
-];
-
 export default function Layout() {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  const nav = [
+    { to: '/app', end: true, labelKey: 'nav.dashboard' },
+    { to: '/app/recipes', end: false, labelKey: 'nav.myRecipes' },
+    { to: '/app/search', end: true, labelKey: 'nav.discover' },
+    { to: '/app/meal-plan', end: true, labelKey: 'nav.mealPlan' },
+    { to: '/app/shopping-list', end: true, labelKey: 'nav.shoppingList' },
+    { to: '/app/admin', end: false, labelKey: 'nav.admin', adminOnly: true },
+  ];
 
   const handleLogout = () => {
     queryClient.removeQueries({ queryKey: ['recipes'] });
@@ -30,10 +32,10 @@ export default function Layout() {
       <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-14">
           <NavLink to="/app" className="font-display font-bold text-xl text-brand-400">
-            Recipe Planner
+            {t('common.appName')}
           </NavLink>
           <nav className="flex items-center gap-1">
-            {nav.map(({ to, end, label, adminOnly }) =>
+            {nav.map(({ to, end, labelKey, adminOnly }) =>
               adminOnly && !user?.is_admin ? null : (
                 <NavLink
                   key={to}
@@ -45,7 +47,7 @@ export default function Layout() {
                     }`
                   }
                 >
-                  {label}
+                  {t(labelKey)}
                 </NavLink>
               )
             )}
@@ -64,7 +66,7 @@ export default function Layout() {
               onClick={handleLogout}
               className="text-slate-400 hover:text-slate-200 text-sm"
             >
-              Log out
+              {t('nav.logout')}
             </button>
           </div>
         </div>
