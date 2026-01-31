@@ -6,6 +6,11 @@ import RecipeSource from '../components/RecipeSource';
 
 const EXTERNAL_PAGE_SIZE = 20;
 
+const EXTERNAL_PROVIDERS = [
+  { id: 'gutekueche', label: 'GuteKueche' },
+  { id: 'chefkoch', label: 'Chefkoch' },
+];
+
 function shuffle(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -17,6 +22,7 @@ function shuffle(arr) {
 
 export default function Search() {
   const [q, setQ] = useState('');
+  const [selectedProviders, setSelectedProviders] = useState(EXTERNAL_PROVIDERS.map((p) => p.id));
   const [externalVisibleCount, setExternalVisibleCount] = useState(EXTERNAL_PAGE_SIZE);
   const queryClient = useQueryClient();
 
@@ -35,29 +41,32 @@ export default function Search() {
     staleTime: 0,
   });
 
-  const hasNoInternal = data && Array.isArray(data.recipes) && data.recipes.length === 0;
-  const shouldFetchExternal = !!trimmedQ && hasNoInternal;
-
+  const shouldFetchExternal = !!trimmedQ;
   const externalGk = useQuery({
     queryKey: ['recipes', 'external', trimmedQ, 'gutekueche'],
     queryFn: () => recipesApi.externalSearch(trimmedQ, 'gutekueche'),
-    enabled: shouldFetchExternal,
+    enabled: shouldFetchExternal && selectedProviders.includes('gutekueche'),
     staleTime: 60 * 1000,
   });
   const externalCk = useQuery({
     queryKey: ['recipes', 'external', trimmedQ, 'chefkoch'],
     queryFn: () => recipesApi.externalSearch(trimmedQ, 'chefkoch'),
-    enabled: shouldFetchExternal,
+    enabled: shouldFetchExternal && selectedProviders.includes('chefkoch'),
     staleTime: 60 * 1000,
   });
 
   const external = useMemo(() => {
-    const a = externalGk.data?.external ?? [];
-    const b = externalCk.data?.external ?? [];
+    const a = selectedProviders.includes('gutekueche') ? (externalGk.data?.external ?? []) : [];
+    const b = selectedProviders.includes('chefkoch') ? (externalCk.data?.external ?? []) : [];
     return shuffle([...a, ...b]);
-  }, [externalGk.data, externalCk.data]);
+  }, [externalGk.data, externalCk.data, selectedProviders]);
 
-  const externalLoading = shouldFetchExternal && (externalGk.isFetching || externalCk.isFetching) && external.length === 0;
+  const externalLoading =
+    shouldFetchExternal &&
+    selectedProviders.length > 0 &&
+    ((selectedProviders.includes('gutekueche') && externalGk.isFetching) ||
+      (selectedProviders.includes('chefkoch') && externalCk.isFetching)) &&
+    external.length === 0;
 
   const saveMutation = useMutation({
     mutationFn: (id) => recipesApi.save(id),
@@ -69,15 +78,28 @@ export default function Search() {
   const importMutation = useMutation({
     mutationFn: (url) => recipesApi.importFromUrl(url),
     onSuccess: () => {
+      const scrollY = window.scrollY;
       queryClient.invalidateQueries({ queryKey: ['recipes'] });
+      const restore = () => window.scrollTo(0, scrollY);
+      requestAnimationFrame(() => requestAnimationFrame(restore));
+      setTimeout(restore, 100);
     },
   });
+
+  const toggleProvider = (id) => {
+    setSelectedProviders((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
+    );
+  };
 
   const recipes = data?.recipes || [];
   const externalToShow = external.slice(0, externalVisibleCount);
   const hasMoreExternal = external.length > externalVisibleCount;
   const hasExternal = external.length > 0;
-  const showExternalOnly = recipes.length === 0 && (hasExternal || externalLoading);
+  const showExternalSection = !!trimmedQ && (hasExternal || externalLoading);
+
+  const emptyState =
+    !isLoading && !isFetching && recipes.length === 0 && !showExternalSection;
 
   return (
     <div>
@@ -96,87 +118,24 @@ export default function Search() {
 
       {isLoading || isFetching ? (
         <p className="text-slate-500">Loading…</p>
-      ) : recipes.length === 0 && !hasExternal && !externalLoading ? (
+      ) : emptyState ? (
         <p className="text-slate-500">
-          {q.trim()
+          {trimmedQ
             ? 'No recipes found. Try a different search or import from URL in My Recipes.'
             : 'No recipes in the community yet. Import from URL in My Recipes to get started.'}
         </p>
       ) : (
         <>
           {recipes.length > 0 && (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
-              {recipes.map((r) => (
-                <div
-                  key={r.id}
-                  className="rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden hover:border-slate-700 transition-colors flex flex-col"
-                >
-                  <Link to={`/app/recipes/${r.id}`} className="flex-1 block">
-                    {r.image_url ? (
-                      <img
-                        src={r.image_url}
-                        alt=""
-                        className="w-full h-40 object-cover bg-slate-800"
-                      />
-                    ) : (
-                      <div className="w-full h-40 bg-slate-800 flex items-center justify-center text-slate-600">
-                        No image
-                      </div>
-                    )}
-                    <div className="p-4">
-                      <h2 className="font-semibold text-white truncate">{r.title}</h2>
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        {r.source_domain && (
-                          <>
-                            <RecipeSource recipe={r} />
-                            <span className="text-slate-600">·</span>
-                          </>
-                        )}
-                        <p className="text-slate-500 text-sm">
-                          {[r.prep_time, r.cook_time].filter(Boolean).length
-                            ? `${[r.prep_time, r.cook_time].filter(Boolean).join(' + ')} min`
-                            : '—'}
-                          {r.save_count != null && r.save_count > 1 && ` · ${r.save_count} saved`}
-                        </p>
-                      </div>
-                    </div>
-                  </Link>
-                  <div className="p-4 pt-0">
-                    <button
-                      type="button"
-                      onClick={() => saveMutation.mutate(r.id)}
-                      disabled={saveMutation.isPending}
-                      className="w-full py-2 rounded-lg border border-brand-500 text-brand-400 font-medium hover:bg-brand-500/10 transition-colors disabled:opacity-50"
-                    >
-                      {saveMutation.isPending && saveMutation.variables === r.id ? 'Saving…' : 'Save to my recipes'}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {showExternalOnly && (
-            <div>
-              <p className="text-slate-400 mb-4">
-                No internal recipes for &quot;{q}&quot;. Results from external sources:
-              </p>
-              {externalLoading ? (
-                <p className="text-slate-500">Loading external results…</p>
-              ) : (
-              <>
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold text-white mb-3">Interne Rezepte</h2>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {externalToShow.map((r) => (
+                {recipes.map((r) => (
                   <div
-                    key={r.url}
+                    key={r.id}
                     className="rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden hover:border-slate-700 transition-colors flex flex-col"
                   >
-                    <a
-                      href={r.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 block"
-                    >
+                    <Link to={`/app/recipes/${r.id}`} className="flex-1 block">
                       {r.image_url ? (
                         <img
                           src={r.image_url}
@@ -191,42 +150,133 @@ export default function Search() {
                       <div className="p-4">
                         <h2 className="font-semibold text-white truncate">{r.title}</h2>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <RecipeSource
-                            recipe={{
-                              source_domain: r.source_domain || (r.url ? new URL(r.url).hostname : null),
-                              favicon_url: r.favicon_url,
-                            }}
-                          />
+                          {r.source_domain && (
+                            <>
+                              <RecipeSource recipe={r} />
+                              <span className="text-slate-600">·</span>
+                            </>
+                          )}
+                          <p className="text-slate-500 text-sm">
+                            {[r.prep_time, r.cook_time].filter(Boolean).length
+                              ? `${[r.prep_time, r.cook_time].filter(Boolean).join(' + ')} min`
+                              : '—'}
+                            {r.save_count != null && r.save_count > 1 && ` · ${r.save_count} saved`}
+                          </p>
                         </div>
                       </div>
-                    </a>
+                    </Link>
                     <div className="p-4 pt-0">
-                      <button
-                        type="button"
-                        onClick={() => importMutation.mutate(r.url)}
-                        disabled={importMutation.isPending}
-                        className="w-full py-2 rounded-lg border border-brand-500 text-brand-400 font-medium hover:bg-brand-500/10 transition-colors disabled:opacity-50"
-                      >
-                        {importMutation.isPending && importMutation.variables === r.url
-                          ? 'Importing…'
-                          : 'Import into my recipes'}
-                      </button>
+                      {r.saved_by_me ? (
+                        <p className="text-slate-500 text-sm py-2">In deinen Rezepten</p>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => saveMutation.mutate(r.id)}
+                          disabled={saveMutation.isPending}
+                          className="w-full py-2 rounded-lg border border-brand-500 text-brand-400 font-medium hover:bg-brand-500/10 transition-colors disabled:opacity-50"
+                        >
+                          {saveMutation.isPending && saveMutation.variables === r.id ? 'Saving…' : 'Save to my recipes'}
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
               </div>
-              {hasMoreExternal && (
-                <div className="mt-6 flex justify-center">
-                  <button
-                    type="button"
-                    onClick={() => setExternalVisibleCount((prev) => prev + EXTERNAL_PAGE_SIZE)}
-                    className="px-6 py-2 rounded-lg border border-slate-600 text-slate-300 font-medium hover:bg-slate-800 transition-colors"
+            </div>
+          )}
+
+          {trimmedQ && (
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold text-white mb-2">Externe Anbieter</h2>
+              <p className="text-slate-400 text-sm mb-3">Quellen für die externe Suche auswählen:</p>
+              <div className="flex flex-wrap gap-3">
+                {EXTERNAL_PROVIDERS.map((p) => (
+                  <label
+                    key={p.id}
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 cursor-pointer hover:border-slate-600 transition-colors"
                   >
-                    Load more
-                  </button>
-                </div>
-              )}
-              </>
+                    <input
+                      type="checkbox"
+                      checked={selectedProviders.includes(p.id)}
+                      onChange={() => toggleProvider(p.id)}
+                      className="rounded border-slate-600 bg-slate-800 text-brand-500 focus:ring-brand-500"
+                    />
+                    <span className="text-slate-300">{p.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {showExternalSection && (
+            <div>
+              <h2 className="text-lg font-semibold text-white mb-3">Externe Suchergebnisse</h2>
+              {externalLoading ? (
+                <p className="text-slate-500">Loading external results…</p>
+              ) : (
+                <>
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {externalToShow.map((r) => (
+                      <div
+                        key={r.url}
+                        className="rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden hover:border-slate-700 transition-colors flex flex-col"
+                      >
+                        <a
+                          href={r.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 block"
+                        >
+                          {r.image_url ? (
+                            <img
+                              src={r.image_url}
+                              alt=""
+                              className="w-full h-40 object-cover bg-slate-800"
+                            />
+                          ) : (
+                            <div className="w-full h-40 bg-slate-800 flex items-center justify-center text-slate-600">
+                              No image
+                            </div>
+                          )}
+                          <div className="p-4">
+                            <h2 className="font-semibold text-white truncate">{r.title}</h2>
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              <RecipeSource
+                                recipe={{
+                                  source_domain: r.source_domain || (r.url ? new URL(r.url).hostname : null),
+                                  favicon_url: r.favicon_url,
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </a>
+                        <div className="p-4 pt-0">
+                          <button
+                            type="button"
+                            onClick={() => importMutation.mutate(r.url)}
+                            disabled={importMutation.isPending}
+                            className="w-full py-2 rounded-lg border border-brand-500 text-brand-400 font-medium hover:bg-brand-500/10 transition-colors disabled:opacity-50"
+                          >
+                            {importMutation.isPending && importMutation.variables === r.url
+                              ? 'Importing…'
+                              : 'Import into my recipes'}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {hasMoreExternal && (
+                    <div className="mt-6 flex justify-center">
+                      <button
+                        type="button"
+                        onClick={() => setExternalVisibleCount((prev) => prev + EXTERNAL_PAGE_SIZE)}
+                        className="px-6 py-2 rounded-lg border border-slate-600 text-slate-300 font-medium hover:bg-slate-800 transition-colors"
+                      >
+                        Load more
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}

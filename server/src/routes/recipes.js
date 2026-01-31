@@ -165,20 +165,22 @@ router.get('/', async (req, res) => {
     const pattern = `%${q.replace(/%/g, '\\%')}%`;
     rows = db.prepare(`
       SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.instructions, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
-             (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count
+             (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count,
+             (SELECT 1 FROM user_recipes WHERE user_id = ? AND recipe_id = r.id) AS saved_by_me
       FROM recipes r
       WHERE r.title LIKE ? OR r.description LIKE ? OR r.ingredients LIKE ?
       ORDER BY save_count DESC, r.created_at DESC
       LIMIT ?
-    `).all(pattern, pattern, pattern, limit);
+    `).all(userId ?? 0, pattern, pattern, pattern, limit);
   } else {
     rows = db.prepare(`
       SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.instructions, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
-             (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count
+             (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count,
+             (SELECT 1 FROM user_recipes WHERE user_id = ? AND recipe_id = r.id) AS saved_by_me
       FROM recipes r
       ORDER BY RANDOM()
       LIMIT ?
-    `).all(limit);
+    `).all(userId ?? 0, limit);
   }
 
   // If search had a query and no internal results, return empty; frontend will request external per provider (so results show as soon as first provider returns)
@@ -372,6 +374,7 @@ function rowToRecipe(row) {
     favicon_url: row.favicon_url || null,
     created_at: row.created_at,
     save_count: row.save_count ?? 0,
+    saved_by_me: !!(row.saved_by_me != null && row.saved_by_me !== 0),
     is_favorite: row.is_favorite ? true : false,
     personal_notes: row.personal_notes,
     saved_at: row.saved_at,
