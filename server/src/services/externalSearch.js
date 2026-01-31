@@ -7,6 +7,7 @@
 import { searchGutekueche } from './providers/gutekueche.js';
 import { searchChefkoch } from './providers/chefkoch.js';
 import { searchAllrecipes } from './providers/allrecipes.js';
+import { searchTasty } from './providers/tasty.js';
 
 /**
  * Normalized external recipe hit (same shape for all providers).
@@ -26,14 +27,14 @@ function shuffle(arr) {
   return arr;
 }
 
-const PROVIDERS = { gutekueche: searchGutekueche, chefkoch: searchChefkoch, allrecipes: searchAllrecipes };
+const PROVIDERS = { gutekueche: searchGutekueche, chefkoch: searchChefkoch, allrecipes: searchAllrecipes, tasty: searchTasty };
 
 /**
  * Search a single external provider. Used so the frontend can request each
  * provider separately and show results as soon as the first one returns.
  *
  * @param {string} query - Search term
- * @param {string} providerName - 'gutekueche' | 'chefkoch' | 'allrecipes'
+ * @param {string} providerName - 'gutekueche' | 'chefkoch' | 'allrecipes' | 'tasty'
  * @param {{ limit?: number }} options - Optional limit (default 30, max 30)
  * @returns {Promise<ExternalRecipeHit[]>}
  */
@@ -51,8 +52,8 @@ export async function searchExternalByProvider(query, providerName, options = {}
 }
 
 /**
- * Search external recipe sources. Uses GuteKueche.at and Chefkoch.de.
- * All providers are queried; results are merged and shuffled.
+ * Search external recipe sources. All providers (GuteKueche, Chefkoch, Allrecipes, Tasty)
+ * are queried; results are merged and shuffled.
  * Prefer using searchExternalByProvider from the frontend so results can
  * be shown as soon as the first provider returns.
  *
@@ -65,14 +66,14 @@ export async function searchExternal(query, options = {}) {
   const q = String(query || '').trim();
   if (!q) return [];
 
-  const perProvider = Math.ceil(totalLimit / 2);
+  const providerCount = Object.keys(PROVIDERS).length;
+  const perProvider = Math.ceil(totalLimit / providerCount);
 
   try {
-    const [gutekuecheResults, chefkochResults] = await Promise.all([
-      searchGutekueche(q, { limit: perProvider }),
-      searchChefkoch(q, { limit: perProvider }),
-    ]);
-    const merged = [...gutekuecheResults, ...chefkochResults];
+    const resultsArrays = await Promise.all(
+      Object.values(PROVIDERS).map((fn) => fn(q, { limit: perProvider }))
+    );
+    const merged = resultsArrays.flat();
     return shuffle(merged).slice(0, totalLimit);
   } catch (err) {
     console.error('External search error:', err);
