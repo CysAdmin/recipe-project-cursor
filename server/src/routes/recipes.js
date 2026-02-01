@@ -178,6 +178,8 @@ router.get('/', async (req, res) => {
     const tagFilter = (req.query.tag || '').trim();
     const maxMinutes = parseInt(req.query.max_minutes, 10);
     const quickByTime = !Number.isNaN(maxMinutes) && maxMinutes > 0;
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 50);
+    const offset = Math.max(parseInt(req.query.offset, 10) || 0, 0);
     const favCondition = favoritesOnly ? ' AND ur.is_favorite = 1' : '';
     const tagCondition = tagFilter === 'favorite'
       ? ' AND ur.is_favorite = 1'
@@ -187,6 +189,15 @@ router.get('/', async (req, res) => {
     const tagParam = tagFilter && tagFilter !== 'favorite' && RECIPE_TAG_KEYS.includes(tagFilter) ? [tagFilter] : [];
     const timeCondition = quickByTime ? ' AND (COALESCE(r.prep_time, 0) + COALESCE(r.cook_time, 0)) <= ?' : '';
     const timeParam = quickByTime ? [maxMinutes] : [];
+    const whereClause = q
+      ? `(r.title LIKE ? OR r.description LIKE ? OR r.ingredients LIKE ?)${favCondition}${tagCondition}${timeCondition}`
+      : `1=1${favCondition}${tagCondition}${timeCondition}`;
+    const countParams = q ? [userId, `%${q.replace(/%/g, '\\%')}%`, `%${q.replace(/%/g, '\\%')}%`, `%${q.replace(/%/g, '\\%')}%`, ...tagParam, ...timeParam] : [userId, ...tagParam, ...timeParam];
+    const totalCount = db.prepare(`
+      SELECT COUNT(*) AS n FROM recipes r
+      JOIN user_recipes ur ON ur.recipe_id = r.id AND ur.user_id = ?
+      WHERE ${whereClause}
+    `).get(...countParams)?.n ?? 0;
     let rows;
     if (q) {
       const pattern = `%${q.replace(/%/g, '\\%')}%`;
@@ -198,7 +209,8 @@ router.get('/', async (req, res) => {
         JOIN user_recipes ur ON ur.recipe_id = r.id AND ur.user_id = ?
         WHERE (r.title LIKE ? OR r.description LIKE ? OR r.ingredients LIKE ?)${favCondition}${tagCondition}${timeCondition}
         ORDER BY ur.saved_at DESC
-      `).all(userId, pattern, pattern, pattern, ...tagParam, ...timeParam);
+        LIMIT ? OFFSET ?
+      `).all(userId, pattern, pattern, pattern, ...tagParam, ...timeParam, limit, offset);
     } else {
       rows = db.prepare(`
         SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
@@ -208,9 +220,10 @@ router.get('/', async (req, res) => {
         JOIN user_recipes ur ON ur.recipe_id = r.id AND ur.user_id = ?
         WHERE 1=1${favCondition}${tagCondition}${timeCondition}
         ORDER BY ur.saved_at DESC
-      `).all(userId, ...tagParam, ...timeParam);
+        LIMIT ? OFFSET ?
+      `).all(userId, ...tagParam, ...timeParam, limit, offset);
     }
-    return res.json({ recipes: rows.map(rowToRecipe) });
+    return res.json({ recipes: rows.map(rowToRecipe), total: totalCount });
   }
 
   // All recipes (for discovery/search)

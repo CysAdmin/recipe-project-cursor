@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { recipes as recipesApi } from '../api/client';
 import RecipeSource from '../components/RecipeSource';
 import RecipeTags from '../components/RecipeTags';
@@ -117,20 +117,50 @@ export default function Recipes() {
     importMutation.mutate(url);
   };
 
-  const { data, isLoading } = useQuery({
+  const RECIPES_PAGE_SIZE = 20;
+
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery({
     queryKey: ['recipes', 'mine', user?.id, tagFilter || null, favoritesOnly, maxMinutes || null, (searchQuery || '').trim() || null],
-    queryFn: () =>
+    queryFn: ({ pageParam }) =>
       recipesApi.list({
         mine: '1',
+        limit: RECIPES_PAGE_SIZE,
+        offset: pageParam,
         ...(tagFilter && { tag: tagFilter }),
         ...(favoritesOnly && { favorites: '1' }),
         ...(maxMinutes && { max_minutes: maxMinutes }),
         ...(searchQuery.trim() && { q: searchQuery.trim() }),
       }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((sum, p) => sum + (p.recipes?.length ?? 0), 0);
+      return lastPage.total != null && loaded < lastPage.total ? loaded : undefined;
+    },
     enabled: !!user?.id,
   });
 
-  const recipes = data?.recipes || [];
+  const recipes = data?.pages?.flatMap((p) => p.recipes ?? []) ?? [];
+  const totalCount = data?.pages?.[0]?.total ?? recipes.length;
+  const loadMoreRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const el = loadMoreRef.current;
+    if (!el || !hasNextPage || isFetchingNextPage) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) fetchNextPage();
+      },
+      { rootMargin: '100px', threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -260,7 +290,7 @@ export default function Recipes() {
           <TagFilterPills selectedTag={tagFilter} onSelectTag={setTagFilter} />
         </div>
         {!isLoading && (
-          <p className="text-slate-500 text-sm">{t('recipes.recipesFound', { count: recipes.length })}</p>
+          <p className="text-slate-500 text-sm">{t('recipes.recipesFound', { count: totalCount })}</p>
         )}
       </div>
 
@@ -314,6 +344,13 @@ export default function Recipes() {
                 </li>
               ))}
             </ul>
+          )}
+          {hasNextPage != null && hasNextPage && (
+            <div ref={loadMoreRef} className="py-4 flex justify-center">
+              {isFetchingNextPage && (
+                <p className="text-slate-500 text-sm">{t('common.loading')}</p>
+              )}
+            </div>
           )}
         </div>
 
