@@ -176,6 +176,8 @@ router.get('/', async (req, res) => {
     const q = (req.query.q || '').trim();
     const favoritesOnly = req.query.favorites === '1' || req.query.favorites === 'true';
     const tagFilter = (req.query.tag || '').trim();
+    const maxMinutes = parseInt(req.query.max_minutes, 10);
+    const quickByTime = !Number.isNaN(maxMinutes) && maxMinutes > 0;
     const favCondition = favoritesOnly ? ' AND ur.is_favorite = 1' : '';
     const tagCondition = tagFilter === 'favorite'
       ? ' AND ur.is_favorite = 1'
@@ -183,6 +185,8 @@ router.get('/', async (req, res) => {
         ? ` AND EXISTS (SELECT 1 FROM json_each(COALESCE(r.tags,'[]')) WHERE json_each.value = ?)`
         : '';
     const tagParam = tagFilter && tagFilter !== 'favorite' && RECIPE_TAG_KEYS.includes(tagFilter) ? [tagFilter] : [];
+    const timeCondition = quickByTime ? ' AND (COALESCE(r.prep_time, 0) + COALESCE(r.cook_time, 0)) <= ?' : '';
+    const timeParam = quickByTime ? [maxMinutes] : [];
     let rows;
     if (q) {
       const pattern = `%${q.replace(/%/g, '\\%')}%`;
@@ -192,9 +196,9 @@ router.get('/', async (req, res) => {
                (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count
         FROM recipes r
         JOIN user_recipes ur ON ur.recipe_id = r.id AND ur.user_id = ?
-        WHERE (r.title LIKE ? OR r.description LIKE ? OR r.ingredients LIKE ?)${favCondition}${tagCondition}
+        WHERE (r.title LIKE ? OR r.description LIKE ? OR r.ingredients LIKE ?)${favCondition}${tagCondition}${timeCondition}
         ORDER BY ur.saved_at DESC
-      `).all(userId, pattern, pattern, pattern, ...tagParam);
+      `).all(userId, pattern, pattern, pattern, ...tagParam, ...timeParam);
     } else {
       rows = db.prepare(`
         SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
@@ -202,9 +206,9 @@ router.get('/', async (req, res) => {
                (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count
         FROM recipes r
         JOIN user_recipes ur ON ur.recipe_id = r.id AND ur.user_id = ?
-        WHERE 1=1${favCondition}${tagCondition}
+        WHERE 1=1${favCondition}${tagCondition}${timeCondition}
         ORDER BY ur.saved_at DESC
-      `).all(userId, ...tagParam);
+      `).all(userId, ...tagParam, ...timeParam);
     }
     return res.json({ recipes: rows.map(rowToRecipe) });
   }

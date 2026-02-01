@@ -28,10 +28,10 @@ export default function Layout() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-10">
+    <div className="min-h-screen flex flex-col bg-slate-50">
+      <header className="border-b border-slate-200 bg-white sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-14">
-          <NavLink to="/app" className="font-display font-bold text-xl text-brand-400">
+          <NavLink to="/app" className="font-display font-bold text-xl text-slate-800 hover:text-brand-600">
             {t('common.appName')}
           </NavLink>
           <nav className="flex items-center gap-1">
@@ -43,7 +43,7 @@ export default function Layout() {
                   end={end}
                   className={({ isActive }) =>
                     `px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive ? 'bg-brand-600/20 text-brand-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                      isActive ? 'bg-brand-100 text-brand-700' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`
                   }
                 >
@@ -56,7 +56,7 @@ export default function Layout() {
             <NavLink
               to="/app/profile"
               className={({ isActive }) =>
-                `text-sm transition-colors ${isActive ? 'text-brand-400' : 'text-slate-500 hover:text-slate-200'}`
+                `text-sm transition-colors ${isActive ? 'text-brand-600 font-medium' : 'text-slate-600 hover:text-slate-900'}`
               }
             >
               {user?.display_name || user?.email}
@@ -64,7 +64,7 @@ export default function Layout() {
             <button
               type="button"
               onClick={handleLogout}
-              className="text-slate-400 hover:text-slate-200 text-sm"
+              className="text-slate-600 hover:text-slate-900 text-sm"
             >
               {t('nav.logout')}
             </button>

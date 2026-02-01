@@ -99,7 +99,15 @@
     "errorImport": "Import failed",
     "filterByTag": "Filter by tag",
     "allTags": "All tags",
-    "resetFilters": "Reset filters"
+    "resetFilters": "Reset filters",
+    "recipesFound": "{{count}} recipes found",
+    "searchPlaceholder": "Search my recipes…",
+    "newRecipe": "New Recipe",
+    "goToMealPlan": "Go to Meal Plan",
+    "todayCook": "Cook today?",
+    "decisionAidQuickEasy": "Quick & easy",
+    "decisionAidFavorites": "Favorites",
+    "decisionAidRecent": "Newly saved recipes"
   },
   "recipeDetail": {
     "backToRecipes": "← Back to My Recipes",
@@ -141,6 +149,7 @@
   },
   "mealPlan": {
     "title": "Meal Plan",
+    "today": "Today",
     "subline": "Search your recipes above, then drag them into the week below.",
     "searchPick": "Search & pick recipes",
     "placeholderSearch": "Search my recipes by name or ingredients…",

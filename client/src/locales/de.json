@@ -99,7 +99,15 @@
     "errorImport": "Import fehlgeschlagen",
     "filterByTag": "Tag filtern",
     "allTags": "Alle Tags",
-    "resetFilters": "Filter zurücksetzen"
+    "resetFilters": "Filter zurücksetzen",
+    "recipesFound": "{{count}} Rezepte gefunden",
+    "searchPlaceholder": "In meinen Rezepten suchen…",
+    "newRecipe": "Neues Rezept",
+    "goToMealPlan": "Zum Essensplan",
+    "todayCook": "Heute kochen?",
+    "decisionAidQuickEasy": "Schnell & einfach",
+    "decisionAidFavorites": "Favoriten",
+    "decisionAidRecent": "Neu gespeicherte Rezepte"
   },
   "recipeDetail": {
     "backToRecipes": "← Zurück zu Meine Rezepte",
@@ -140,7 +148,8 @@
     "loadMore": "Mehr laden"
   },
   "mealPlan": {
-    "title": "Meal Plan",
+    "title": "Essensplan",
+    "today": "Heute",
     "subline": "Rezepte oben suchen und in die Woche unten ziehen.",
     "searchPick": "Rezepte suchen & auswählen",
     "placeholderSearch": "Meine Rezepte nach Name oder Zutaten suchen…",

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { recipes as recipesApi } from '../api/client';
@@ -8,27 +8,102 @@ import RecipeTags from '../components/RecipeTags';
 import TagFilterPills from '../components/TagFilterPills';
 import { useAuth } from '../context/AuthContext';
 
+function IconSearch({ className = 'w-5 h-5' }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    </svg>
+  );
+}
+function IconPlus({ className = 'w-5 h-5' }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+    </svg>
+  );
+}
+function IconChevronRight({ className = 'w-4 h-4' }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+    </svg>
+  );
+}
+function IconLightning({ className = 'w-5 h-5' }) {
+  return (
+    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+    </svg>
+  );
+}
+function IconStar({ className = 'w-5 h-5' }) {
+  return (
+    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+    </svg>
+  );
+}
+function IconClock({ className = 'w-5 h-5' }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+
 export default function Recipes() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const [importUrl, setImportUrl] = useState('');
-  const [importError, setImportError] = useState('');
-  const [importing, setImporting] = useState(false);
-  const [tagFilter, setTagFilter] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tagFilter = searchParams.get('tag') || '';
+  const favoritesOnly = searchParams.get('favorites') === '1';
+  const maxMinutes = searchParams.get('max_minutes') || '';
+  const quickByTime = maxMinutes !== '';
+  const setTagFilter = (tag) => {
+    setSearchParams((prev) => {
+      const p = new URLSearchParams(prev);
+      if (tag) p.set('tag', tag);
+      else p.delete('tag');
+      p.delete('favorites');
+      p.delete('max_minutes');
+      return p;
+    });
+  };
+  const [searchOpen, setSearchOpen] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const searchInputRef = React.useRef(null);
+
+  const openSearch = () => {
+    setSearchOpen(true);
+    requestAnimationFrame(() => searchInputRef.current?.focus());
+  };
+  const closeSearch = () => {
+    setSearchOpen(false);
+    setSearchQuery('');
+  };
+
+  const [importOpen, setImportOpen] = React.useState(false);
+  const [importUrl, setImportUrl] = React.useState('');
+  const [importError, setImportError] = React.useState('');
+  const importInputRef = React.useRef(null);
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['recipes', 'mine', user?.id, tagFilter || null],
-    queryFn: () => recipesApi.list({ mine: '1', ...(tagFilter && { tag: tagFilter }) }),
-    enabled: !!user?.id,
-  });
+  const openImport = () => {
+    setImportOpen(true);
+    setImportError('');
+    requestAnimationFrame(() => importInputRef.current?.focus());
+  };
+  const closeImport = () => {
+    setImportOpen(false);
+    setImportUrl('');
+    setImportError('');
+  };
 
   const importMutation = useMutation({
     mutationFn: (url) => recipesApi.importFromUrl(url),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipes', 'mine', user?.id] });
-      setImportUrl('');
-      setImportError('');
+      closeImport();
     },
     onError: (err) => {
       setImportError(err.data?.error || err.message || t('recipes.errorImport'));
@@ -39,101 +114,260 @@ export default function Recipes() {
     e.preventDefault();
     const url = importUrl.trim();
     if (!url) return;
-    setImporting(true);
-    setImportError('');
-    importMutation.mutate(url, {
-      onSettled: () => setImporting(false),
-    });
+    importMutation.mutate(url);
   };
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['recipes', 'mine', user?.id, tagFilter || null, favoritesOnly, maxMinutes || null, (searchQuery || '').trim() || null],
+    queryFn: () =>
+      recipesApi.list({
+        mine: '1',
+        ...(tagFilter && { tag: tagFilter }),
+        ...(favoritesOnly && { favorites: '1' }),
+        ...(maxMinutes && { max_minutes: maxMinutes }),
+        ...(searchQuery.trim() && { q: searchQuery.trim() }),
+      }),
+    enabled: !!user?.id,
+  });
 
   const recipes = data?.recipes || [];
 
   return (
-    <div>
-      <h1 className="font-display text-2xl font-bold text-white mb-2">{t('recipes.title')}</h1>
-      <p className="text-slate-400 mb-6">{t('recipes.subline')}</p>
-
-      <div className="mb-6">
-        <TagFilterPills selectedTag={tagFilter} onSelectTag={setTagFilter} />
+    <div className="flex flex-col gap-6">
+      {/* Page header: title left, actions right */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="font-display text-2xl font-bold text-slate-800">{t('recipes.title')}</h1>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center">
+            <div
+              className={`overflow-hidden transition-[width] duration-300 ease-out flex items-center ${
+                searchOpen ? 'w-48 sm:w-56' : 'w-0'
+              }`}
+            >
+              <input
+                ref={searchInputRef}
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onBlur={() => {
+                  if (!searchQuery.trim()) setSearchOpen(false);
+                }}
+                placeholder={t('recipes.searchPlaceholder')}
+                className="w-full min-w-0 py-2 pl-3 pr-2 rounded-l-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
+                aria-label={t('recipes.searchPlaceholder')}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={searchOpen ? undefined : openSearch}
+              className={`p-2 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors shrink-0 ${
+                searchOpen ? 'rounded-l-none border border-l-0 border-slate-200 bg-slate-50' : ''
+              }`}
+              title={t('recipes.searchPlaceholder')}
+            >
+              <IconSearch />
+            </button>
+            {searchOpen && (
+              <button
+                type="button"
+                onClick={closeSearch}
+                className="p-1.5 rounded text-slate-500 hover:bg-slate-100 hover:text-slate-700 ml-0.5 shrink-0"
+                aria-label={t('common.cancel')}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={openImport}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-brand-600 text-white font-medium hover:bg-brand-700 transition-colors shrink-0"
+          >
+            <IconPlus />
+            {t('recipes.newRecipe')}
+          </button>
+          <Link
+            to="/app/profile"
+            className="flex items-center justify-center w-10 h-10 rounded-full bg-brand-200 text-brand-800 font-semibold text-sm overflow-hidden"
+            title={user?.display_name || user?.email}
+          >
+            {(user?.display_name || user?.email || '?').charAt(0).toUpperCase()}
+          </Link>
+        </div>
       </div>
 
-      <form onSubmit={handleImport} className="mb-8 flex flex-wrap gap-3 items-end">
-        <div className="flex-1 min-w-[200px]">
-          <label htmlFor="importUrl" className="block text-sm font-medium text-slate-400 mb-1">
-            {t('recipes.importFromUrl')}
-          </label>
-          <input
-            id="importUrl"
-            type="url"
-            value={importUrl}
-            onChange={(e) => setImportUrl(e.target.value)}
-            placeholder={t('recipes.placeholderUrl')}
-            className="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={importing || !importUrl.trim()}
-          className="px-4 py-2 rounded-lg bg-brand-500 text-white font-medium hover:bg-brand-600 disabled:opacity-50 transition-colors"
+      {/* Import-Overlay: abgedunkelter Hintergrund, Klick außerhalb schließt */}
+      {importOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !importMutation.isPending) closeImport();
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="import-dialog-title"
         >
-          {importing ? t('recipes.importing') : t('recipes.import')}
-        </button>
-        {importError && (
-          <p className="w-full text-red-400 text-sm mt-1">{importError}</p>
-        )}
-      </form>
-
-      {isLoading ? (
-        <p className="text-slate-500">{t('common.loading')}</p>
-      ) : recipes.length === 0 ? (
-        <p className="text-slate-500">
-          {t('recipes.noRecipesBefore')}
-          <Link to="/app/search" className="text-brand-400 hover:underline">
-            {t('recipes.discoverLink')}
-          </Link>
-          {t('recipes.noRecipesAfter')}
-        </p>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {recipes.map((r) => (
-            <Link
-              key={r.id}
-              to={`/app/recipes/${r.id}`}
-              className="block rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden hover:border-slate-700 transition-colors"
-            >
-              {r.image_url ? (
-                <img
-                  src={r.image_url}
-                  alt=""
-                  className="w-full h-40 object-cover bg-slate-800"
-                />
-              ) : (
-                <div className="w-full h-40 bg-slate-800 flex items-center justify-center text-slate-600">
-                  {t('common.noImage')}
-                </div>
+          <div
+            className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="import-dialog-title" className="font-semibold text-slate-800 mb-3">
+              {t('recipes.importFromUrl')}
+            </h2>
+            <form onSubmit={handleImport} className="flex flex-col gap-3">
+              <input
+                ref={importInputRef}
+                type="url"
+                value={importUrl}
+                onChange={(e) => setImportUrl(e.target.value)}
+                placeholder={t('recipes.placeholderUrl')}
+                className="w-full py-2.5 px-3 rounded-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
+                aria-label={t('recipes.placeholderUrl')}
+                disabled={importMutation.isPending}
+              />
+              {importError && (
+                <p className="text-red-600 text-sm" role="alert">
+                  {importError}
+                </p>
               )}
-              <div className="p-4">
-                <h2 className="font-semibold text-white truncate">{r.title}</h2>
-                <div className="flex items-center gap-2 mt-1 flex-wrap">
-                  {r.source_domain && (
-                    <>
-                      <RecipeSource recipe={r} />
-                      <span className="text-slate-600">·</span>
-                    </>
-                  )}
-                  <p className="text-slate-500 text-sm">
-                    {[r.prep_time, r.cook_time].filter(Boolean).length
-                      ? `${[r.prep_time, r.cook_time].filter(Boolean).join(' + ')} ${t('recipeDetail.min')}`
-                      : t('common.dash')}
-                    {r.save_count != null && r.save_count > 1 && ` · ${r.save_count} ${t('recipeDetail.saved')}`}
-                  </p>
-                </div>
-                <RecipeTags recipe={r} className="mt-2" />
+              <div className="flex gap-2 justify-end">
+                <button
+                  type="button"
+                  onClick={closeImport}
+                  disabled={importMutation.isPending}
+                  className="px-4 py-2 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-50 text-sm font-medium"
+                >
+                  {t('common.cancel')}
+                </button>
+                <button
+                  type="submit"
+                  disabled={importMutation.isPending || !importUrl.trim()}
+                  className="px-4 py-2 rounded-lg bg-brand-600 text-white font-medium text-sm hover:bg-brand-700 disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  {importMutation.isPending ? t('recipes.importing') : t('recipes.import')}
+                </button>
               </div>
-            </Link>
-          ))}
+            </form>
+          </div>
         </div>
       )}
+
+      {/* Tag filters + result count */}
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <TagFilterPills selectedTag={tagFilter} onSelectTag={setTagFilter} />
+        </div>
+        {!isLoading && (
+          <p className="text-slate-500 text-sm">{t('recipes.recipesFound', { count: recipes.length })}</p>
+        )}
+      </div>
+
+      {/* Two-column: recipe list (left) | Entscheidungshilfen sidebar (right) */}
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+        <div className="flex-1 min-w-0">
+          {isLoading ? (
+            <p className="text-slate-500">{t('common.loading')}</p>
+          ) : recipes.length === 0 ? (
+            <p className="text-slate-500">
+              {t('recipes.noRecipesBefore')}
+              <Link to="/app/search" className="text-blue-600 hover:underline">
+                {t('recipes.discoverLink')}
+              </Link>
+              {t('recipes.noRecipesAfter')}
+            </p>
+          ) : (
+            <ul className="space-y-4">
+              {recipes.map((r) => (
+                <li key={r.id}>
+                  <Link
+                    to={`/app/recipes/${r.id}`}
+                    className="flex rounded-xl bg-white border border-slate-200 shadow-sm overflow-hidden hover:shadow-md hover:border-slate-300 transition-all"
+                  >
+                    <div className="w-28 h-28 sm:w-32 sm:h-32 shrink-0 bg-slate-100">
+                      {r.image_url ? (
+                        <img
+                          src={r.image_url}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">
+                          {t('common.noImage')}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0 p-4 flex flex-col justify-center">
+                      <RecipeSource recipe={r} className="mb-1" />
+                      <h2 className="font-semibold text-slate-800 truncate">{r.title}</h2>
+                      <RecipeTags recipe={r} activeFilter={tagFilter || undefined} className="mt-1.5" />
+                      <div className="mt-1.5 flex items-center gap-2 text-slate-500 text-sm">
+                        {[r.prep_time, r.cook_time].filter(Boolean).length > 0 && (
+                          <span>
+                            {[r.prep_time, r.cook_time].filter(Boolean).join(' + ')} {t('recipeDetail.min')}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Entscheidungshilfen sidebar */}
+        <aside className="lg:w-80 shrink-0">
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4 sticky top-20">
+            <h2 className="font-semibold text-slate-800 mb-4">{t('recipes.todayCook')}</h2>
+            <nav className="space-y-2" aria-label={t('recipes.todayCook')}>
+              <Link
+                to="/app/recipes?max_minutes=30"
+                className={`flex items-center gap-3 w-full py-3 px-3 rounded-lg text-left font-medium transition-colors ${
+                  quickByTime && !favoritesOnly
+                    ? 'bg-brand-100 text-brand-800 border border-brand-200'
+                    : 'bg-slate-100 text-slate-800 hover:bg-slate-200 border border-transparent'
+                }`}
+              >
+                <span className="text-amber-500 shrink-0" aria-hidden>
+                  <IconLightning className="w-5 h-5" />
+                </span>
+                <span className="flex-1 min-w-0">{t('recipes.decisionAidQuickEasy')}</span>
+                <IconChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+              </Link>
+              <Link
+                to="/app/recipes?favorites=1"
+                className={`flex items-center gap-3 w-full py-3 px-3 rounded-lg text-left font-medium transition-colors ${
+                  favoritesOnly
+                    ? 'bg-brand-100 text-brand-800 border border-brand-200'
+                    : 'bg-slate-100 text-slate-800 hover:bg-slate-200 border border-transparent'
+                }`}
+              >
+                <span className="text-amber-500 shrink-0" aria-hidden>
+                  <IconStar className="w-5 h-5" />
+                </span>
+                <span className="flex-1 min-w-0">{t('recipes.decisionAidFavorites')}</span>
+                <IconChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+              </Link>
+              <Link
+                to="/app/recipes"
+                className={`flex items-center gap-3 w-full py-3 px-3 rounded-lg text-left font-medium transition-colors ${
+                  !tagFilter && !favoritesOnly && !quickByTime
+                    ? 'bg-brand-100 text-brand-800 border border-brand-200'
+                    : 'bg-slate-100 text-slate-800 hover:bg-slate-200 border border-transparent'
+                }`}
+              >
+                <span className="text-brand-600 shrink-0" aria-hidden>
+                  <IconClock className="w-5 h-5" />
+                </span>
+                <span className="flex-1 min-w-0">{t('recipes.decisionAidRecent')}</span>
+                <IconChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+              </Link>
+            </nav>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

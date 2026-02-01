@@ -30,12 +30,11 @@ const IconContainer = ({ className = 'w-4 h-4 text-brand-400' }) => (
 );
 
 function TagIcon({ tagKey, selected }) {
-  const base = selected ? 'text-white' : '';
-  if (tagKey === 'quick' || tagKey === 'easy') return <IconCheck className={`w-4 h-4 shrink-0 ${selected ? 'text-white' : 'text-brand-400'}`} />;
-  if (tagKey === 'after_work' || tagKey === 'vegetarian') return <IconHeart className={`w-4 h-4 shrink-0 ${selected ? 'text-white' : 'text-brand-400'}`} />;
-  if (tagKey === 'comfort_food' || tagKey === 'favorite') return <IconHeartRed className={`w-4 h-4 shrink-0 ${selected ? 'text-white' : 'text-red-400'}`} />;
-  if (tagKey === 'summer') return <IconSun className={`w-4 h-4 shrink-0 ${selected ? 'text-white' : 'text-amber-400'}`} />;
-  if (tagKey === 'reheatable') return <IconContainer className={`w-4 h-4 shrink-0 ${selected ? 'text-white' : 'text-brand-400'}`} />;
+  if (tagKey === 'quick' || tagKey === 'easy') return <IconCheck className={`w-4 h-4 shrink-0 ${selected ? 'text-white' : 'text-brand-600'}`} />;
+  if (tagKey === 'after_work' || tagKey === 'vegetarian') return <IconHeart className={`w-4 h-4 shrink-0 ${selected ? 'text-white' : 'text-brand-600'}`} />;
+  if (tagKey === 'comfort_food' || tagKey === 'favorite') return <IconHeartRed className={`w-4 h-4 shrink-0 ${selected ? 'text-white' : 'text-red-500'}`} />;
+  if (tagKey === 'summer') return <IconSun className={`w-4 h-4 shrink-0 ${selected ? 'text-white' : 'text-amber-500'}`} />;
+  if (tagKey === 'reheatable') return <IconContainer className={`w-4 h-4 shrink-0 ${selected ? 'text-white' : 'text-brand-600'}`} />;
   return null;
 }
 
@@ -54,8 +53,8 @@ export default function TagFilterPills({ selectedTag, onSelectTag, className = '
             onClick={() => onSelectTag(selected ? '' : key)}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
               selected
-                ? 'bg-brand-500 text-white'
-                : 'bg-slate-800 border border-slate-600 text-slate-300 hover:border-slate-500 hover:bg-slate-700/80'
+                ? 'bg-brand-600 text-white'
+                : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
             }`}
           >
             <TagIcon tagKey={key} selected={selected} />
@@ -67,7 +66,7 @@ export default function TagFilterPills({ selectedTag, onSelectTag, className = '
         <button
           type="button"
           onClick={() => onSelectTag('')}
-          className="ml-1 text-sm text-brand-400 hover:underline"
+          className="ml-1 text-sm text-blue-600 hover:underline"
         >
           {t('recipes.resetFilters')}
         </button>
@@ -100,8 +99,8 @@ export function RecipeTagPillsEditable({ tags = [], onTagsChange, disabled = fal
             onClick={() => toggle(key)}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors disabled:opacity-50 ${
               selected
-                ? 'bg-brand-500 text-white'
-                : 'bg-slate-800 border border-slate-600 text-slate-300 hover:border-slate-500 hover:bg-slate-700/80'
+                ? 'bg-brand-600 text-white border border-brand-600'
+                : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
             }`}
           >
             <TagIcon tagKey={key} selected={selected} />
