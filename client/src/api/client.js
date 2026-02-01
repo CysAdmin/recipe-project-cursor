@@ -54,13 +54,6 @@ export const recipes = {
     api(`/recipes/external?q=${encodeURIComponent(query)}&provider=${encodeURIComponent(provider)}`),
 };
 
-export const shoppingLists = {
-  generateFromRecipes: (items) =>
-    api('/shopping-lists/generate', { method: 'POST', body: JSON.stringify({ items }) }),
-  list: () => api('/shopping-lists'),
-  save: (body) => api('/shopping-lists', { method: 'POST', body: JSON.stringify(body) }),
-};
-
 export const admin = {
   users: {
     list: () => api('/admin/users'),

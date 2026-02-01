@@ -14,7 +14,6 @@ export default function Layout() {
     { to: '/app', end: true, labelKey: 'nav.dashboard' },
     { to: '/app/recipes', end: false, labelKey: 'nav.myRecipes' },
     { to: '/app/search', end: true, labelKey: 'nav.discover' },
-    { to: '/app/shopping-list', end: true, labelKey: 'nav.shoppingList' },
     { to: '/app/admin', end: false, labelKey: 'nav.admin', adminOnly: true },
   ];
 

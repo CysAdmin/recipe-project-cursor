@@ -28,8 +28,6 @@
     "dashboard": "Dashboard",
     "myRecipes": "Meine Rezepte",
     "discover": "Discover",
-    "mealPlan": "Meal Plan",
-    "shoppingList": "Einkaufsliste",
     "admin": "Admin",
     "profile": "Profil",
     "logout": "Abmelden"
@@ -76,10 +74,6 @@
     "saved": "gespeichert",
     "discover": "Discover",
     "discoverDesc": "Rezepte suchen und speichern",
-    "mealPlan": "Meal Plan",
-    "mealPlanDesc": "Wochenübersicht",
-    "shoppingList": "Einkaufsliste",
-    "shoppingListDesc": "Aus ausgewählten Rezepten erzeugen",
     "recentRecipes": "Letzte Rezepte",
     "viewAll": "Alle anzeigen",
     "noRecipesYet": "Noch keine Rezepte.",
@@ -164,19 +158,7 @@
     "noImg": "Kein Bild",
     "previous": "← Zurück",
     "next": "Weiter →",
-    "generateList": "Einkaufsliste erzeugen",
-    "dragHint": "Rezepte in einen Tag ziehen. Mit × entfernen.",
-    "shoppingListUses": "Einkaufsliste nutzt diese Woche."
-  },
-  "shoppingList": {
-    "title": "Einkaufsliste",
-    "sublineSelect": "Rezepte auswählen und Portionen angeben – die Zutaten werden zusammengefasst.",
-    "noRecipes": "Noch keine gespeicherten Rezepte. Rezepte unter Meine Rezepte hinzufügen.",
-    "selectRecipes": "Rezepte auswählen",
-    "printList": "Liste drucken",
-    "generating": "Liste wird erzeugt…",
-    "generateList": "Einkaufsliste erzeugen",
-    "listTitle": "Einkaufsliste"
+    "dragHint": "Rezepte in einen Tag ziehen. Mit × entfernen."
   },
   "profile": {
     "title": "Profil & Einstellungen",

@@ -50,6 +50,20 @@ function IconClock({ className = 'w-5 h-5' }) {
     </svg>
   );
 }
+function IconHeartFilled({ className = 'w-5 h-5' }) {
+  return (
+    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+    </svg>
+  );
+}
+function IconHeartOutline({ className = 'w-5 h-5' }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+    </svg>
+  );
+}
 
 export default function Recipes() {
   const { t } = useTranslation();
@@ -109,6 +123,19 @@ export default function Recipes() {
       setImportError(err.data?.error || err.message || t('recipes.errorImport'));
     },
   });
+
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: ({ id, is_favorite }) => recipesApi.updateUserRecipe(id, { is_favorite }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recipes', 'mine', user?.id] });
+    },
+  });
+
+  const handleToggleFavorite = (e, recipe) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleFavoriteMutation.mutate({ id: recipe.id, is_favorite: !recipe.is_favorite });
+  };
 
   const handleImport = (e) => {
     e.preventDefault();
@@ -322,7 +349,7 @@ export default function Recipes() {
                     to={`/app/recipes/${r.id}`}
                     className="flex rounded-xl bg-white border border-slate-200 shadow-sm overflow-hidden hover:shadow-md hover:border-slate-300 transition-all"
                   >
-                    <div className="w-28 h-28 sm:w-32 sm:h-32 shrink-0 bg-slate-100">
+                    <div className="relative w-28 h-28 sm:w-32 sm:h-32 shrink-0 bg-slate-100">
                       {r.image_url ? (
                         <img
                           src={r.image_url}
@@ -334,6 +361,19 @@ export default function Recipes() {
                           {t('common.noImage')}
                         </div>
                       )}
+                      <button
+                        type="button"
+                        onClick={(e) => handleToggleFavorite(e, r)}
+                        className="absolute top-2 left-2 z-10 flex items-center justify-center w-8 h-8 rounded-full bg-white/80 hover:bg-white text-red-500 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1"
+                        aria-label={r.is_favorite ? t('recipeDetail.favorited') : t('recipeDetail.favorite')}
+                        aria-pressed={!!r.is_favorite}
+                      >
+                        {r.is_favorite ? (
+                          <IconHeartFilled className="w-5 h-5 text-red-500" />
+                        ) : (
+                          <IconHeartOutline className="w-5 h-5 text-red-500" />
+                        )}
+                      </button>
                     </div>
                     <div className="flex-1 min-w-0 p-4 flex flex-col justify-center">
                       <RecipeSource recipe={r} className="mb-1" />

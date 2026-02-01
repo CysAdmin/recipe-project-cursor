@@ -42,13 +42,6 @@ export default function Dashboard() {
           <h2 className="font-semibold text-slate-800 mb-1">{t('dashboard.discover')}</h2>
           <p className="text-slate-500 text-sm">{t('dashboard.discoverDesc')}</p>
         </Link>
-        <Link
-          to="/app/shopping-list"
-          className="p-6 rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md hover:border-slate-300 transition-all md:col-span-2 lg:col-span-1"
-        >
-          <h2 className="font-semibold text-slate-800 mb-1">{t('dashboard.shoppingList')}</h2>
-          <p className="text-slate-500 text-sm">{t('dashboard.shoppingListDesc')}</p>
-        </Link>
       </div>
 
       <section>
