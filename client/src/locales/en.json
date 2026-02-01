@@ -70,7 +70,25 @@
     "errorLogin": "Login failed",
     "errorEmailNotVerified": "Please verify your email address first using the link we sent you.",
     "resendVerificationEmail": "Resend verification email",
-    "resendVerificationEmailSent": "If your account is not yet verified, we sent a new link."
+    "resendVerificationEmailSent": "If your account is not yet verified, we sent a new link.",
+    "forgotPassword": "Forgot password?"
+  },
+  "forgotPassword": {
+    "title": "Reset password",
+    "emailLabel": "Email",
+    "submit": "Send reset link",
+    "successMessage": "If an account exists with this email, we sent a link to reset your password.",
+    "backToLogin": "Back to log in"
+  },
+  "resetPassword": {
+    "title": "Set new password",
+    "newPasswordLabel": "New password",
+    "confirmPasswordLabel": "Confirm password",
+    "submit": "Reset password",
+    "successMessage": "Your password has been reset. You can now log in.",
+    "errorInvalidOrExpired": "Link invalid or expired.",
+    "passwordsMismatch": "Passwords do not match.",
+    "backToLogin": "Back to log in"
   },
   "register": {
     "title": "Sign up",
@@ -113,6 +131,7 @@
     "discoverLink": "discover",
     "favorite": "Favorite",
     "errorImport": "Import failed",
+    "errorNoRecipeFound": "No recipe could be recognized from this URL.",
     "filterByTag": "Filter by tag",
     "allTags": "All tags",
     "resetFilters": "Reset filters",

@@ -70,7 +70,8 @@
     "errorLogin": "Anmeldung fehlgeschlagen",
     "errorEmailNotVerified": "Bitte bestätige zuerst deine E-Mail-Adresse über den Link in der E-Mail.",
     "resendVerificationEmail": "Verifizierungs-E-Mail erneut senden",
-    "resendVerificationEmailSent": "Falls dein Konto noch nicht bestätigt ist, haben wir einen neuen Link gesendet."
+    "resendVerificationEmailSent": "Falls dein Konto noch nicht bestätigt ist, haben wir einen neuen Link gesendet.",
+    "forgotPassword": "Passwort vergessen?"
   },
   "verifyEmail": {
     "title": "E-Mail bestätigen",
@@ -78,6 +79,23 @@
     "error": "Link ungültig oder abgelaufen.",
     "missingToken": "Kein Bestätigungslink angegeben.",
     "goToLogin": "Zum Anmelden",
+    "backToLogin": "Zurück zur Anmeldung"
+  },
+  "forgotPassword": {
+    "title": "Passwort zurücksetzen",
+    "emailLabel": "E-Mail",
+    "submit": "Link zum Zurücksetzen senden",
+    "successMessage": "Falls ein Konto mit dieser E-Mail existiert, haben wir einen Link zum Zurücksetzen gesendet.",
+    "backToLogin": "Zurück zur Anmeldung"
+  },
+  "resetPassword": {
+    "title": "Neues Passwort setzen",
+    "newPasswordLabel": "Neues Passwort",
+    "confirmPasswordLabel": "Passwort bestätigen",
+    "submit": "Passwort zurücksetzen",
+    "successMessage": "Dein Passwort wurde zurückgesetzt. Du kannst dich jetzt anmelden.",
+    "errorInvalidOrExpired": "Link ungültig oder abgelaufen.",
+    "passwordsMismatch": "Die Passwörter stimmen nicht überein.",
     "backToLogin": "Zurück zur Anmeldung"
   },
   "register": {
@@ -121,6 +139,7 @@
     "discoverLink": "entdecken",
     "favorite": "Favorit",
     "errorImport": "Import fehlgeschlagen",
+    "errorNoRecipeFound": "Von dieser URL konnte kein Rezept erkannt werden.",
     "filterByTag": "Tag filtern",
     "allTags": "Alle Tags",
     "resetFilters": "Filter zurücksetzen",

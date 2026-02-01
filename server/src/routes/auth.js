@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import db from '../db/index.js';
 import { authMiddleware, signToken } from '../middleware/auth.js';
-import { sendVerificationEmail } from '../services/email.js';
+import { sendVerificationEmail, sendPasswordResetEmail } from '../services/email.js';
 
 const router = express.Router();
 
@@ -11,6 +11,7 @@ const PASSWORD_MIN_LENGTH = 8;
 const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const VERIFICATION_TOKEN_EXPIRY_HOURS = 24;
+const PASSWORD_RESET_EXPIRY_HOURS = 1;
 
 router.post('/register', async (req, res) => {
   const { email, password, display_name: displayName } = req.body;
@@ -219,6 +220,75 @@ router.get('/verify-email', (req, res) => {
   ).run(row.id);
 
   res.json({ success: true, message: 'Email verified. You can now log in.' });
+});
+
+router.post('/forgot-password', async (req, res) => {
+  const email = (req.body.email || '').trim().toLowerCase();
+  const genericMessage =
+    'If an account exists with this email, we sent a link to reset your password.';
+
+  const user = db.prepare(
+    'SELECT id, email, display_name FROM users WHERE email = ?'
+  ).get(email);
+
+  if (user) {
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + PASSWORD_RESET_EXPIRY_HOURS * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 19)
+      .replace('T', ' ');
+    db.prepare(
+      'UPDATE users SET password_reset_token = ?, password_reset_token_expires_at = ? WHERE id = ?'
+    ).run(resetToken, expiresAt, user.id);
+    const resetLink = `${FRONTEND_URL.replace(/\/$/, '')}/reset-password?token=${resetToken}`;
+    await sendPasswordResetEmail(user.email, resetLink, user.display_name || '');
+  }
+
+  return res.json({ message: genericMessage });
+});
+
+router.post('/reset-password', (req, res) => {
+  let token = (req.body.token || '').trim();
+  try {
+    if (token.includes('%')) token = decodeURIComponent(token);
+  } catch (_) {}
+  const { new_password: newPassword } = req.body;
+
+  if (!token) {
+    return res.status(400).json({ error: 'Token is required' });
+  }
+  if (!newPassword) {
+    return res.status(400).json({ error: 'New password is required' });
+  }
+  if (newPassword.length < PASSWORD_MIN_LENGTH) {
+    return res.status(400).json({ error: 'New password must be at least 8 characters' });
+  }
+  if (!PASSWORD_REGEX.test(newPassword)) {
+    return res.status(400).json({ error: 'New password must contain both letters and numbers' });
+  }
+
+  const row = db.prepare(
+    'SELECT id, password_reset_token_expires_at FROM users WHERE password_reset_token = ?'
+  ).get(token);
+
+  if (!row) {
+    return res.status(400).json({ error: 'Invalid or expired token' });
+  }
+
+  const expiresAt = row.password_reset_token_expires_at;
+  if (expiresAt) {
+    const expiryDate = new Date(expiresAt.replace(' ', 'T') + 'Z');
+    if (Date.now() > expiryDate.getTime()) {
+      return res.status(400).json({ error: 'Token expired' });
+    }
+  }
+
+  const passwordHash = bcrypt.hashSync(newPassword, 10);
+  db.prepare(
+    'UPDATE users SET password_hash = ?, password_reset_token = NULL, password_reset_token_expires_at = NULL WHERE id = ?'
+  ).run(passwordHash, row.id);
+
+  return res.json({ success: true, message: 'Password has been reset. You can now log in.' });
 });
 
 router.post('/change-password', authMiddleware, (req, res) => {

@@ -73,4 +73,16 @@ try {
   );
 } catch (_) {}
 
+// Password reset (users)
+try {
+  db.exec('ALTER TABLE users ADD COLUMN password_reset_token VARCHAR(255)');
+} catch (e) {
+  if (!e.message.includes('duplicate column name')) throw e;
+}
+try {
+  db.exec('ALTER TABLE users ADD COLUMN password_reset_token_expires_at DATETIME');
+} catch (e) {
+  if (!e.message.includes('duplicate column name')) throw e;
+}
+
 export default db;

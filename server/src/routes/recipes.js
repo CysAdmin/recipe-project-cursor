@@ -2,7 +2,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import db from '../db/index.js';
 import { authMiddleware } from '../middleware/auth.js';
-import { parseRecipeFromHtml, extractFaviconFromHtml, extractMinimalFromHtml } from '../services/recipeParser.js';
+import { parseRecipeFromHtml, extractFaviconFromHtml } from '../services/recipeParser.js';
 import { searchExternal, searchExternalByProvider } from '../services/externalSearch.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
@@ -87,31 +87,23 @@ router.post('/import', authMiddleware, async (req, res) => {
     const parsed = parseRecipeFromHtml(html, parsedUrl.href);
     const faviconUrl = extractFaviconFromHtml(html, parsedUrl.href) || null;
 
-    let title, description, ingredientsJson, prep_time, cook_time, servings, image_url;
-    if (parsed?.title) {
-      title = parsed.title;
-      description = parsed.description || null;
-      ingredientsJson = JSON.stringify(parsed.ingredients || []);
-      prep_time = parsed.prep_time ?? null;
-      cook_time = parsed.cook_time ?? null;
-      servings = parsed.servings ?? null;
-      image_url = parsed.image_url || null;
-    } else {
-      const minimal = extractMinimalFromHtml(html, parsedUrl.href);
-      if (!minimal?.title) {
-        return res.status(422).json({
-          error: 'Von dieser URL konnte kein Rezept erkannt werden. Du kannst es manuell anlegen.',
-          manual_fallback: true,
-        });
-      }
-      title = minimal.title;
-      description = minimal.description || null;
-      ingredientsJson = '[]';
-      prep_time = null;
-      cook_time = null;
-      servings = null;
-      image_url = minimal.image_url || null;
+    const hasTitle = parsed?.title?.trim();
+    const hasIngredients = Array.isArray(parsed?.ingredients) && parsed.ingredients.length > 0;
+    if (!hasTitle || !hasIngredients) {
+      return res.status(422).json({
+        error: 'No recipe could be recognized from this URL.',
+        code: 'NO_RECIPE_FOUND',
+        manual_fallback: true,
+      });
     }
+
+    const title = parsed.title;
+    const description = parsed.description || null;
+    const ingredientsJson = JSON.stringify(parsed.ingredients || []);
+    const prep_time = parsed.prep_time ?? null;
+    const cook_time = parsed.cook_time ?? null;
+    const servings = parsed.servings ?? null;
+    const image_url = parsed.image_url || null;
 
     // Upsert recipe (by source_url); link to user
     const existing = db.prepare('SELECT id, created_by_user_id FROM recipes WHERE source_url = ?').get(parsedUrl.href);

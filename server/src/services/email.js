@@ -3,6 +3,7 @@ import { Resend } from 'resend';
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const FROM_EMAIL = process.env.EMAIL_FROM || 'Cookmarker <no-reply@cookmarker.com>';
 const VERIFICATION_TEMPLATE_ID = process.env.RESEND_VERIFICATION_TEMPLATE_ID || '58d1be20-87e7-459d-90ef-0c124896f071';
+const PASSWORD_RESET_TEMPLATE_ID = process.env.RESEND_PASSWORD_RESET_TEMPLATE_ID;
 
 let resend = null;
 if (RESEND_API_KEY) {
@@ -40,6 +41,45 @@ export async function sendVerificationEmail(to, verificationLink, userName = '')
     return { success: true, id: data?.id };
   } catch (err) {
     console.error('Send verification email error:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Send password reset email. Uses Resend template; PASS_RESET_TOKEN = full URL, USER_NAME = display name.
+ * @param {string} to - Recipient email
+ * @param {string} resetLink - Full URL e.g. https://app.cookmarker.de/reset-password?token=xxx
+ * @param {string} userName - Display name (e.g. "Hi USER_NAME,")
+ * @returns {Promise<{ success: boolean, error?: string }>}
+ */
+export async function sendPasswordResetEmail(to, resetLink, userName = '') {
+  if (!resend) {
+    console.warn('RESEND_API_KEY not set; skipping password reset email');
+    return { success: false, error: 'Email not configured' };
+  }
+  if (!PASSWORD_RESET_TEMPLATE_ID) {
+    console.warn('RESEND_PASSWORD_RESET_TEMPLATE_ID not set; skipping password reset email');
+    return { success: false, error: 'Password reset template not configured' };
+  }
+  try {
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [to],
+      template: {
+        id: PASSWORD_RESET_TEMPLATE_ID,
+        variables: {
+          PASS_RESET_TOKEN: resetLink,
+          USER_NAME: userName || 'User',
+        },
+      },
+    });
+    if (error) {
+      console.error('Resend send error:', error);
+      return { success: false, error: error.message };
+    }
+    return { success: true, id: data?.id };
+  } catch (err) {
+    console.error('Send password reset email error:', err);
     return { success: false, error: err.message };
   }
 }

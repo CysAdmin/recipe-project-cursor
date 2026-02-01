@@ -122,7 +122,11 @@ export default function Recipes() {
       closeImport();
     },
     onError: (err) => {
-      setImportError(err.data?.error || err.message || t('recipes.errorImport'));
+      const msg =
+        err.data?.code === 'NO_RECIPE_FOUND'
+          ? t('recipes.errorNoRecipeFound')
+          : err.data?.error || err.message || t('recipes.errorImport');
+      setImportError(msg);
     },
   });
 

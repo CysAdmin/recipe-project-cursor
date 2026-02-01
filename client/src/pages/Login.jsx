@@ -116,6 +116,11 @@ export default function Login() {
               autoComplete="current-password"
               className="login-input w-full px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
             />
+            <p className="mt-1 text-right">
+              <Link to="/forgot-password" className="text-sm text-brand-600 hover:underline">
+                {t('login.forgotPassword')}
+              </Link>
+            </p>
           </div>
           <button
             type="submit"
