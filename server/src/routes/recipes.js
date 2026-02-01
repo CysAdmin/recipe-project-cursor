@@ -230,6 +230,7 @@ router.get('/', async (req, res) => {
   let q = (req.query.q ?? '').trim();
   if (q === 'undefined' || q === 'null') q = '';
   const tagFilter = (req.query.tag ?? '').trim();
+  const excludeMine = req.query.exclude_mine === '1' || req.query.exclude_mine === 'true';
   const limit = Math.min(parseInt(req.query.limit, 10) || 50, 100);
   let tagCondition = '';
   let tagParam = [];
@@ -240,6 +241,8 @@ router.get('/', async (req, res) => {
     tagCondition = ` AND EXISTS (SELECT 1 FROM json_each(COALESCE(r.tags,'[]')) WHERE json_each.value = ?)`;
     tagParam = [tagFilter];
   }
+  const excludeCondition = excludeMine && userId ? ' AND NOT EXISTS (SELECT 1 FROM user_recipes WHERE user_id = ? AND recipe_id = r.id)' : '';
+  const excludeParam = excludeMine && userId ? [userId] : [];
   const uid = userId ?? 0;
   let rows;
   if (q) {
@@ -249,20 +252,20 @@ router.get('/', async (req, res) => {
              (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count,
              (SELECT 1 FROM user_recipes WHERE user_id = ? AND recipe_id = r.id) AS saved_by_me
       FROM recipes r
-      WHERE (r.title LIKE ? OR r.description LIKE ? OR r.ingredients LIKE ?)${tagCondition}
+      WHERE (r.title LIKE ? OR r.description LIKE ? OR r.ingredients LIKE ?)${tagCondition}${excludeCondition}
       ORDER BY save_count DESC, r.created_at DESC
       LIMIT ?
-    `).all(uid, pattern, pattern, pattern, ...tagParam, limit);
+    `).all(uid, pattern, pattern, pattern, ...tagParam, ...excludeParam, limit);
   } else {
     rows = db.prepare(`
       SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
              (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count,
              (SELECT 1 FROM user_recipes WHERE user_id = ? AND recipe_id = r.id) AS saved_by_me
       FROM recipes r
-      WHERE 1=1${tagCondition}
+      WHERE 1=1${tagCondition}${excludeCondition}
       ORDER BY RANDOM()
       LIMIT ?
-    `).all(uid, ...tagParam, limit);
+    `).all(uid, ...tagParam, ...excludeParam, limit);
   }
 
   // If search had a query and no internal results, return empty; frontend will request external per provider (so results show as soon as first provider returns)

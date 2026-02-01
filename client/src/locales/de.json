@@ -107,7 +107,9 @@
     "todayCook": "Heute kochen?",
     "decisionAidQuickEasy": "Schnell & einfach",
     "decisionAidFavorites": "Favoriten",
-    "decisionAidRecent": "Neu gespeicherte Rezepte"
+    "decisionAidRecent": "Neu gespeicherte Rezepte",
+    "discoverRecipes": "Entdecke Rezepte",
+    "noDiscoverRecipes": "Keine weiteren Rezepte zum Entdecken."
   },
   "recipeDetail": {
     "backToRecipes": "← Zurück zu Meine Rezepte",

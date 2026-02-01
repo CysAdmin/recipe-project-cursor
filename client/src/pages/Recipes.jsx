@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { recipes as recipesApi } from '../api/client';
 import RecipeSource from '../components/RecipeSource';
 import RecipeTags from '../components/RecipeTags';
@@ -148,6 +148,13 @@ export default function Recipes() {
   const recipes = data?.pages?.flatMap((p) => p.recipes ?? []) ?? [];
   const totalCount = data?.pages?.[0]?.total ?? recipes.length;
   const loadMoreRef = React.useRef(null);
+
+  const { data: discoverData } = useQuery({
+    queryKey: ['recipes', 'discover-random', user?.id],
+    queryFn: () => recipesApi.list({ limit: 3, exclude_mine: '1' }),
+    enabled: !!user?.id,
+  });
+  const discoverRecipes = discoverData?.recipes ?? [];
 
   React.useEffect(() => {
     const el = loadMoreRef.current;
@@ -354,9 +361,10 @@ export default function Recipes() {
           )}
         </div>
 
-        {/* Entscheidungshilfen sidebar */}
+        {/* Entscheidungshilfen sidebar: ein gemeinsamer sticky Container, damit „Entdecke Rezepte“ nicht darunter scrollt */}
         <aside className="lg:w-80 shrink-0">
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4 sticky top-20">
+          <div className="sticky top-20 space-y-6">
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4">
             <h2 className="font-semibold text-slate-800 mb-4">{t('recipes.todayCook')}</h2>
             <nav className="space-y-2" aria-label={t('recipes.todayCook')}>
               <Link
@@ -402,6 +410,38 @@ export default function Recipes() {
                 <IconChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
               </Link>
             </nav>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4">
+            <h2 className="font-semibold text-slate-800 mb-3">{t('recipes.discoverRecipes')}</h2>
+            {discoverRecipes.length === 0 ? (
+              <p className="text-slate-500 text-sm">{t('recipes.noDiscoverRecipes')}</p>
+            ) : (
+              <ul className="space-y-2">
+                {discoverRecipes.map((r) => (
+                  <li key={r.id}>
+                    <Link
+                      to={`/app/recipes/${r.id}`}
+                      className="flex items-center gap-3 p-2 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
+                    >
+                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-200 shrink-0">
+                        {r.image_url ? (
+                          <img src={r.image_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">
+                            {t('common.noImage')}
+                          </div>
+                        )}
+                      </div>
+                      <span className="font-medium text-slate-800 text-sm line-clamp-2 flex-1 min-w-0">
+                        {r.title}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
           </div>
         </aside>
       </div>
