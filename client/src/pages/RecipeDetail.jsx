@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { recipes as recipesApi } from '../api/client';
 import RecipeSource from '../components/RecipeSource';
 import RecipeTags from '../components/RecipeTags';
+import RecipeMenuDropdown from '../components/RecipeMenuDropdown';
 import { RecipeTagPillsEditable } from '../components/TagFilterPills';
 
 function IconHeartFilled({ className = 'w-5 h-5' }) {
@@ -25,7 +26,9 @@ function IconHeartOutline({ className = 'w-5 h-5' }) {
 export default function RecipeDetail() {
   const { t } = useTranslation();
   const { id } = useParams();
+  const navigate = useNavigate();
   const [notes, setNotes] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
@@ -57,6 +60,15 @@ export default function RecipeDetail() {
         recipe: res.recipe,
         user_recipe: res.user_recipe ?? prev?.user_recipe,
       }));
+    },
+  });
+
+  const unsaveMutation = useMutation({
+    mutationFn: () => recipesApi.unsave(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recipe', id] });
+      queryClient.invalidateQueries({ queryKey: ['recipes', 'mine'] });
+      navigate('/app/recipes');
     },
   });
 
@@ -109,6 +121,13 @@ export default function RecipeDetail() {
               <IconHeartOutline className="w-5 h-5 text-red-500" />
             )}
           </button>
+          <RecipeMenuDropdown
+            recipe={recipe}
+            isOpen={menuOpen}
+            onToggle={() => setMenuOpen((prev) => !prev)}
+            onClose={() => setMenuOpen(false)}
+            onRemove={() => unsaveMutation.mutate()}
+          />
         </div>
         <div className="p-6">
           <h1 className="font-display text-2xl font-bold text-slate-800 mb-2">{recipe.title}</h1>

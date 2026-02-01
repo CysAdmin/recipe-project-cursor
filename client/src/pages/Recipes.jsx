@@ -6,6 +6,7 @@ import { recipes as recipesApi } from '../api/client';
 import RecipeSource from '../components/RecipeSource';
 import RecipeTags from '../components/RecipeTags';
 import TagFilterPills from '../components/TagFilterPills';
+import RecipeMenuDropdown from '../components/RecipeMenuDropdown';
 import { useAuth } from '../context/AuthContext';
 
 function IconSearch({ className = 'w-5 h-5' }) {
@@ -124,10 +125,20 @@ export default function Recipes() {
     },
   });
 
+  const [openMenuRecipeId, setOpenMenuRecipeId] = React.useState(null);
+
   const toggleFavoriteMutation = useMutation({
     mutationFn: ({ id, is_favorite }) => recipesApi.updateUserRecipe(id, { is_favorite }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipes', 'mine', user?.id] });
+    },
+  });
+
+  const unsaveMutation = useMutation({
+    mutationFn: (id) => recipesApi.unsave(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recipes', 'mine', user?.id] });
+      setOpenMenuRecipeId(null);
     },
   });
 
@@ -347,9 +358,9 @@ export default function Recipes() {
                 <li key={r.id}>
                   <Link
                     to={`/app/recipes/${r.id}`}
-                    className="flex rounded-xl bg-white border border-slate-200 shadow-sm overflow-hidden hover:shadow-md hover:border-slate-300 transition-all"
+                    className={`relative flex rounded-xl bg-white border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 transition-all ${openMenuRecipeId === r.id ? 'z-30' : ''}`}
                   >
-                    <div className="relative w-28 h-28 sm:w-32 sm:h-32 shrink-0 bg-slate-100">
+                    <div className="relative w-28 h-28 sm:w-32 sm:h-32 shrink-0 bg-slate-100 overflow-hidden rounded-l-xl">
                       {r.image_url ? (
                         <img
                           src={r.image_url}
@@ -387,6 +398,13 @@ export default function Recipes() {
                         )}
                       </div>
                     </div>
+                    <RecipeMenuDropdown
+                      recipe={r}
+                      isOpen={openMenuRecipeId === r.id}
+                      onToggle={() => setOpenMenuRecipeId((prev) => (prev === r.id ? null : r.id))}
+                      onClose={() => setOpenMenuRecipeId(null)}
+                      onRemove={(recipe) => unsaveMutation.mutate(recipe.id)}
+                    />
                   </Link>
                 </li>
               ))}

@@ -105,6 +105,14 @@
     "discoverRecipes": "Discover recipes",
     "noDiscoverRecipes": "No other recipes to discover."
   },
+  "recipeMenu": {
+    "ariaLabel": "Recipe menu",
+    "openOriginal": "Open original",
+    "copyLink": "Copy link",
+    "remove": "Remove",
+    "copyLinkSuccess": "Link copied",
+    "removeConfirm": "Remove recipe from My Recipes?"
+  },
   "recipeDetail": {
     "backToRecipes": "← Back to My Recipes",
     "prep": "Prep",
