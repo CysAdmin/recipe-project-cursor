@@ -135,7 +135,9 @@
     "placeholderNotes": "Your private notes…",
     "assignTags": "Assign tags",
     "loading": "Loading recipe…",
-    "notFound": "Recipe not found."
+    "notFound": "Recipe not found.",
+    "savedInList": "Saved",
+    "notSavedInList": "Not saved"
   },
   "search": {
     "title": "Discover recipes",

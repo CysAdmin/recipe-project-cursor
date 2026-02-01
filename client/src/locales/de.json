@@ -135,7 +135,9 @@
     "placeholderNotes": "Deine privaten Notizen…",
     "assignTags": "Tags vergeben",
     "loading": "Rezept wird geladen…",
-    "notFound": "Rezept nicht gefunden."
+    "notFound": "Rezept nicht gefunden.",
+    "savedInList": "Gespeichert",
+    "notSavedInList": "Nicht gespeichert"
   },
   "search": {
     "title": "Rezepte entdecken",

@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { recipes as recipesApi } from '../api/client';
 import RecipeSource from '../components/RecipeSource';
 import RecipeTags from '../components/RecipeTags';
-import RecipeMenuDropdown from '../components/RecipeMenuDropdown';
 import { RecipeTagPillsEditable } from '../components/TagFilterPills';
 
 function IconHeartFilled({ className = 'w-5 h-5' }) {
@@ -26,9 +25,7 @@ function IconHeartOutline({ className = 'w-5 h-5' }) {
 export default function RecipeDetail() {
   const { t } = useTranslation();
   const { id } = useParams();
-  const navigate = useNavigate();
   const [notes, setNotes] = useState('');
-  const [menuOpen, setMenuOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
@@ -63,12 +60,19 @@ export default function RecipeDetail() {
     },
   });
 
+  const saveMutation = useMutation({
+    mutationFn: () => recipesApi.save(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recipe', id] });
+      queryClient.invalidateQueries({ queryKey: ['recipes', 'mine'] });
+    },
+  });
+
   const unsaveMutation = useMutation({
     mutationFn: () => recipesApi.unsave(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipe', id] });
       queryClient.invalidateQueries({ queryKey: ['recipes', 'mine'] });
-      navigate('/app/recipes');
     },
   });
 
@@ -107,27 +111,30 @@ export default function RecipeDetail() {
               {t('common.noImage')}
             </div>
           )}
+          {userRecipe && (
+            <button
+              type="button"
+              onClick={toggleFavorite}
+              className="absolute top-2 left-2 z-10 flex items-center justify-center w-8 h-8 rounded-full bg-white/80 hover:bg-white text-red-500 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1"
+              aria-label={isFavorite ? t('recipeDetail.favorited') : t('recipeDetail.favorite')}
+              aria-pressed={isFavorite}
+              disabled={updateUserRecipe.isPending}
+            >
+              {isFavorite ? (
+                <IconHeartFilled className="w-5 h-5 text-red-500" />
+              ) : (
+                <IconHeartOutline className="w-5 h-5 text-red-500" />
+              )}
+            </button>
+          )}
           <button
             type="button"
-            onClick={toggleFavorite}
-            className="absolute top-2 left-2 z-10 flex items-center justify-center w-8 h-8 rounded-full bg-white/80 hover:bg-white text-red-500 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1"
-            aria-label={isFavorite ? t('recipeDetail.favorited') : t('recipeDetail.favorite')}
-            aria-pressed={isFavorite}
-            disabled={updateUserRecipe.isPending}
+            onClick={() => (userRecipe ? unsaveMutation.mutate() : saveMutation.mutate())}
+            disabled={userRecipe ? unsaveMutation.isPending : saveMutation.isPending}
+            className="absolute top-2 right-2 z-10 px-3 py-1.5 rounded-full text-sm font-medium bg-white/90 hover:bg-white text-slate-700 shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1 disabled:opacity-50"
           >
-            {isFavorite ? (
-              <IconHeartFilled className="w-5 h-5 text-red-500" />
-            ) : (
-              <IconHeartOutline className="w-5 h-5 text-red-500" />
-            )}
+            {userRecipe ? t('recipeDetail.savedInList') : t('recipeDetail.notSavedInList')}
           </button>
-          <RecipeMenuDropdown
-            recipe={recipe}
-            isOpen={menuOpen}
-            onToggle={() => setMenuOpen((prev) => !prev)}
-            onClose={() => setMenuOpen(false)}
-            onRemove={() => unsaveMutation.mutate()}
-          />
         </div>
         <div className="p-6">
           <h1 className="font-display text-2xl font-bold text-slate-800 mb-2">{recipe.title}</h1>
