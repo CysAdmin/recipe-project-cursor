@@ -4,7 +4,6 @@ import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import authRoutes from './routes/auth.js';
 import recipeRoutes from './routes/recipes.js';
-import mealScheduleRoutes from './routes/mealSchedules.js';
 import shoppingListRoutes from './routes/shoppingLists.js';
 import adminRoutes from './routes/admin.js';
 import './db/index.js'; // ensure DB exists
@@ -24,7 +23,6 @@ app.use('/api', limiter);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/recipes', recipeRoutes);
-app.use('/api/meal-schedules', mealScheduleRoutes);
 app.use('/api/shopping-lists', shoppingListRoutes);
 app.use('/api/admin', adminRoutes);
 

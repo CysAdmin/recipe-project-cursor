@@ -10,7 +10,6 @@ import Dashboard from './pages/Dashboard';
 import Recipes from './pages/Recipes';
 import RecipeDetail from './pages/RecipeDetail';
 import Search from './pages/Search';
-import MealPlan from './pages/MealPlan';
 import ShoppingList from './pages/ShoppingList';
 import Profile from './pages/Profile';
 import AdminLayout from './pages/admin/AdminLayout';
@@ -45,7 +44,6 @@ function AppRoutes() {
         <Route path="recipes" element={<Recipes />} />
         <Route path="recipes/:id" element={<RecipeDetail />} />
         <Route path="search" element={<Search />} />
-        <Route path="meal-plan" element={<MealPlan />} />
         <Route path="shopping-list" element={<ShoppingList />} />
         <Route path="profile" element={<Profile />} />
         <Route path="admin" element={<AdminLayout />}>

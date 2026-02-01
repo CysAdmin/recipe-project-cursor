@@ -60,18 +60,18 @@ export default function Profile() {
   };
 
   return (
-    <div>
-      <h1 className="font-display text-2xl font-bold text-white mb-2">{t('profile.title')}</h1>
-      <p className="text-slate-400 mb-8">{t('profile.subline')}</p>
+    <div className="flex flex-col gap-6">
+      <h1 className="font-display text-2xl font-bold text-slate-800">{t('profile.title')}</h1>
+      <p className="text-slate-600 mb-2">{t('profile.subline')}</p>
 
       <div className="max-w-md space-y-10">
-        <section>
-          <h2 className="text-lg font-semibold text-white mb-3">{t('profile.language')}</h2>
+        <section className="rounded-xl border border-slate-200 bg-white shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-slate-800 mb-3">{t('profile.language')}</h2>
           <p className="text-slate-500 text-sm mb-3">{t('profile.languageDesc')}</p>
           <select
             value={i18n.language || 'de'}
             onChange={(e) => handleLanguageChange(e.target.value)}
-            className="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="w-full px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
           >
             {supportedLngs.map((lng) => (
               <option key={lng} value={lng}>
@@ -81,21 +81,21 @@ export default function Profile() {
           </select>
         </section>
 
-        <section>
-          <h2 className="text-lg font-semibold text-white mb-3">{t('profile.displayName')}</h2>
+        <section className="rounded-xl border border-slate-200 bg-white shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-slate-800 mb-3">{t('profile.displayName')}</h2>
           <form onSubmit={handleProfileSubmit} className="space-y-3">
             <input
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder={t('profile.displayNamePlaceholder')}
-              className="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
             />
             <p className="text-slate-500 text-sm">{t('profile.emailLogin')} {user?.email}</p>
             <button
               type="submit"
               disabled={profileMutation.isPending}
-              className="px-4 py-2 rounded-lg bg-brand-500 text-white font-medium hover:bg-brand-600 transition-colors disabled:opacity-50"
+              className="px-4 py-2 rounded-lg bg-brand-600 text-white font-medium hover:bg-brand-700 transition-colors disabled:opacity-50"
             >
               {profileMutation.isPending ? t('common.saving') : t('common.save')}
             </button>
@@ -108,8 +108,8 @@ export default function Profile() {
           </form>
         </section>
 
-        <section>
-          <h2 className="text-lg font-semibold text-white mb-3">{t('profile.changePassword')}</h2>
+        <section className="rounded-xl border border-slate-200 bg-white shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-slate-800 mb-3">{t('profile.changePassword')}</h2>
           <form onSubmit={handlePasswordSubmit} className="space-y-3">
             <input
               type="password"
@@ -118,7 +118,7 @@ export default function Profile() {
               placeholder={t('profile.currentPassword')}
               required
               autoComplete="current-password"
-              className="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
             />
             <input
               type="password"
@@ -128,7 +128,7 @@ export default function Profile() {
               required
               autoComplete="new-password"
               minLength={8}
-              className="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
             />
             <input
               type="password"
@@ -138,16 +138,16 @@ export default function Profile() {
               required
               autoComplete="new-password"
               minLength={8}
-              className="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className="w-full px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
             />
             <p className="text-slate-500 text-sm">{t('profile.passwordHint')}</p>
             {(passwordError || passwordMutation.isError) && (
-              <p className="text-red-400 text-sm">
+              <p className="text-red-600 text-sm">
                 {passwordError || passwordMutation.error?.message}
               </p>
             )}
             {passwordMutation.isSuccess && (
-              <p className="text-green-500 text-sm">{t('profile.passwordSuccess')}</p>
+              <p className="text-green-600 text-sm">{t('profile.passwordSuccess')}</p>
             )}
             <button
               type="submit"
@@ -158,7 +158,7 @@ export default function Profile() {
                 !newPasswordConfirm ||
                 newPassword !== newPasswordConfirm
               }
-              className="px-4 py-2 rounded-lg bg-brand-500 text-white font-medium hover:bg-brand-600 transition-colors disabled:opacity-50"
+              className="px-4 py-2 rounded-lg bg-brand-600 text-white font-medium hover:bg-brand-700 transition-colors disabled:opacity-50"
             >
               {passwordMutation.isPending ? t('profile.changing') : t('profile.changeButton')}
             </button>

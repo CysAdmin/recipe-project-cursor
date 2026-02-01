@@ -19,49 +19,42 @@ export default function Dashboard() {
   const recentRecipes = (data?.recipes || []).slice(0, 6);
 
   return (
-    <div>
-      <h1 className="font-display text-2xl font-bold text-white mb-2">
+    <div className="flex flex-col gap-6">
+      <h1 className="font-display text-2xl font-bold text-slate-800">
         {t('dashboard.hi')}{user?.display_name ? `, ${user.display_name}` : ''}
       </h1>
-      <p className="text-slate-400 mb-8">{t('dashboard.subline')}</p>
+      <p className="text-slate-600 mb-2">{t('dashboard.subline')}</p>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-10">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-4">
         <Link
           to="/app/recipes"
-          className="p-6 rounded-xl border border-slate-800 bg-slate-900/50 hover:border-brand-500/50 hover:bg-slate-900 transition-colors"
+          className="p-6 rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md hover:border-slate-300 transition-all"
         >
-          <h2 className="font-semibold text-white mb-1">{t('dashboard.myRecipes')}</h2>
+          <h2 className="font-semibold text-slate-800 mb-1">{t('dashboard.myRecipes')}</h2>
           <p className="text-slate-500 text-sm">
             {isLoading ? '…' : `${(data?.recipes || []).length} ${t('dashboard.saved')}`}
           </p>
         </Link>
         <Link
           to="/app/search"
-          className="p-6 rounded-xl border border-slate-800 bg-slate-900/50 hover:border-brand-500/50 hover:bg-slate-900 transition-colors"
+          className="p-6 rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md hover:border-slate-300 transition-all"
         >
-          <h2 className="font-semibold text-white mb-1">{t('dashboard.discover')}</h2>
+          <h2 className="font-semibold text-slate-800 mb-1">{t('dashboard.discover')}</h2>
           <p className="text-slate-500 text-sm">{t('dashboard.discoverDesc')}</p>
         </Link>
         <Link
-          to="/app/meal-plan"
-          className="p-6 rounded-xl border border-slate-800 bg-slate-900/50 hover:border-brand-500/50 hover:bg-slate-900 transition-colors"
-        >
-          <h2 className="font-semibold text-white mb-1">{t('dashboard.mealPlan')}</h2>
-          <p className="text-slate-500 text-sm">{t('dashboard.mealPlanDesc')}</p>
-        </Link>
-        <Link
           to="/app/shopping-list"
-          className="p-6 rounded-xl border border-slate-800 bg-slate-900/50 hover:border-brand-500/50 hover:bg-slate-900 transition-colors md:col-span-2 lg:col-span-1"
+          className="p-6 rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow-md hover:border-slate-300 transition-all md:col-span-2 lg:col-span-1"
         >
-          <h2 className="font-semibold text-white mb-1">{t('dashboard.shoppingList')}</h2>
+          <h2 className="font-semibold text-slate-800 mb-1">{t('dashboard.shoppingList')}</h2>
           <p className="text-slate-500 text-sm">{t('dashboard.shoppingListDesc')}</p>
         </Link>
       </div>
 
       <section>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-lg font-semibold text-white">{t('dashboard.recentRecipes')}</h2>
-          <Link to="/app/recipes" className="text-brand-400 hover:underline text-sm">
+          <h2 className="font-display text-lg font-semibold text-slate-800">{t('dashboard.recentRecipes')}</h2>
+          <Link to="/app/recipes" className="text-brand-600 hover:text-brand-700 font-medium text-sm">
             {t('dashboard.viewAll')}
           </Link>
         </div>
@@ -70,7 +63,7 @@ export default function Dashboard() {
         ) : recentRecipes.length === 0 ? (
           <p className="text-slate-500">
             {t('dashboard.noRecipesYet')}{' '}
-            <Link to="/app/search" className="text-brand-400 hover:underline">
+            <Link to="/app/search" className="text-brand-600 hover:underline">
               {t('dashboard.discover')}
             </Link>{' '}
             {t('dashboard.discoverOrImport')}
@@ -81,26 +74,26 @@ export default function Dashboard() {
               <Link
                 key={r.id}
                 to={`/app/recipes/${r.id}`}
-                className="block rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden hover:border-slate-700 transition-colors"
+                className="block rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden hover:shadow-md hover:border-slate-300 transition-all"
               >
                 {r.image_url ? (
                   <img
                     src={r.image_url}
                     alt=""
-                    className="w-full h-32 object-cover bg-slate-800"
+                    className="w-full h-32 object-cover bg-slate-100"
                   />
                 ) : (
-                  <div className="w-full h-32 bg-slate-800 flex items-center justify-center text-slate-600">
+                  <div className="w-full h-32 bg-slate-100 flex items-center justify-center text-slate-400">
                     {t('common.noImage')}
                   </div>
                 )}
                 <div className="p-3">
-                  <h3 className="font-medium text-white truncate">{r.title}</h3>
+                  <h3 className="font-medium text-slate-800 truncate">{r.title}</h3>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
                     {r.source_domain && (
                       <>
                         <RecipeSource recipe={r} />
-                        <span className="text-slate-600">·</span>
+                        <span className="text-slate-400">·</span>
                       </>
                     )}
                     <p className="text-slate-500 text-sm">

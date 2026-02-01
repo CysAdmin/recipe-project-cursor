@@ -79,7 +79,7 @@
     "mealPlan": "Meal Plan",
     "mealPlanDesc": "Weekly schedule",
     "shoppingList": "Shopping List",
-    "shoppingListDesc": "Generate from meal plan",
+    "shoppingListDesc": "Generate from selected recipes",
     "recentRecipes": "Recent recipes",
     "viewAll": "View all",
     "noRecipesYet": "No recipes yet.",
@@ -170,17 +170,13 @@
   },
   "shoppingList": {
     "title": "Shopping List",
-    "subline": "Generated from recipes scheduled in your meal plan for the selected date range.",
-    "startDate": "Start date",
-    "endDate": "End date",
+    "sublineSelect": "Select recipes and servings – ingredients will be merged.",
+    "noRecipes": "No saved recipes yet. Add recipes under My Recipes.",
+    "selectRecipes": "Select recipes",
     "printList": "Print list",
-    "editMealPlan": "Edit meal plan",
     "generating": "Generating list…",
-    "loadFailed": "Failed to load shopping list.",
-    "noScheduled": "No recipes scheduled for this date range.",
-    "addToMealPlan": "Add recipes to your meal plan",
-    "first": "first.",
-    "listTitle": "Shopping list ({{start}} – {{end}})"
+    "generateList": "Generate shopping list",
+    "listTitle": "Shopping list"
   },
   "profile": {
     "title": "Profile & Settings",

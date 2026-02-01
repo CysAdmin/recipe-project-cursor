@@ -309,7 +309,6 @@ router.delete('/recipes/:id', (req, res) => {
   const row = db.prepare('SELECT id FROM recipes WHERE id = ?').get(id);
   if (!row) return res.status(404).json({ error: 'Recipe not found' });
   db.prepare('DELETE FROM user_recipes WHERE recipe_id = ?').run(id);
-  db.prepare('DELETE FROM meal_schedules WHERE recipe_id = ?').run(id);
   db.prepare('DELETE FROM recipes WHERE id = ?').run(id);
   res.status(204).send();
 });

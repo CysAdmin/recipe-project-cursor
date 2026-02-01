@@ -127,17 +127,17 @@ export default function Search() {
     !isLoading && !isFetching && recipes.length === 0 && !showExternalSection;
 
   return (
-    <div>
-      <h1 className="font-display text-2xl font-bold text-white mb-2">{t('search.title')}</h1>
-      <p className="text-slate-400 mb-6">{t('search.subline')}</p>
+    <div className="flex flex-col gap-6">
+      <h1 className="font-display text-2xl font-bold text-slate-800">{t('search.title')}</h1>
+      <p className="text-slate-600 mb-2">{t('search.subline')}</p>
 
-      <div className="mb-6 space-y-3">
+      <div className="space-y-3">
         <input
           type="search"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder={t('search.placeholder')}
-          className="w-full max-w-md px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+          className="w-full max-w-md px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
         />
         <TagFilterPills selectedTag={tagFilter} onSelectTag={setTagFilter} />
       </div>
@@ -152,32 +152,32 @@ export default function Search() {
         <>
           {recipes.length > 0 && (
             <div className="mb-8">
-              <h2 className="text-lg font-semibold text-white mb-3">{t('search.internalRecipes')}</h2>
+              <h2 className="text-lg font-semibold text-slate-800 mb-3">{t('search.internalRecipes')}</h2>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {recipes.map((r) => (
                   <div
                     key={r.id}
-                    className="rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden hover:border-slate-700 transition-colors flex flex-col"
+                    className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden hover:shadow-md hover:border-slate-300 transition-all flex flex-col"
                   >
                     <Link to={`/app/recipes/${r.id}`} className="flex-1 block">
                       {r.image_url ? (
                         <img
                           src={r.image_url}
                           alt=""
-                          className="w-full h-40 object-cover bg-slate-800"
+                          className="w-full h-40 object-cover bg-slate-100"
                         />
                       ) : (
-                        <div className="w-full h-40 bg-slate-800 flex items-center justify-center text-slate-600">
+                        <div className="w-full h-40 bg-slate-100 flex items-center justify-center text-slate-400">
                           {t('common.noImage')}
                         </div>
                       )}
                       <div className="p-4">
-                        <h2 className="font-semibold text-white truncate">{r.title}</h2>
+                        <h2 className="font-semibold text-slate-800 truncate">{r.title}</h2>
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
                           {r.source_domain && (
                             <>
                               <RecipeSource recipe={r} />
-                              <span className="text-slate-600">·</span>
+                              <span className="text-slate-400">·</span>
                             </>
                           )}
                           <p className="text-slate-500 text-sm">
@@ -198,7 +198,7 @@ export default function Search() {
                           type="button"
                           onClick={() => saveMutation.mutate(r.id)}
                           disabled={saveMutation.isPending}
-                          className="w-full py-2 rounded-lg border border-brand-500 text-brand-400 font-medium hover:bg-brand-500/10 transition-colors disabled:opacity-50"
+                          className="w-full py-2 rounded-lg border border-brand-500 text-brand-600 font-medium hover:bg-brand-50 transition-colors disabled:opacity-50"
                         >
                           {saveMutation.isPending && saveMutation.variables === r.id ? t('common.saving') : t('search.saveToMine')}
                         </button>
@@ -212,21 +212,21 @@ export default function Search() {
 
           {trimmedQ && (
             <div className="mb-6">
-              <h2 className="text-lg font-semibold text-white mb-2">{t('search.externalProviders')}</h2>
-              <p className="text-slate-400 text-sm mb-3">{t('search.externalProvidersDesc')}</p>
+              <h2 className="text-lg font-semibold text-slate-800 mb-2">{t('search.externalProviders')}</h2>
+              <p className="text-slate-600 text-sm mb-3">{t('search.externalProvidersDesc')}</p>
               <div className="flex flex-wrap gap-3">
                 {EXTERNAL_PROVIDERS.map((p) => (
                   <label
                     key={p.id}
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 cursor-pointer hover:border-slate-600 transition-colors"
+                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-slate-200 cursor-pointer hover:border-slate-300 hover:bg-slate-50 transition-colors"
                   >
                     <input
                       type="checkbox"
                       checked={selectedProviders.includes(p.id)}
                       onChange={() => toggleProvider(p.id)}
-                      className="rounded border-slate-600 bg-slate-800 text-brand-500 focus:ring-brand-500"
-                    />
-                    <span className="text-slate-300">{p.label}</span>
+                    className="rounded border-slate-300 bg-white text-brand-500 focus:ring-brand-500"
+                  />
+                  <span className="text-slate-600">{p.label}</span>
                   </label>
                 ))}
               </div>
@@ -235,7 +235,7 @@ export default function Search() {
 
           {showExternalSection && (
             <div>
-              <h2 className="text-lg font-semibold text-white mb-3">{t('search.externalResults')}</h2>
+              <h2 className="text-lg font-semibold text-slate-800 mb-3">{t('search.externalResults')}</h2>
               {externalLoading ? (
                 <p className="text-slate-500">{t('search.loadingExternal')}</p>
               ) : (
@@ -244,7 +244,7 @@ export default function Search() {
                     {externalToShow.map((r) => (
                       <div
                         key={r.url}
-                        className="rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden hover:border-slate-700 transition-colors flex flex-col"
+                        className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden hover:shadow-md hover:border-slate-300 transition-all flex flex-col"
                       >
                         <a
                           href={r.url}
@@ -256,15 +256,15 @@ export default function Search() {
                             <img
                               src={r.image_url}
                               alt=""
-                              className="w-full h-40 object-cover bg-slate-800"
+                              className="w-full h-40 object-cover bg-slate-100"
                             />
                           ) : (
-                            <div className="w-full h-40 bg-slate-800 flex items-center justify-center text-slate-600">
+                            <div className="w-full h-40 bg-slate-100 flex items-center justify-center text-slate-400">
                               {t('common.noImage')}
                             </div>
                           )}
                           <div className="p-4">
-                            <h2 className="font-semibold text-white truncate">{r.title}</h2>
+                            <h2 className="font-semibold text-slate-800 truncate">{r.title}</h2>
                             <div className="flex items-center gap-2 mt-1 flex-wrap">
                               <RecipeSource
                                 recipe={{
@@ -280,7 +280,7 @@ export default function Search() {
                             type="button"
                             onClick={() => importMutation.mutate(r.url)}
                             disabled={importMutation.isPending}
-                            className="w-full py-2 rounded-lg border border-brand-500 text-brand-400 font-medium hover:bg-brand-500/10 transition-colors disabled:opacity-50"
+                            className="w-full py-2 rounded-lg border border-brand-500 text-brand-600 font-medium hover:bg-brand-50 transition-colors disabled:opacity-50"
                           >
                             {importMutation.isPending && importMutation.variables === r.url
                               ? 'Importing…'
@@ -295,7 +295,7 @@ export default function Search() {
                       <button
                         type="button"
                         onClick={() => setExternalVisibleCount((prev) => prev + EXTERNAL_PAGE_SIZE)}
-                        className="px-6 py-2 rounded-lg border border-slate-600 text-slate-300 font-medium hover:bg-slate-800 transition-colors"
+                        className="px-6 py-2 rounded-lg border border-slate-200 text-slate-600 font-medium hover:bg-slate-50 transition-colors"
                       >
                         {t('search.loadMore')}
                       </button>

@@ -54,17 +54,9 @@ export const recipes = {
     api(`/recipes/external?q=${encodeURIComponent(query)}&provider=${encodeURIComponent(provider)}`),
 };
 
-export const mealSchedules = {
-  list: (start, end) => api(`/meal-schedules?start=${start}&end=${end}`),
-  add: (body) => api('/meal-schedules', { method: 'POST', body: JSON.stringify(body) }),
-  update: (id, body) => api(`/meal-schedules/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
-  remove: (id) => api(`/meal-schedules/${id}`, { method: 'DELETE' }),
-  copyWeek: (fromStart, toStart) =>
-    api('/meal-schedules/copy-week', { method: 'POST', body: JSON.stringify({ from_start: fromStart, to_start: toStart }) }),
-};
-
 export const shoppingLists = {
-  generate: (start, end) => api(`/shopping-lists/generate?start=${start}&end=${end}`),
+  generateFromRecipes: (items) =>
+    api('/shopping-lists/generate', { method: 'POST', body: JSON.stringify({ items }) }),
   list: () => api('/shopping-lists'),
   save: (body) => api('/shopping-lists', { method: 'POST', body: JSON.stringify(body) }),
 };

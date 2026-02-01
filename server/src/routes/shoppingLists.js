@@ -70,61 +70,87 @@ function formatMergedIngredient(quantity, unit, name) {
   return `${qStr} ${name}`;
 }
 
-// Aggregate ingredients: parse each line, group by (name, unit), sum quantities
-function aggregateIngredients(userId, startDate, endDate) {
-  const rows = db.prepare(`
-    SELECT r.ingredients, ms.servings, r.servings AS recipe_servings
-    FROM meal_schedules ms
-    JOIN recipes r ON r.id = ms.recipe_id
-    WHERE ms.user_id = ? AND ms.meal_date >= ? AND ms.meal_date <= ?
-  `).all(userId, startDate, endDate);
+const multiplier = (servings, recipeServings) => {
+  if (!recipeServings || recipeServings <= 0) return 1;
+  return (servings || 1) / recipeServings;
+};
 
-  const multiplier = (servings, recipeServings) => {
-    if (!recipeServings || recipeServings <= 0) return 1;
-    return (servings || 1) / recipeServings;
-  };
+// Aggregate from ingredient entries (string or object), multiply by mult, merge into map
+function mergeInto(merged, ingredients, mult) {
+  for (const entry of ingredients) {
+    let qty, unit_key, ingredient_key, name;
+    if (entry && typeof entry === 'object' && !Array.isArray(entry)) {
+      ingredient_key = entry.ingredient_key || null;
+      unit_key = entry.unit_key || '';
+      qty = entry.quantity != null ? entry.quantity * mult : null;
+      name = null;
+    } else {
+      const parsed = parseIngredient(String(entry).trim());
+      if (!parsed) continue;
+      qty = parsed.quantity != null ? parsed.quantity * mult : null;
+      unit_key = parsed.unit || '';
+      ingredient_key = null;
+      name = parsed.name;
+    }
+    const key = ingredient_key != null ? `${ingredient_key}|${unit_key}` : `${unit_key}|${name}`;
+    if (!merged.has(key)) {
+      merged.set(key, { quantity: qty, unit_key, ingredient_key, name });
+    } else {
+      const cur = merged.get(key);
+      if (qty != null) cur.quantity = (cur.quantity != null ? cur.quantity : 0) + qty;
+    }
+  }
+}
 
-  const merged = new Map(); // key = `${unit}|${name}` -> { quantity, unit, name }
-  for (const row of rows) {
+// Aggregate ingredients from selected recipes (items: [{ recipe_id, servings }])
+function aggregateFromRecipeItems(userId, items) {
+  if (!Array.isArray(items) || items.length === 0) return [];
+  const recipeIds = [...new Set(items.map((i) => parseInt(i.recipe_id, 10)).filter((id) => !Number.isNaN(id)))];
+  if (recipeIds.length === 0) return [];
+  const placeholders = recipeIds.map(() => '?').join(',');
+  const saved = db.prepare(
+    `SELECT recipe_id FROM user_recipes WHERE user_id = ? AND recipe_id IN (${placeholders})`
+  ).all(userId, ...recipeIds);
+  const allowedIds = new Set(saved.map((r) => r.recipe_id));
+  const rows = db.prepare(
+    `SELECT id, ingredients, servings AS recipe_servings FROM recipes WHERE id IN (${placeholders})`
+  ).all(...recipeIds);
+  const recipeMap = new Map(rows.map((r) => [r.id, r]));
+  const merged = new Map();
+  for (const item of items) {
+    const recipeId = parseInt(item.recipe_id, 10);
+    if (Number.isNaN(recipeId) || !allowedIds.has(recipeId)) continue;
+    const recipe = recipeMap.get(recipeId);
+    if (!recipe) continue;
     let ingredients = [];
     try {
-      ingredients = JSON.parse(row.ingredients || '[]');
+      ingredients = JSON.parse(recipe.ingredients || '[]');
     } catch {
       ingredients = [];
     }
-    const mult = multiplier(row.servings, row.recipe_servings);
-    for (const line of ingredients) {
-      const parsed = parseIngredient(line);
-      if (!parsed) continue;
-      const qty = parsed.quantity != null ? parsed.quantity * mult : null;
-      const key = `${parsed.unit}|${parsed.name}`;
-      if (!merged.has(key)) {
-        merged.set(key, { quantity: qty, unit: parsed.unit, name: parsed.name });
-      } else {
-        const entry = merged.get(key);
-        if (qty != null) {
-          entry.quantity = (entry.quantity != null ? entry.quantity : 0) + qty;
-        }
-      }
-    }
+    const mult = multiplier(item.servings ?? 1, recipe.recipe_servings);
+    mergeInto(merged, ingredients, mult);
   }
-
-  return Array.from(merged.entries()).map(([, v]) => ({
-    raw: formatMergedIngredient(v.quantity, v.unit, v.name),
-    name: v.name,
-    unit: v.unit,
-    quantity: v.quantity,
-  }));
+  const unitsRows = db.prepare('SELECT key, label_de, label_en FROM units').all();
+  const unitMap = Object.fromEntries(unitsRows.map((u) => [u.key, u]));
+  const ingredientsRows = db.prepare('SELECT key, label_de, label_en FROM ingredients').all();
+  const ingredientMap = Object.fromEntries(ingredientsRows.map((i) => [i.key, i]));
+  return Array.from(merged.entries()).map(([, v]) => {
+    const unitLabel = v.unit_key ? (unitMap[v.unit_key]?.label_de || v.unit_key) : '';
+    const ingLabel = v.ingredient_key
+      ? (ingredientMap[v.ingredient_key]?.label_de || v.ingredient_key)
+      : (v.name || '');
+    const raw = formatMergedIngredient(v.quantity, unitLabel, ingLabel);
+    return { raw, quantity: v.quantity, unit_key: v.unit_key || null, ingredient_key: v.ingredient_key || null };
+  });
 }
 
-// GET /api/shopping-lists/generate?start=YYYY-MM-DD&end=YYYY-MM-DD — generate list for date range
-router.get('/generate', (req, res) => {
+// POST /api/shopping-lists/generate — generate list from selected recipes
+router.post('/generate', (req, res) => {
   const userId = req.userId;
-  const start = dateStr(req.query.start) || dateStr(new Date());
-  const end = dateStr(req.query.end) || start;
-
-  const items = aggregateIngredients(userId, start, end);
-  res.json({ start, end, items });
+  const items = Array.isArray(req.body.items) ? req.body.items : [];
+  const result = aggregateFromRecipeItems(userId, items);
+  res.json({ items: result });
 });
 
 // GET /api/shopping-lists — list saved shopping lists (optional)

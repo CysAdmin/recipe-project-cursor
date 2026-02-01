@@ -79,7 +79,7 @@
     "mealPlan": "Meal Plan",
     "mealPlanDesc": "Wochenübersicht",
     "shoppingList": "Einkaufsliste",
-    "shoppingListDesc": "Aus Meal Plan erzeugen",
+    "shoppingListDesc": "Aus ausgewählten Rezepten erzeugen",
     "recentRecipes": "Letzte Rezepte",
     "viewAll": "Alle anzeigen",
     "noRecipesYet": "Noch keine Rezepte.",
@@ -170,17 +170,13 @@
   },
   "shoppingList": {
     "title": "Einkaufsliste",
-    "subline": "Erzeugt aus den Rezepten in deinem Meal Plan für den gewählten Zeitraum.",
-    "startDate": "Startdatum",
-    "endDate": "Enddatum",
+    "sublineSelect": "Rezepte auswählen und Portionen angeben – die Zutaten werden zusammengefasst.",
+    "noRecipes": "Noch keine gespeicherten Rezepte. Rezepte unter Meine Rezepte hinzufügen.",
+    "selectRecipes": "Rezepte auswählen",
     "printList": "Liste drucken",
-    "editMealPlan": "Meal Plan bearbeiten",
     "generating": "Liste wird erzeugt…",
-    "loadFailed": "Einkaufsliste konnte nicht geladen werden.",
-    "noScheduled": "Für diesen Zeitraum keine Rezepte eingeplant.",
-    "addToMealPlan": "Rezepte zum Meal Plan hinzufügen",
-    "first": "zuerst.",
-    "listTitle": "Einkaufsliste ({{start}} – {{end}})"
+    "generateList": "Einkaufsliste erzeugen",
+    "listTitle": "Einkaufsliste"
   },
   "profile": {
     "title": "Profil & Einstellungen",
