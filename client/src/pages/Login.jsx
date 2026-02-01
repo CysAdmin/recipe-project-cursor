@@ -11,19 +11,25 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [errorCode, setErrorCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState('');
+  const [resendLoading, setResendLoading] = useState(false);
   const { login } = useAuth();
   const successMessage = location.state?.message;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setErrorCode('');
+    setResendSuccess('');
     setLoading(true);
     try {
       const { token, user: userData } = await auth.login({ email, password });
       login(token, userData);
       navigate('/app');
     } catch (err) {
+      setErrorCode(err.data?.code || '');
       const msg =
         err.data?.code === 'EMAIL_NOT_VERIFIED'
           ? t('login.errorEmailNotVerified')
@@ -31,6 +37,24 @@ export default function Login() {
       setError(msg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async (e) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setResendSuccess('');
+    setResendLoading(true);
+    try {
+      const data = await auth.resendVerificationEmail(email.trim());
+      setResendSuccess(data.message || t('login.resendVerificationEmailSent'));
+      setError('');
+      setErrorCode('');
+    } catch (err) {
+      setResendSuccess('');
+      setError(err.data?.error || err.message || t('login.errorLogin'));
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -47,6 +71,21 @@ export default function Login() {
           {error && (
             <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-600 text-sm">
               {error}
+              {errorCode === 'EMAIL_NOT_VERIFIED' && email.trim() && (
+                <button
+                  type="button"
+                  onClick={handleResendVerification}
+                  disabled={resendLoading}
+                  className="mt-2 block w-full py-2 rounded-lg border border-brand-500 text-brand-600 text-sm font-medium hover:bg-brand-50 disabled:opacity-50"
+                >
+                  {resendLoading ? t('common.loading') : t('login.resendVerificationEmail')}
+                </button>
+              )}
+            </div>
+          )}
+          {resendSuccess && (
+            <div className="p-3 rounded-lg bg-brand-50 border border-brand-200 text-brand-800 text-sm">
+              {resendSuccess}
             </div>
           )}
           <div>

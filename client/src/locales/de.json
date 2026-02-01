@@ -68,7 +68,9 @@
     "signUpLink": "Registrieren",
     "placeholderEmail": "max.mustermann@beispiel.local",
     "errorLogin": "Anmeldung fehlgeschlagen",
-    "errorEmailNotVerified": "Bitte bestätige zuerst deine E-Mail-Adresse über den Link in der E-Mail."
+    "errorEmailNotVerified": "Bitte bestätige zuerst deine E-Mail-Adresse über den Link in der E-Mail.",
+    "resendVerificationEmail": "Verifizierungs-E-Mail erneut senden",
+    "resendVerificationEmailSent": "Falls dein Konto noch nicht bestätigt ist, haben wir einen neuen Link gesendet."
   },
   "verifyEmail": {
     "title": "E-Mail bestätigen",

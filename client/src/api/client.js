@@ -29,6 +29,8 @@ export const auth = {
   register: (body) => api('/auth/register', { method: 'POST', body: JSON.stringify(body) }),
   login: (body) => api('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
   verifyEmail: (token) => api(`/auth/verify-email?token=${encodeURIComponent(token)}`),
+  resendVerificationEmail: (email) =>
+    api('/auth/resend-verification-email', { method: 'POST', body: JSON.stringify({ email }) }),
   me: () => api('/auth/me'),
   updateProfile: (body) => api('/auth/me', { method: 'PATCH', body: JSON.stringify(body) }),
   changePassword: (currentPassword, newPassword) =>

@@ -67,7 +67,10 @@
     "noAccount": "Don't have an account?",
     "signUpLink": "Sign up",
     "placeholderEmail": "you@example.com",
-    "errorLogin": "Login failed"
+    "errorLogin": "Login failed",
+    "errorEmailNotVerified": "Please verify your email address first using the link we sent you.",
+    "resendVerificationEmail": "Resend verification email",
+    "resendVerificationEmailSent": "If your account is not yet verified, we sent a new link."
   },
   "register": {
     "title": "Sign up",

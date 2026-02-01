@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { auth } from '../api/client';
@@ -9,6 +9,7 @@ export default function VerifyEmail() {
   const token = searchParams.get('token') || '';
   const [status, setStatus] = useState('loading'); // 'loading' | 'success' | 'error'
   const [errorMessage, setErrorMessage] = useState('');
+  const hasCalledRef = useRef(false);
 
   useEffect(() => {
     if (!token) {
@@ -16,11 +17,14 @@ export default function VerifyEmail() {
       setErrorMessage(t('verifyEmail.missingToken'));
       return;
     }
+    if (hasCalledRef.current) return;
+    hasCalledRef.current = true;
+
     auth
       .verifyEmail(token)
       .then(() => setStatus('success'))
       .catch((err) => {
-        setStatus('error');
+        setStatus((prev) => (prev === 'success' ? prev : 'error'));
         setErrorMessage(err.data?.error || err.message || t('verifyEmail.error'));
       });
   }, [token, t]);

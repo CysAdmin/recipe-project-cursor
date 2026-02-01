@@ -35,10 +35,11 @@ router.post('/register', async (req, res) => {
   const emailNorm = String(email).trim().toLowerCase();
   const passwordHash = bcrypt.hashSync(password, 10);
   const verificationToken = crypto.randomBytes(32).toString('hex');
+  // Store as SQLite-friendly "YYYY-MM-DD HH:MM:SS" (no ms) so datetime() comparison works
   const expiresAt = new Date(Date.now() + VERIFICATION_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000)
     .toISOString()
-    .replace('T', ' ')
-    .replace('Z', '');
+    .slice(0, 19)
+    .replace('T', ' ');
 
   try {
     const stmt = db.prepare(`
@@ -49,7 +50,7 @@ router.post('/register', async (req, res) => {
     const userId = result.lastInsertRowid;
 
     const verificationLink = `${FRONTEND_URL.replace(/\/$/, '')}/verify-email?token=${verificationToken}`;
-    await sendVerificationEmail(emailNorm, verificationLink);
+    await sendVerificationEmail(emailNorm, verificationLink, displayNameTrimmed);
 
     res.status(201).json({
       message: 'Registration successful. Please check your email to verify your account.',
@@ -147,14 +148,51 @@ router.patch('/me', authMiddleware, (req, res) => {
   });
 });
 
+router.post('/resend-verification-email', async (req, res) => {
+  const email = (req.body.email || '').trim().toLowerCase();
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+
+  const user = db.prepare(
+    'SELECT id, email, display_name, email_verified_at FROM users WHERE email = ?'
+  ).get(email);
+
+  if (!user || user.email_verified_at) {
+    return res.json({
+      message: 'If your email is registered and not yet verified, we sent a new verification link.',
+    });
+  }
+
+  const verificationToken = crypto.randomBytes(32).toString('hex');
+  const expiresAt = new Date(Date.now() + VERIFICATION_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 19)
+    .replace('T', ' ');
+
+  db.prepare(
+    'UPDATE users SET verification_token = ?, verification_token_expires_at = ? WHERE id = ?'
+  ).run(verificationToken, expiresAt, user.id);
+
+  const verificationLink = `${FRONTEND_URL.replace(/\/$/, '')}/verify-email?token=${verificationToken}`;
+  await sendVerificationEmail(user.email, verificationLink, user.display_name || '');
+
+  return res.json({
+    message: 'If your email is registered and not yet verified, we sent a new verification link.',
+  });
+});
+
 router.get('/verify-email', (req, res) => {
-  const token = (req.query.token || '').trim();
+  let token = (req.query.token || '').trim();
   if (!token) {
     return res.status(400).json({ error: 'Token is required' });
   }
+  try {
+    if (token.includes('%')) token = decodeURIComponent(token);
+  } catch (_) {}
 
   const row = db.prepare(
-    'SELECT id FROM users WHERE verification_token = ? AND verification_token_expires_at > datetime(\'now\')'
+    'SELECT id, verification_token_expires_at FROM users WHERE verification_token = ?'
   ).get(token);
 
   if (!row) {
@@ -162,6 +200,18 @@ router.get('/verify-email', (req, res) => {
       error: 'Invalid or expired token',
       code: 'INVALID_OR_EXPIRED_TOKEN',
     });
+  }
+
+  // Check expiry in Node (avoids SQLite datetime quirks)
+  const expiresAt = row.verification_token_expires_at;
+  if (expiresAt) {
+    const expiryDate = new Date(expiresAt.replace(' ', 'T') + 'Z');
+    if (Date.now() > expiryDate.getTime()) {
+      return res.status(400).json({
+        error: 'Token expired. Please register again or request a new verification email.',
+        code: 'TOKEN_EXPIRED',
+      });
+    }
   }
 
   db.prepare(
