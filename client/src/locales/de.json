@@ -10,7 +10,7 @@
     "favorite": "Favorit"
   },
   "common": {
-    "appName": "Cookmarker",
+    "appName": "SimplyKeepIt",
     "loading": "Laden…",
     "save": "Speichern",
     "saving": "Speichern…",
@@ -56,7 +56,7 @@
     "ctaTitle": "Bereit loszulegen?",
     "ctaSubline": "Starte jetzt kostenlos und organisiere deine Rezepte wie nie zuvor.",
     "ctaButton": "Jetzt registrieren",
-    "footer": "© 2026 Cookmarker. Alle Rechte vorbehalten."
+    "footer": "© 2026 SimplyKeepIt. Alle Rechte vorbehalten."
   },
   "login": {
     "title": "Anmelden",

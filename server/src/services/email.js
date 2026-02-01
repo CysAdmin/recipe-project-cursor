@@ -1,7 +1,7 @@
 import { Resend } from 'resend';
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const FROM_EMAIL = process.env.EMAIL_FROM || 'Cookmarker <no-reply@cookmarker.com>';
+const FROM_EMAIL = process.env.EMAIL_FROM || 'SimplyKeepIt <no-reply@simplykeepit.com>';
 const VERIFICATION_TEMPLATE_ID = process.env.RESEND_VERIFICATION_TEMPLATE_ID || '58d1be20-87e7-459d-90ef-0c124896f071';
 const PASSWORD_RESET_TEMPLATE_ID = process.env.RESEND_PASSWORD_RESET_TEMPLATE_ID;
 
@@ -13,7 +13,7 @@ if (RESEND_API_KEY) {
 /**
  * Send verification email with link. Uses Resend template; VERIFIY_EMAIL_TOKEN = full URL, USER_NAME = display name.
  * @param {string} to - Recipient email
- * @param {string} verificationLink - Full URL e.g. https://app.cookmarker.de/verify-email?token=xxx
+ * @param {string} verificationLink - Full URL e.g. https://app.simplykeepit.com/verify-email?token=xxx
  * @param {string} userName - Display name for greeting (e.g. "Hi USER_NAME,")
  * @returns {Promise<{ success: boolean, error?: string }>}
  */
@@ -48,7 +48,7 @@ export async function sendVerificationEmail(to, verificationLink, userName = '')
 /**
  * Send password reset email. Uses Resend template; PASS_RESET_TOKEN = full URL, USER_NAME = display name.
  * @param {string} to - Recipient email
- * @param {string} resetLink - Full URL e.g. https://app.cookmarker.de/reset-password?token=xxx
+ * @param {string} resetLink - Full URL e.g. https://app.simplykeepit.com/reset-password?token=xxx
  * @param {string} userName - Display name (e.g. "Hi USER_NAME,")
  * @returns {Promise<{ success: boolean, error?: string }>}
  */

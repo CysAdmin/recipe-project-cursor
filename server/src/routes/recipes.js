@@ -14,6 +14,10 @@ const router = express.Router();
 
 const FETCH_TIMEOUT_MS = 15000;
 
+const SEARCH_USER_AGENT =
+  process.env.SEARCH_USER_AGENT ||
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
 // Fetch HTML from URL with timeout and browser-like headers to reduce blocking
 async function fetchHtml(url) {
   const u = new URL(url);
@@ -26,8 +30,7 @@ async function fetchHtml(url) {
     const res = await fetch(url, {
       signal: controller.signal,
       headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'User-Agent': SEARCH_USER_AGENT,
         Accept:
           'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
         'Accept-Language': 'de-DE,de;q=0.9,en;q=0.8',
@@ -424,7 +427,7 @@ router.post('/', authMiddleware, (req, res) => {
   const ingredients = Array.isArray(body.ingredients) ? body.ingredients : [];
   const ingredientsJson = JSON.stringify(ingredients);
 
-  const sourceUrl = body.source_url?.trim() || `https://cookmarker.local/manual/${Date.now()}`;
+  const sourceUrl = body.source_url?.trim() || `https://simplykeepit.local/manual/${Date.now()}`;
   const existing = db.prepare('SELECT id FROM recipes WHERE source_url = ?').get(sourceUrl);
   if (existing) {
     db.prepare(

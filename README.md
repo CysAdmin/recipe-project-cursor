@@ -1,4 +1,4 @@
-# Cookmarker
+# SimplyKeepIt
 
 Recipe collection app — save and manage recipes from your favorite sites (per PRD v1.0).
 

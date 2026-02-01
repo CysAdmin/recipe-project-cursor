@@ -1,7 +1,7 @@
 {
   "name": "recipe-platform-server",
   "version": "1.0.0",
-  "description": "Cookmarker - Recipe collection backend",
+  "description": "SimplyKeepIt - Recipe collection backend",
   "type": "module",
   "main": "src/index.js",
   "scripts": {
