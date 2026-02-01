@@ -203,7 +203,7 @@ router.get('/', async (req, res) => {
       const pattern = `%${q.replace(/%/g, '\\%')}%`;
       rows = db.prepare(`
         SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
-               ur.is_favorite, ur.personal_notes, ur.saved_at, COALESCE(ur.tags,'[]') AS tags,
+               ur.is_favorite, ur.personal_notes, ur.saved_at, COALESCE(ur.tags,'[]') AS user_tags,
                (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count
         FROM recipes r
         JOIN user_recipes ur ON ur.recipe_id = r.id AND ur.user_id = ?
@@ -214,7 +214,7 @@ router.get('/', async (req, res) => {
     } else {
       rows = db.prepare(`
         SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
-               ur.is_favorite, ur.personal_notes, ur.saved_at, COALESCE(ur.tags,'[]') AS tags,
+               ur.is_favorite, ur.personal_notes, ur.saved_at, COALESCE(ur.tags,'[]') AS user_tags,
                (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count
         FROM recipes r
         JOIN user_recipes ur ON ur.recipe_id = r.id AND ur.user_id = ?
@@ -223,7 +223,10 @@ router.get('/', async (req, res) => {
         LIMIT ? OFFSET ?
       `).all(userId, ...tagParam, ...timeParam, limit, offset);
     }
-    return res.json({ recipes: rows.map(rowToRecipe), total: totalCount });
+    return res.json({
+      recipes: rows.map((row) => rowToRecipe(row, row.user_tags != null ? row.user_tags : '[]')),
+      total: totalCount,
+    });
   }
 
   // All recipes (for discovery/search)

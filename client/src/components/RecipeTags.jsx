@@ -37,10 +37,25 @@ function TagIcon({ tagKey, isHighlight }) {
   return null;
 }
 
+/** Normalize recipe.tags to an array (API may send array or JSON string). */
+function normalizeTags(recipe) {
+  const raw = recipe?.tags;
+  if (Array.isArray(raw)) return [...raw];
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 /** Read-only tags for internal recipes. activeFilter: tag key that is currently selected (shown in green with checkmark). */
 export default function RecipeTags({ recipe, activeFilter, className = '' }) {
   const { t } = useTranslation();
-  const tags = Array.isArray(recipe?.tags) ? [...recipe.tags] : [];
+  const tags = normalizeTags(recipe);
   if (recipe?.is_favorite && !tags.includes('favorite')) {
     tags.push('favorite');
   }
