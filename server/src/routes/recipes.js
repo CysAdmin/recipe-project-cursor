@@ -148,12 +148,12 @@ router.post('/import', authMiddleware, async (req, res) => {
     ).run(userId, recipeId);
 
     const row = db.prepare(`
-      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
+      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
              (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count
       FROM recipes r WHERE r.id = ?
     `).get(recipeId);
-
-    res.status(existing ? 200 : 201).json({ recipe: rowToRecipe(row) });
+    const userRecipeTags = db.prepare('SELECT tags FROM user_recipes WHERE user_id = ? AND recipe_id = ?').get(userId, recipeId);
+    res.status(existing ? 200 : 201).json({ recipe: rowToRecipe(row, userRecipeTags?.tags ?? '[]') });
   } catch (err) {
     console.error('Recipe import error:', err);
     if (err.message?.includes('fetch') || err.message?.includes('URL')) {
@@ -184,7 +184,7 @@ router.get('/', async (req, res) => {
     const tagCondition = tagFilter === 'favorite'
       ? ' AND ur.is_favorite = 1'
       : tagFilter && RECIPE_TAG_KEYS.includes(tagFilter)
-        ? ` AND EXISTS (SELECT 1 FROM json_each(COALESCE(r.tags,'[]')) WHERE json_each.value = ?)`
+        ? ` AND EXISTS (SELECT 1 FROM json_each(COALESCE(ur.tags,'[]')) WHERE json_each.value = ?)`
         : '';
     const tagParam = tagFilter && tagFilter !== 'favorite' && RECIPE_TAG_KEYS.includes(tagFilter) ? [tagFilter] : [];
     const timeCondition = quickByTime ? ' AND (COALESCE(r.prep_time, 0) + COALESCE(r.cook_time, 0)) <= ?' : '';
@@ -202,8 +202,8 @@ router.get('/', async (req, res) => {
     if (q) {
       const pattern = `%${q.replace(/%/g, '\\%')}%`;
       rows = db.prepare(`
-        SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
-               ur.is_favorite, ur.personal_notes, ur.saved_at,
+        SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+               ur.is_favorite, ur.personal_notes, ur.saved_at, COALESCE(ur.tags,'[]') AS tags,
                (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count
         FROM recipes r
         JOIN user_recipes ur ON ur.recipe_id = r.id AND ur.user_id = ?
@@ -213,8 +213,8 @@ router.get('/', async (req, res) => {
       `).all(userId, pattern, pattern, pattern, ...tagParam, ...timeParam, limit, offset);
     } else {
       rows = db.prepare(`
-        SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
-               ur.is_favorite, ur.personal_notes, ur.saved_at,
+        SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+               ur.is_favorite, ur.personal_notes, ur.saved_at, COALESCE(ur.tags,'[]') AS tags,
                (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count
         FROM recipes r
         JOIN user_recipes ur ON ur.recipe_id = r.id AND ur.user_id = ?
@@ -238,8 +238,14 @@ router.get('/', async (req, res) => {
     tagCondition = ' AND EXISTS (SELECT 1 FROM user_recipes WHERE user_id = ? AND recipe_id = r.id AND is_favorite = 1)';
     tagParam = [userId];
   } else if (tagFilter && RECIPE_TAG_KEYS.includes(tagFilter)) {
-    tagCondition = ` AND EXISTS (SELECT 1 FROM json_each(COALESCE(r.tags,'[]')) WHERE json_each.value = ?)`;
-    tagParam = [tagFilter];
+    // User-specific tags: when logged in filter by user_recipes.tags; when not, filter by recipe-level r.tags (legacy)
+    if (userId) {
+      tagCondition = ' AND EXISTS (SELECT 1 FROM user_recipes ur WHERE ur.user_id = ? AND ur.recipe_id = r.id AND EXISTS (SELECT 1 FROM json_each(COALESCE(ur.tags,\'[]\')) WHERE json_each.value = ?))';
+      tagParam = [userId, tagFilter];
+    } else {
+      tagCondition = ` AND EXISTS (SELECT 1 FROM json_each(COALESCE(r.tags,'[]')) WHERE json_each.value = ?)`;
+      tagParam = [tagFilter];
+    }
   }
   const excludeCondition = excludeMine && userId ? ' AND NOT EXISTS (SELECT 1 FROM user_recipes WHERE user_id = ? AND recipe_id = r.id)' : '';
   const excludeParam = excludeMine && userId ? [userId] : [];
@@ -248,24 +254,26 @@ router.get('/', async (req, res) => {
   if (q) {
     const pattern = `%${q.replace(/%/g, '\\%')}%`;
     rows = db.prepare(`
-      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
+      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
              (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count,
-             (SELECT 1 FROM user_recipes WHERE user_id = ? AND recipe_id = r.id) AS saved_by_me
+             (SELECT 1 FROM user_recipes WHERE user_id = ? AND recipe_id = r.id) AS saved_by_me,
+             (SELECT ur.tags FROM user_recipes ur WHERE ur.user_id = ? AND ur.recipe_id = r.id) AS user_tags
       FROM recipes r
       WHERE (r.title LIKE ? OR r.description LIKE ? OR r.ingredients LIKE ?)${tagCondition}${excludeCondition}
       ORDER BY save_count DESC, r.created_at DESC
       LIMIT ?
-    `).all(uid, pattern, pattern, pattern, ...tagParam, ...excludeParam, limit);
+    `).all(uid, uid, pattern, pattern, pattern, ...tagParam, ...excludeParam, limit);
   } else {
     rows = db.prepare(`
-      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
+      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
              (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count,
-             (SELECT 1 FROM user_recipes WHERE user_id = ? AND recipe_id = r.id) AS saved_by_me
+             (SELECT 1 FROM user_recipes WHERE user_id = ? AND recipe_id = r.id) AS saved_by_me,
+             (SELECT ur.tags FROM user_recipes ur WHERE ur.user_id = ? AND ur.recipe_id = r.id) AS user_tags
       FROM recipes r
       WHERE 1=1${tagCondition}${excludeCondition}
       ORDER BY RANDOM()
       LIMIT ?
-    `).all(uid, ...tagParam, ...excludeParam, limit);
+    `).all(uid, uid, ...tagParam, ...excludeParam, limit);
   }
 
   // If search had a query and no internal results, return empty; frontend will request external per provider (so results show as soon as first provider returns)
@@ -273,7 +281,8 @@ router.get('/', async (req, res) => {
     return res.json({ recipes: [], external: [] });
   }
 
-  res.json({ recipes: rows.map(rowToRecipe) });
+  // Only show tags to the user who set them (saved_by_me + user_tags)
+  res.json({ recipes: rows.map((row) => rowToRecipe(row, row.saved_by_me && row.user_tags != null ? row.user_tags : '[]')) });
 });
 
 // GET /api/recipes/external — single-provider external search (so frontend can show results as soon as first provider returns)
@@ -366,7 +375,8 @@ router.get('/similar-to-favorites', authMiddleware, (req, res) => {
 
   scored.sort((a, b) => b.score - a.score);
   const top = scored.slice(0, limit).map(({ row }) => row);
-  res.json({ recipes: top.map(rowToRecipe) });
+  // Similar recipes are never "mine", so never show tags
+  res.json({ recipes: top.map((row) => rowToRecipe(row, '[]')) });
 });
 
 function getUserIdFromHeader(req) {
@@ -396,11 +406,13 @@ router.get('/:id', (req, res) => {
   const userId = getUserIdFromHeader(req);
   let userRecipe = null;
   if (userId) {
-    userRecipe = db.prepare('SELECT is_favorite, personal_notes, saved_at FROM user_recipes WHERE user_id = ? AND recipe_id = ?').get(userId, id);
+    userRecipe = db.prepare('SELECT is_favorite, personal_notes, saved_at, tags FROM user_recipes WHERE user_id = ? AND recipe_id = ?').get(userId, id);
   }
 
+  // Tags only for the user who set them (from user_recipes)
+  const recipePayload = rowToRecipe(row, userRecipe && userRecipe.tags != null ? userRecipe.tags : '[]');
   res.json({
-    recipe: rowToRecipe(row),
+    recipe: recipePayload,
     user_recipe: userRecipe
       ? { is_favorite: !!userRecipe.is_favorite, personal_notes: userRecipe.personal_notes, saved_at: userRecipe.saved_at }
       : null,
@@ -424,10 +436,11 @@ router.post('/', authMiddleware, (req, res) => {
       `INSERT OR IGNORE INTO user_recipes (user_id, recipe_id, is_favorite, personal_notes, saved_at) VALUES (?, ?, 0, NULL, datetime('now'))`
     ).run(userId, existing.id);
     const row = db.prepare(`
-      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
+      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
              (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count FROM recipes r WHERE r.id = ?
     `).get(existing.id);
-    return res.status(200).json({ recipe: rowToRecipe(row) });
+    const urTags = db.prepare('SELECT tags FROM user_recipes WHERE user_id = ? AND recipe_id = ?').get(userId, existing.id);
+    return res.status(200).json({ recipe: rowToRecipe(row, urTags?.tags ?? '[]') });
   }
 
   const insert = db.prepare(`
@@ -451,10 +464,11 @@ router.post('/', authMiddleware, (req, res) => {
   ).run(userId, recipeId);
 
   const row = db.prepare(`
-    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
+    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
            (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count FROM recipes r WHERE r.id = ?
   `).get(recipeId);
-  res.status(201).json({ recipe: rowToRecipe(row) });
+  const urTags = db.prepare('SELECT tags FROM user_recipes WHERE user_id = ? AND recipe_id = ?').get(userId, recipeId);
+  res.status(201).json({ recipe: rowToRecipe(row, urTags?.tags ?? '[]') });
 });
 
 // POST /api/recipes/:id/save — add recipe to user's collection
@@ -470,11 +484,12 @@ router.post('/:id/save', authMiddleware, (req, res) => {
     `INSERT OR IGNORE INTO user_recipes (user_id, recipe_id, is_favorite, personal_notes, saved_at) VALUES (?, ?, 0, NULL, datetime('now'))`
   ).run(userId, recipeId);
 
-const row = db.prepare(`
-  SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
-         (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count FROM recipes r WHERE r.id = ?
+  const row = db.prepare(`
+    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+           (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count FROM recipes r WHERE r.id = ?
   `).get(recipeId);
-  res.json({ recipe: rowToRecipe(row) });
+  const urTags = db.prepare('SELECT tags FROM user_recipes WHERE user_id = ? AND recipe_id = ?').get(userId, recipeId);
+  res.json({ recipe: rowToRecipe(row, urTags?.tags ?? '[]') });
 });
 
 // DELETE /api/recipes/:id/save — remove from user's collection (not delete recipe)
@@ -487,7 +502,7 @@ router.delete('/:id/save', authMiddleware, (req, res) => {
   res.status(204).send();
 });
 
-// PATCH /api/recipes/:id — update recipe tags (admin or user who has saved the recipe)
+// PATCH /api/recipes/:id — update tags (only for user who has saved the recipe; tags stored in user_recipes)
 router.patch('/:id', authMiddleware, (req, res) => {
   const userId = req.userId;
   const recipeId = parseInt(req.params.id, 10);
@@ -496,23 +511,23 @@ router.patch('/:id', authMiddleware, (req, res) => {
   const recipe = db.prepare('SELECT id FROM recipes WHERE id = ?').get(recipeId);
   if (!recipe) return res.status(404).json({ error: 'Recipe not found' });
 
-  const isAdmin = db.prepare('SELECT is_admin FROM users WHERE id = ?').get(userId)?.is_admin;
   const hasSaved = db.prepare('SELECT 1 FROM user_recipes WHERE user_id = ? AND recipe_id = ?').get(userId, recipeId);
-  if (!isAdmin && !hasSaved) return res.status(403).json({ error: 'Not allowed to edit this recipe' });
+  if (!hasSaved) return res.status(403).json({ error: 'Not allowed to edit this recipe' });
 
   const { tags } = req.body;
   if (tags !== undefined) {
     const tagsArr = Array.isArray(tags) ? tags.filter((k) => RECIPE_TAG_KEYS.includes(k)) : [];
-    db.prepare('UPDATE recipes SET tags = ? WHERE id = ?').run(JSON.stringify(tagsArr), recipeId);
+    db.prepare('UPDATE user_recipes SET tags = ? WHERE user_id = ? AND recipe_id = ?').run(JSON.stringify(tagsArr), userId, recipeId);
   }
 
   const row = db.prepare(`
-    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
+    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
            (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count FROM recipes r WHERE r.id = ?
   `).get(recipeId);
-  const userRecipe = db.prepare('SELECT is_favorite, personal_notes, saved_at FROM user_recipes WHERE user_id = ? AND recipe_id = ?').get(userId, recipeId);
+  const userRecipe = db.prepare('SELECT is_favorite, personal_notes, saved_at, tags FROM user_recipes WHERE user_id = ? AND recipe_id = ?').get(userId, recipeId);
+  const recipePayload = rowToRecipe(row, userRecipe && userRecipe.tags != null ? userRecipe.tags : '[]');
   res.json({
-    recipe: rowToRecipe(row),
+    recipe: recipePayload,
     user_recipe: userRecipe
       ? { is_favorite: !!userRecipe.is_favorite, personal_notes: userRecipe.personal_notes, saved_at: userRecipe.saved_at }
       : null,
@@ -531,10 +546,11 @@ router.patch('/:id/user-recipe', authMiddleware, (req, res) => {
   ).run(isFavorite !== undefined ? (isFavorite ? 1 : 0) : undefined, personalNotes !== undefined ? personalNotes : undefined, userId, recipeId);
 
   const row = db.prepare(`
-    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
+    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
            (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count FROM recipes r WHERE r.id = ?
   `).get(recipeId);
-  res.json({ recipe: rowToRecipe(row) });
+  const urTags = db.prepare('SELECT tags FROM user_recipes WHERE user_id = ? AND recipe_id = ?').get(userId, recipeId);
+  res.json({ recipe: rowToRecipe(row, urTags?.tags ?? '[]') });
 });
 
 function sourceDomainFromUrl(url) {
@@ -556,13 +572,14 @@ function parseTags(tagsJson) {
   }
 }
 
-function rowToRecipe(row) {
+function rowToRecipe(row, tagsJsonOverride) {
   let ingredients = [];
   try {
     ingredients = JSON.parse(row.ingredients || '[]');
   } catch {
     ingredients = [];
   }
+  const tags = tagsJsonOverride !== undefined ? parseTags(tagsJsonOverride) : parseTags(row.tags);
   return {
     id: row.id,
     source_url: row.source_url,
@@ -575,7 +592,7 @@ function rowToRecipe(row) {
     servings: row.servings,
     image_url: row.image_url,
     favicon_url: row.favicon_url || null,
-    tags: parseTags(row.tags),
+    tags,
     created_at: row.created_at,
     save_count: row.save_count ?? 0,
     saved_by_me: !!(row.saved_by_me != null && row.saved_by_me !== 0),

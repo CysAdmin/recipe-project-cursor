@@ -43,4 +43,11 @@ try {
   if (!e.message.includes('duplicate column name')) throw e;
 }
 
+// Tags per user (user_recipes.tags) — only visible to the user who set them
+try {
+  db.exec("ALTER TABLE user_recipes ADD COLUMN tags TEXT DEFAULT '[]'");
+} catch (e) {
+  if (!e.message.includes('duplicate column name')) throw e;
+}
+
 export default db;
