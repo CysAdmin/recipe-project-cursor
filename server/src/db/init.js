@@ -33,6 +33,7 @@ db.exec(`
     cook_time INTEGER,
     servings INTEGER,
     image_url VARCHAR(1024),
+    tags TEXT DEFAULT '[]',
     created_by_user_id INTEGER REFERENCES users(id),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );

@@ -1,4 +1,14 @@
 {
+  "tags": {
+    "quick": "Quick",
+    "easy": "Easy",
+    "after_work": "After work",
+    "vegetarian": "Vegetarian",
+    "comfort_food": "Comfort food",
+    "summer": "Summer",
+    "reheatable": "Reheatable",
+    "favorite": "Favorite"
+  },
   "common": {
     "appName": "Recipe Planner",
     "loading": "Loading…",
@@ -86,7 +96,10 @@
     "noRecipesAfter": " recipes from others.",
     "discoverLink": "discover",
     "favorite": "Favorite",
-    "errorImport": "Import failed"
+    "errorImport": "Import failed",
+    "filterByTag": "Filter by tag",
+    "allTags": "All tags",
+    "resetFilters": "Reset filters"
   },
   "recipeDetail": {
     "backToRecipes": "← Back to My Recipes",
@@ -106,6 +119,7 @@
     "ingredients": "Ingredients",
     "personalNotes": "Personal notes",
     "placeholderNotes": "Your private notes…",
+    "assignTags": "Assign tags",
     "loading": "Loading recipe…",
     "notFound": "Recipe not found."
   },
@@ -201,6 +215,7 @@
     "editRecipe": "Edit recipe",
     "recipeNotFound": "Recipe not found.",
     "titleLabel": "Title",
+    "tagsLabel": "Tags",
     "description": "Description",
     "ingredients": "Ingredients",
     "addIngredient": "+ Ingredient",

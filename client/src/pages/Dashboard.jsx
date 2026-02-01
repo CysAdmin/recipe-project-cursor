@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { recipes as recipesApi } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import RecipeSource from '../components/RecipeSource';
+import RecipeTags from '../components/RecipeTags';
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -108,6 +109,7 @@ export default function Dashboard() {
                         : t('common.dash')}
                     </p>
                   </div>
+                  <RecipeTags recipe={r} className="mt-2 px-3 pb-3" />
                 </div>
               </Link>
             ))}

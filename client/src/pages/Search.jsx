@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { recipes as recipesApi } from '../api/client';
 import RecipeSource from '../components/RecipeSource';
+import RecipeTags from '../components/RecipeTags';
+import TagFilterPills from '../components/TagFilterPills';
 
 const EXTERNAL_PAGE_SIZE = 20;
 
@@ -26,6 +28,7 @@ function shuffle(arr) {
 export default function Search() {
   const { t } = useTranslation();
   const [q, setQ] = useState('');
+  const [tagFilter, setTagFilter] = useState('');
   const [selectedProviders, setSelectedProviders] = useState(EXTERNAL_PROVIDERS.map((p) => p.id));
   const [externalVisibleCount, setExternalVisibleCount] = useState(EXTERNAL_PAGE_SIZE);
   const queryClient = useQueryClient();
@@ -36,11 +39,13 @@ export default function Search() {
   }, [trimmedQ]);
 
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['recipes', 'discover', trimmedQ || '_all'],
+    queryKey: ['recipes', 'discover', trimmedQ || '_all', tagFilter || null],
     queryFn: () =>
-      recipesApi.list(
-        trimmedQ ? { q: trimmedQ, limit: 30 } : { limit: 30 }
-      ),
+      recipesApi.list({
+        ...(trimmedQ ? { q: trimmedQ } : {}),
+        limit: 30,
+        ...(tagFilter ? { tag: tagFilter } : {}),
+      }),
     enabled: true,
     staleTime: 0,
   });
@@ -126,7 +131,7 @@ export default function Search() {
       <h1 className="font-display text-2xl font-bold text-white mb-2">{t('search.title')}</h1>
       <p className="text-slate-400 mb-6">{t('search.subline')}</p>
 
-      <div className="mb-6">
+      <div className="mb-6 space-y-3">
         <input
           type="search"
           value={q}
@@ -134,6 +139,7 @@ export default function Search() {
           placeholder={t('search.placeholder')}
           className="w-full max-w-md px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
         />
+        <TagFilterPills selectedTag={tagFilter} onSelectTag={setTagFilter} />
       </div>
 
       {isLoading || isFetching ? (
@@ -181,6 +187,7 @@ export default function Search() {
                             {r.save_count != null && r.save_count > 1 && ` · ${r.save_count} ${t('recipeDetail.saved')}`}
                           </p>
                         </div>
+                        <RecipeTags recipe={r} className="mt-2" />
                       </div>
                     </Link>
                     <div className="p-4 pt-0">

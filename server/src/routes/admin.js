@@ -178,6 +178,18 @@ function sourceDomainFromUrl(url) {
   }
 }
 
+const RECIPE_TAG_KEYS = ['quick', 'easy', 'after_work', 'vegetarian', 'comfort_food', 'summer', 'reheatable'];
+
+function parseTags(tagsJson) {
+  if (!tagsJson) return [];
+  try {
+    const arr = JSON.parse(tagsJson);
+    return Array.isArray(arr) ? arr.filter((k) => RECIPE_TAG_KEYS.includes(k)) : [];
+  } catch {
+    return [];
+  }
+}
+
 function rowToRecipe(row) {
   let ingredients = [];
   try {
@@ -197,6 +209,7 @@ function rowToRecipe(row) {
     servings: row.servings,
     image_url: row.image_url,
     favicon_url: row.favicon_url || null,
+    tags: parseTags(row.tags),
     created_at: row.created_at,
     save_count: row.save_count ?? 0,
   };
@@ -210,7 +223,7 @@ router.get('/recipes', (req, res) => {
   if (q) {
     const pattern = `%${q.replace(/%/g, '\\%')}%`;
     rows = db.prepare(`
-      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
              (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count
       FROM recipes r
       WHERE r.title LIKE ? OR r.description LIKE ? OR r.ingredients LIKE ?
@@ -219,7 +232,7 @@ router.get('/recipes', (req, res) => {
     `).all(pattern, pattern, pattern, limit);
   } else {
     rows = db.prepare(`
-      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
              (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count
       FROM recipes r
       ORDER BY r.created_at DESC
@@ -234,7 +247,7 @@ router.get('/recipes/:id', (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (Number.isNaN(id)) return res.status(400).json({ error: 'Invalid recipe ID' });
   const row = db.prepare(`
-    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
            (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count
     FROM recipes r WHERE r.id = ?
   `).get(id);
@@ -271,13 +284,18 @@ router.patch('/recipes/:id', (req, res) => {
       params.push(body[key]?.trim?.() ?? body[key] ?? null);
     }
   }
+  if (body.tags !== undefined) {
+    const tagsArr = Array.isArray(body.tags) ? body.tags.filter((k) => RECIPE_TAG_KEYS.includes(k)) : [];
+    updates.push('tags = ?');
+    params.push(JSON.stringify(tagsArr));
+  }
   if (updates.length) {
     params.push(id);
     db.prepare(`UPDATE recipes SET ${updates.join(', ')} WHERE id = ?`).run(...params);
   }
 
   const row = db.prepare(`
-    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
            (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count
     FROM recipes r WHERE r.id = ?
   `).get(id);

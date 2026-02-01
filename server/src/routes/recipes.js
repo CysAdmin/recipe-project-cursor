@@ -2,27 +2,43 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import db from '../db/index.js';
 import { authMiddleware } from '../middleware/auth.js';
-import { parseRecipeFromHtml, extractFaviconFromHtml } from '../services/recipeParser.js';
+import { parseRecipeFromHtml, extractFaviconFromHtml, extractMinimalFromHtml } from '../services/recipeParser.js';
 import { searchExternal, searchExternalByProvider } from '../services/externalSearch.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
 
+// Tag keys stored on recipes (favorite is derived from user_recipe.is_favorite, not stored here)
+const RECIPE_TAG_KEYS = ['quick', 'easy', 'after_work', 'vegetarian', 'comfort_food', 'summer', 'reheatable'];
+
 const router = express.Router();
 
-// Fetch HTML from URL (no auth required for import attempt; we'll require auth when saving)
+const FETCH_TIMEOUT_MS = 15000;
+
+// Fetch HTML from URL with timeout and browser-like headers to reduce blocking
 async function fetchHtml(url) {
   const u = new URL(url);
   if (!['http:', 'https:'].includes(u.protocol)) {
     throw new Error('Invalid URL');
   }
-  const res = await fetch(url, {
-    headers: {
-      'User-Agent': 'RecipePlatform/1.0 (Meal Planning; +https://recipe-platform.local)',
-    },
-    redirect: 'follow',
-  });
-  if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
-  return res.text();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Accept:
+          'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'de-DE,de;q=0.9,en;q=0.8',
+      },
+      redirect: 'follow',
+    });
+    if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
+    return res.text();
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 // POST /api/recipes/import — parse URL and return extracted recipe (optionally save if user is logged in)
@@ -46,19 +62,58 @@ router.post('/import', authMiddleware, async (req, res) => {
   }
 
   try {
-    const html = await fetchHtml(parsedUrl.href);
+    let html;
+    try {
+      html = await fetchHtml(parsedUrl.href);
+    } catch (fetchErr) {
+      const code = fetchErr.code || fetchErr.cause?.code;
+      const isNetwork =
+        code === 'ECONNRESET' ||
+        code === 'ETIMEDOUT' ||
+        code === 'ECONNREFUSED' ||
+        code === 'ENOTFOUND' ||
+        code === 'ERR_NETWORK' ||
+        fetchErr.name === 'AbortError';
+      if (isNetwork) {
+        return res.status(502).json({
+          error:
+            'Die Website konnte nicht geladen werden. Sie blockiert möglicherweise automatische Zugriffe oder ist nicht erreichbar. Bitte URL prüfen oder Rezept manuell anlegen.',
+          manual_fallback: true,
+        });
+      }
+      throw fetchErr;
+    }
+
     const parsed = parseRecipeFromHtml(html, parsedUrl.href);
     const faviconUrl = extractFaviconFromHtml(html, parsedUrl.href) || null;
 
-    if (!parsed || !parsed.title) {
-      return res.status(422).json({
-        error: 'Could not extract recipe from this URL. You can add it manually.',
-        manual_fallback: true,
-      });
+    let title, description, ingredientsJson, prep_time, cook_time, servings, image_url;
+    if (parsed?.title) {
+      title = parsed.title;
+      description = parsed.description || null;
+      ingredientsJson = JSON.stringify(parsed.ingredients || []);
+      prep_time = parsed.prep_time ?? null;
+      cook_time = parsed.cook_time ?? null;
+      servings = parsed.servings ?? null;
+      image_url = parsed.image_url || null;
+    } else {
+      const minimal = extractMinimalFromHtml(html, parsedUrl.href);
+      if (!minimal?.title) {
+        return res.status(422).json({
+          error: 'Von dieser URL konnte kein Rezept erkannt werden. Du kannst es manuell anlegen.',
+          manual_fallback: true,
+        });
+      }
+      title = minimal.title;
+      description = minimal.description || null;
+      ingredientsJson = '[]';
+      prep_time = null;
+      cook_time = null;
+      servings = null;
+      image_url = minimal.image_url || null;
     }
 
     // Upsert recipe (by source_url); link to user
-    const ingredientsJson = JSON.stringify(parsed.ingredients || []);
     const existing = db.prepare('SELECT id, created_by_user_id FROM recipes WHERE source_url = ?').get(parsedUrl.href);
 
     let recipeId;
@@ -66,17 +121,7 @@ router.post('/import', authMiddleware, async (req, res) => {
       recipeId = existing.id;
       db.prepare(
         'UPDATE recipes SET title = ?, description = ?, ingredients = ?, prep_time = ?, cook_time = ?, servings = ?, image_url = ?, favicon_url = ? WHERE id = ?'
-      ).run(
-        parsed.title,
-        parsed.description || null,
-        ingredientsJson,
-        parsed.prep_time ?? null,
-        parsed.cook_time ?? null,
-        parsed.servings ?? null,
-        parsed.image_url || null,
-        faviconUrl,
-        recipeId
-      );
+      ).run(title, description, ingredientsJson, prep_time, cook_time, servings, image_url, faviconUrl, recipeId);
     } else {
       const insert = db.prepare(`
         INSERT INTO recipes (source_url, title, description, ingredients, prep_time, cook_time, servings, image_url, favicon_url, created_by_user_id)
@@ -84,13 +129,13 @@ router.post('/import', authMiddleware, async (req, res) => {
       `);
       const result = insert.run(
         parsedUrl.href,
-        parsed.title,
-        parsed.description || null,
+        title,
+        description,
         ingredientsJson,
-        parsed.prep_time ?? null,
-        parsed.cook_time ?? null,
-        parsed.servings ?? null,
-        parsed.image_url || null,
+        prep_time,
+        cook_time,
+        servings,
+        image_url,
         faviconUrl,
         userId
       );
@@ -103,7 +148,7 @@ router.post('/import', authMiddleware, async (req, res) => {
     ).run(userId, recipeId);
 
     const row = db.prepare(`
-      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
              (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count
       FROM recipes r WHERE r.id = ?
     `).get(recipeId);
@@ -112,9 +157,12 @@ router.post('/import', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Recipe import error:', err);
     if (err.message?.includes('fetch') || err.message?.includes('URL')) {
-      return res.status(400).json({ error: 'Could not load this URL. Check that it is public and try again.' });
+      return res.status(400).json({
+        error: 'Die URL konnte nicht geladen werden. Bitte prüfen oder Rezept manuell anlegen.',
+        manual_fallback: true,
+      });
     }
-    res.status(500).json({ error: 'Failed to import recipe' });
+    res.status(500).json({ error: 'Import fehlgeschlagen. Bitte später erneut versuchen.' });
   }
 });
 
@@ -127,29 +175,36 @@ router.get('/', async (req, res) => {
     if (!userId) return res.status(401).json({ error: 'Authentication required' });
     const q = (req.query.q || '').trim();
     const favoritesOnly = req.query.favorites === '1' || req.query.favorites === 'true';
+    const tagFilter = (req.query.tag || '').trim();
     const favCondition = favoritesOnly ? ' AND ur.is_favorite = 1' : '';
+    const tagCondition = tagFilter === 'favorite'
+      ? ' AND ur.is_favorite = 1'
+      : tagFilter && RECIPE_TAG_KEYS.includes(tagFilter)
+        ? ` AND EXISTS (SELECT 1 FROM json_each(COALESCE(r.tags,'[]')) WHERE json_each.value = ?)`
+        : '';
+    const tagParam = tagFilter && tagFilter !== 'favorite' && RECIPE_TAG_KEYS.includes(tagFilter) ? [tagFilter] : [];
     let rows;
     if (q) {
       const pattern = `%${q.replace(/%/g, '\\%')}%`;
       rows = db.prepare(`
-        SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+        SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
                ur.is_favorite, ur.personal_notes, ur.saved_at,
                (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count
         FROM recipes r
         JOIN user_recipes ur ON ur.recipe_id = r.id AND ur.user_id = ?
-        WHERE (r.title LIKE ? OR r.description LIKE ? OR r.ingredients LIKE ?)${favCondition}
+        WHERE (r.title LIKE ? OR r.description LIKE ? OR r.ingredients LIKE ?)${favCondition}${tagCondition}
         ORDER BY ur.saved_at DESC
-      `).all(userId, pattern, pattern, pattern);
+      `).all(userId, pattern, pattern, pattern, ...tagParam);
     } else {
       rows = db.prepare(`
-        SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+        SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
                ur.is_favorite, ur.personal_notes, ur.saved_at,
                (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count
         FROM recipes r
         JOIN user_recipes ur ON ur.recipe_id = r.id AND ur.user_id = ?
-        WHERE 1=1${favCondition}
+        WHERE 1=1${favCondition}${tagCondition}
         ORDER BY ur.saved_at DESC
-      `).all(userId);
+      `).all(userId, ...tagParam);
     }
     return res.json({ recipes: rows.map(rowToRecipe) });
   }
@@ -157,28 +212,40 @@ router.get('/', async (req, res) => {
   // All recipes (for discovery/search)
   let q = (req.query.q ?? '').trim();
   if (q === 'undefined' || q === 'null') q = '';
+  const tagFilter = (req.query.tag ?? '').trim();
   const limit = Math.min(parseInt(req.query.limit, 10) || 50, 100);
+  let tagCondition = '';
+  let tagParam = [];
+  if (tagFilter === 'favorite' && userId) {
+    tagCondition = ' AND EXISTS (SELECT 1 FROM user_recipes WHERE user_id = ? AND recipe_id = r.id AND is_favorite = 1)';
+    tagParam = [userId];
+  } else if (tagFilter && RECIPE_TAG_KEYS.includes(tagFilter)) {
+    tagCondition = ` AND EXISTS (SELECT 1 FROM json_each(COALESCE(r.tags,'[]')) WHERE json_each.value = ?)`;
+    tagParam = [tagFilter];
+  }
+  const uid = userId ?? 0;
   let rows;
   if (q) {
     const pattern = `%${q.replace(/%/g, '\\%')}%`;
     rows = db.prepare(`
-      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
              (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count,
              (SELECT 1 FROM user_recipes WHERE user_id = ? AND recipe_id = r.id) AS saved_by_me
       FROM recipes r
-      WHERE r.title LIKE ? OR r.description LIKE ? OR r.ingredients LIKE ?
+      WHERE (r.title LIKE ? OR r.description LIKE ? OR r.ingredients LIKE ?)${tagCondition}
       ORDER BY save_count DESC, r.created_at DESC
       LIMIT ?
-    `).all(userId ?? 0, pattern, pattern, pattern, limit);
+    `).all(uid, pattern, pattern, pattern, ...tagParam, limit);
   } else {
     rows = db.prepare(`
-      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
              (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count,
              (SELECT 1 FROM user_recipes WHERE user_id = ? AND recipe_id = r.id) AS saved_by_me
       FROM recipes r
+      WHERE 1=1${tagCondition}
       ORDER BY RANDOM()
       LIMIT ?
-    `).all(userId ?? 0, limit);
+    `).all(uid, ...tagParam, limit);
   }
 
   // If search had a query and no internal results, return empty; frontend will request external per provider (so results show as soon as first provider returns)
@@ -222,7 +289,7 @@ router.get('/:id', (req, res) => {
   if (Number.isNaN(id)) return res.status(400).json({ error: 'Invalid recipe ID' });
 
   const row = db.prepare(`
-    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
            (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count
     FROM recipes r WHERE r.id = ?
   `).get(id);
@@ -260,15 +327,15 @@ router.post('/', authMiddleware, (req, res) => {
       `INSERT OR IGNORE INTO user_recipes (user_id, recipe_id, is_favorite, personal_notes, saved_at) VALUES (?, ?, 0, NULL, datetime('now'))`
     ).run(userId, existing.id);
     const row = db.prepare(`
-      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+      SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
              (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count FROM recipes r WHERE r.id = ?
     `).get(existing.id);
     return res.status(200).json({ recipe: rowToRecipe(row) });
   }
 
   const insert = db.prepare(`
-    INSERT INTO recipes (source_url, title, description, ingredients, prep_time, cook_time, servings, image_url, created_by_user_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO recipes (source_url, title, description, ingredients, prep_time, cook_time, servings, image_url, tags, created_by_user_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, '[]', ?)
   `);
   const result = insert.run(
     sourceUrl,
@@ -287,7 +354,7 @@ router.post('/', authMiddleware, (req, res) => {
   ).run(userId, recipeId);
 
   const row = db.prepare(`
-    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
            (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count FROM recipes r WHERE r.id = ?
   `).get(recipeId);
   res.status(201).json({ recipe: rowToRecipe(row) });
@@ -306,9 +373,9 @@ router.post('/:id/save', authMiddleware, (req, res) => {
     `INSERT OR IGNORE INTO user_recipes (user_id, recipe_id, is_favorite, personal_notes, saved_at) VALUES (?, ?, 0, NULL, datetime('now'))`
   ).run(userId, recipeId);
 
-  const row = db.prepare(`
-    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
-           (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count FROM recipes r WHERE r.id = ?
+const row = db.prepare(`
+  SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
+         (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count FROM recipes r WHERE r.id = ?
   `).get(recipeId);
   res.json({ recipe: rowToRecipe(row) });
 });
@@ -323,6 +390,38 @@ router.delete('/:id/save', authMiddleware, (req, res) => {
   res.status(204).send();
 });
 
+// PATCH /api/recipes/:id — update recipe tags (admin or user who has saved the recipe)
+router.patch('/:id', authMiddleware, (req, res) => {
+  const userId = req.userId;
+  const recipeId = parseInt(req.params.id, 10);
+  if (Number.isNaN(recipeId)) return res.status(400).json({ error: 'Invalid recipe ID' });
+
+  const recipe = db.prepare('SELECT id FROM recipes WHERE id = ?').get(recipeId);
+  if (!recipe) return res.status(404).json({ error: 'Recipe not found' });
+
+  const isAdmin = db.prepare('SELECT is_admin FROM users WHERE id = ?').get(userId)?.is_admin;
+  const hasSaved = db.prepare('SELECT 1 FROM user_recipes WHERE user_id = ? AND recipe_id = ?').get(userId, recipeId);
+  if (!isAdmin && !hasSaved) return res.status(403).json({ error: 'Not allowed to edit this recipe' });
+
+  const { tags } = req.body;
+  if (tags !== undefined) {
+    const tagsArr = Array.isArray(tags) ? tags.filter((k) => RECIPE_TAG_KEYS.includes(k)) : [];
+    db.prepare('UPDATE recipes SET tags = ? WHERE id = ?').run(JSON.stringify(tagsArr), recipeId);
+  }
+
+  const row = db.prepare(`
+    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
+           (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count FROM recipes r WHERE r.id = ?
+  `).get(recipeId);
+  const userRecipe = db.prepare('SELECT is_favorite, personal_notes, saved_at FROM user_recipes WHERE user_id = ? AND recipe_id = ?').get(userId, recipeId);
+  res.json({
+    recipe: rowToRecipe(row),
+    user_recipe: userRecipe
+      ? { is_favorite: !!userRecipe.is_favorite, personal_notes: userRecipe.personal_notes, saved_at: userRecipe.saved_at }
+      : null,
+  });
+});
+
 // PATCH /api/recipes/:id/user-recipe — update favorite / personal notes
 router.patch('/:id/user-recipe', authMiddleware, (req, res) => {
   const userId = req.userId;
@@ -335,7 +434,7 @@ router.patch('/:id/user-recipe', authMiddleware, (req, res) => {
   ).run(isFavorite !== undefined ? (isFavorite ? 1 : 0) : undefined, personalNotes !== undefined ? personalNotes : undefined, userId, recipeId);
 
   const row = db.prepare(`
-    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
+    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
            (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count FROM recipes r WHERE r.id = ?
   `).get(recipeId);
   res.json({ recipe: rowToRecipe(row) });
@@ -347,6 +446,16 @@ function sourceDomainFromUrl(url) {
     return new URL(url).hostname.replace(/^www\./, '');
   } catch {
     return null;
+  }
+}
+
+function parseTags(tagsJson) {
+  if (!tagsJson) return [];
+  try {
+    const arr = JSON.parse(tagsJson);
+    return Array.isArray(arr) ? arr.filter((k) => RECIPE_TAG_KEYS.includes(k)) : [];
+  } catch {
+    return [];
   }
 }
 
@@ -369,6 +478,7 @@ function rowToRecipe(row) {
     servings: row.servings,
     image_url: row.image_url,
     favicon_url: row.favicon_url || null,
+    tags: parseTags(row.tags),
     created_at: row.created_at,
     save_count: row.save_count ?? 0,
     saved_by_me: !!(row.saved_by_me != null && row.saved_by_me !== 0),

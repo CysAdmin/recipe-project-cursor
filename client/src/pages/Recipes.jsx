@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { recipes as recipesApi } from '../api/client';
 import RecipeSource from '../components/RecipeSource';
+import RecipeTags from '../components/RecipeTags';
+import TagFilterPills from '../components/TagFilterPills';
 import { useAuth } from '../context/AuthContext';
 
 export default function Recipes() {
@@ -12,11 +14,12 @@ export default function Recipes() {
   const [importUrl, setImportUrl] = useState('');
   const [importError, setImportError] = useState('');
   const [importing, setImporting] = useState(false);
+  const [tagFilter, setTagFilter] = useState('');
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['recipes', 'mine', user?.id],
-    queryFn: () => recipesApi.list({ mine: '1' }),
+    queryKey: ['recipes', 'mine', user?.id, tagFilter || null],
+    queryFn: () => recipesApi.list({ mine: '1', ...(tagFilter && { tag: tagFilter }) }),
     enabled: !!user?.id,
   });
 
@@ -47,20 +50,24 @@ export default function Recipes() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold text-white mb-2">My Recipes</h1>
-      <p className="text-slate-400 mb-6">Import from a URL or add manually.</p>
+      <h1 className="font-display text-2xl font-bold text-white mb-2">{t('recipes.title')}</h1>
+      <p className="text-slate-400 mb-6">{t('recipes.subline')}</p>
+
+      <div className="mb-6">
+        <TagFilterPills selectedTag={tagFilter} onSelectTag={setTagFilter} />
+      </div>
 
       <form onSubmit={handleImport} className="mb-8 flex flex-wrap gap-3 items-end">
         <div className="flex-1 min-w-[200px]">
           <label htmlFor="importUrl" className="block text-sm font-medium text-slate-400 mb-1">
-            Import from URL
+            {t('recipes.importFromUrl')}
           </label>
           <input
             id="importUrl"
             type="url"
             value={importUrl}
             onChange={(e) => setImportUrl(e.target.value)}
-            placeholder="https://www.allrecipes.com/recipe/..."
+            placeholder={t('recipes.placeholderUrl')}
             className="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
         </div>
@@ -69,7 +76,7 @@ export default function Recipes() {
           disabled={importing || !importUrl.trim()}
           className="px-4 py-2 rounded-lg bg-brand-500 text-white font-medium hover:bg-brand-600 disabled:opacity-50 transition-colors"
         >
-          {importing ? 'Importing…' : 'Import'}
+          {importing ? t('recipes.importing') : t('recipes.import')}
         </button>
         {importError && (
           <p className="w-full text-red-400 text-sm mt-1">{importError}</p>
@@ -116,14 +123,12 @@ export default function Recipes() {
                   )}
                   <p className="text-slate-500 text-sm">
                     {[r.prep_time, r.cook_time].filter(Boolean).length
-                      ? `${[r.prep_time, r.cook_time].filter(Boolean).join(' + ')} min`
-                      : '—'}
+                      ? `${[r.prep_time, r.cook_time].filter(Boolean).join(' + ')} ${t('recipeDetail.min')}`
+                      : t('common.dash')}
                     {r.save_count != null && r.save_count > 1 && ` · ${r.save_count} ${t('recipeDetail.saved')}`}
                   </p>
                 </div>
-                {r.is_favorite && (
-                  <span className="inline-block mt-2 text-brand-400 text-sm">★ {t('recipes.favorite')}</span>
-                )}
+                <RecipeTags recipe={r} className="mt-2" />
               </div>
             </Link>
           ))}

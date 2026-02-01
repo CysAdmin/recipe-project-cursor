@@ -36,4 +36,11 @@ try {
   if (!e.message?.includes('no such column') && !e.message?.includes('syntax error')) throw e;
 }
 
+// Tags on recipes (JSON array of keys: quick, easy, after_work, vegetarian, comfort_food, summer, reheatable)
+try {
+  db.exec("ALTER TABLE recipes ADD COLUMN tags TEXT DEFAULT '[]'");
+} catch (e) {
+  if (!e.message.includes('duplicate column name')) throw e;
+}
+
 export default db;

@@ -44,6 +44,7 @@ export const recipes = {
   },
   get: (id) => api(`/recipes/${id}`),
   create: (body) => api('/recipes', { method: 'POST', body: JSON.stringify(body) }),
+  update: (id, body) => api(`/recipes/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   importFromUrl: (url) => api('/recipes/import', { method: 'POST', body: JSON.stringify({ url }) }),
   save: (id) => api(`/recipes/${id}/save`, { method: 'POST' }),
   unsave: (id) => api(`/recipes/${id}/save`, { method: 'DELETE' }),

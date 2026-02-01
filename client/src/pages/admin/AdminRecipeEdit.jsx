@@ -24,6 +24,9 @@ export default function AdminRecipeEdit() {
   const [servings, setServings] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [sourceUrl, setSourceUrl] = useState('');
+  const [tags, setTags] = useState([]);
+
+  const RECIPE_TAG_KEYS = ['quick', 'easy', 'after_work', 'vegetarian', 'comfort_food', 'summer', 'reheatable'];
 
   useEffect(() => {
     if (data?.recipe) {
@@ -36,6 +39,7 @@ export default function AdminRecipeEdit() {
       setServings(r.servings != null ? String(r.servings) : '');
       setImageUrl(r.image_url || '');
       setSourceUrl(r.source_url || '');
+      setTags(Array.isArray(r.tags) ? r.tags.filter((k) => RECIPE_TAG_KEYS.includes(k)) : []);
     }
   }, [data]);
 
@@ -60,6 +64,7 @@ export default function AdminRecipeEdit() {
       servings: servings === '' ? null : parseInt(servings, 10),
       image_url: imageUrl.trim() || null,
       source_url: sourceUrl.trim() || null,
+      tags,
     };
     saveMutation.mutate(body);
   };
@@ -97,6 +102,25 @@ export default function AdminRecipeEdit() {
             className="w-full px-3 py-2 rounded-lg bg-slate-800 border border-slate-600 text-white"
             required
           />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-400 mb-1">{t('admin.tagsLabel')}</label>
+          <div className="flex flex-wrap gap-3">
+            {RECIPE_TAG_KEYS.map((key) => (
+              <label key={key} className="inline-flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={tags.includes(key)}
+                  onChange={(e) => {
+                    if (e.target.checked) setTags((prev) => [...prev, key]);
+                    else setTags((prev) => prev.filter((k) => k !== key));
+                  }}
+                  className="rounded border-slate-600 bg-slate-800 text-brand-500 focus:ring-brand-500"
+                />
+                <span className="text-sm text-slate-300">{t(`tags.${key}`)}</span>
+              </label>
+            ))}
+          </div>
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-400 mb-1">{t('admin.description')}</label>

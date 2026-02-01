@@ -1,4 +1,14 @@
 {
+  "tags": {
+    "quick": "Schnell",
+    "easy": "Einfach",
+    "after_work": "Feierabend",
+    "vegetarian": "Vegetarisch",
+    "comfort_food": "Comfort Food",
+    "summer": "Sommer",
+    "reheatable": "Aufwärmbar",
+    "favorite": "Favorit"
+  },
   "common": {
     "appName": "Recipe Planner",
     "loading": "Laden…",
@@ -86,7 +96,10 @@
     "noRecipesAfter": " Rezepte von anderen.",
     "discoverLink": "entdecken",
     "favorite": "Favorit",
-    "errorImport": "Import fehlgeschlagen"
+    "errorImport": "Import fehlgeschlagen",
+    "filterByTag": "Tag filtern",
+    "allTags": "Alle Tags",
+    "resetFilters": "Filter zurücksetzen"
   },
   "recipeDetail": {
     "backToRecipes": "← Zurück zu Meine Rezepte",
@@ -106,6 +119,7 @@
     "ingredients": "Zutaten",
     "personalNotes": "Persönliche Notizen",
     "placeholderNotes": "Deine privaten Notizen…",
+    "assignTags": "Tags vergeben",
     "loading": "Rezept wird geladen…",
     "notFound": "Rezept nicht gefunden."
   },
@@ -201,6 +215,7 @@
     "editRecipe": "Rezept bearbeiten",
     "recipeNotFound": "Rezept nicht gefunden.",
     "titleLabel": "Titel",
+    "tagsLabel": "Tags",
     "description": "Beschreibung",
     "ingredients": "Zutaten",
     "addIngredient": "+ Zutat",

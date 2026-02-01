@@ -164,3 +164,37 @@ function normalizeParsedRecipe(parsed, sourceUrl) {
     source_url: sourceUrl,
   };
 }
+
+/**
+ * Minimal extraction for any URL when no recipe parser matches.
+ * Uses <title> and og:* meta tags so users can save any link as a recipe and edit later.
+ * @param {string} html - Raw HTML of the page
+ * @param {string} sourceUrl - Page URL (for resolving relative og:image)
+ * @returns {{ title: string, description?: string, image_url?: string } | null}
+ */
+export function extractMinimalFromHtml(html, sourceUrl) {
+  const $ = cheerio.load(html);
+  const title =
+    $('meta[property="og:title"]').attr('content')?.trim() ||
+    $('title').text().trim().split(/[\s|–—-]+/)[0]?.trim();
+  if (!title || title.length < 2) return null;
+
+  let description = $('meta[property="og:description"]').attr('content')?.trim();
+  if (!description) description = $('meta[name="description"]').attr('content')?.trim();
+  if (description && description.length > 2000) description = description.slice(0, 2000);
+
+  let image_url = $('meta[property="og:image"]').attr('content')?.trim();
+  if (image_url && !/^https?:\/\//i.test(image_url)) {
+    try {
+      image_url = new URL(image_url, sourceUrl).href;
+    } catch {
+      image_url = undefined;
+    }
+  }
+
+  return {
+    title: title.slice(0, 500),
+    description: description || undefined,
+    image_url: image_url || undefined,
+  };
+}

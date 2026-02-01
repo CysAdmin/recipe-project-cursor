@@ -5,6 +5,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { recipes as recipesApi } from '../api/client';
 import { mealSchedules as scheduleApi } from '../api/client';
 import RecipeSource from '../components/RecipeSource';
+import RecipeTags from '../components/RecipeTags';
+import { RecipeTagPillsEditable } from '../components/TagFilterPills';
 
 function toYMD(d) {
   return d.toISOString().slice(0, 10);
@@ -41,6 +43,17 @@ export default function RecipeDetail() {
     mutationFn: (body) => scheduleApi.add(body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['meal-schedules'] });
+    },
+  });
+
+  const updateRecipeTags = useMutation({
+    mutationFn: (tags) => recipesApi.update(id, { tags }),
+    onSuccess: (res) => {
+      queryClient.setQueryData(['recipe', id], (prev) => ({
+        ...prev,
+        recipe: res.recipe,
+        user_recipe: res.user_recipe ?? prev?.user_recipe,
+      }));
     },
   });
 
@@ -90,7 +103,7 @@ export default function RecipeDetail() {
         )}
         <div className="p-6">
           <h1 className="font-display text-2xl font-bold text-white mb-2">{recipe.title}</h1>
-          <div className="flex flex-wrap items-center gap-4 text-slate-500 text-sm mb-4">
+          <div className="flex flex-wrap items-center gap-4 text-slate-500 text-sm mb-2">
             <RecipeSource recipe={recipe} className="text-slate-400" />
             {recipe.prep_time != null && <span>{t('recipeDetail.prep')}: {recipe.prep_time} {t('recipeDetail.min')}</span>}
             {recipe.cook_time != null && <span>{t('recipeDetail.cook')}: {recipe.cook_time} {t('recipeDetail.min')}</span>}
@@ -99,6 +112,18 @@ export default function RecipeDetail() {
               <span>{recipe.save_count} {t('recipeDetail.saved')}</span>
             )}
           </div>
+          {userRecipe ? (
+            <div className="mb-4">
+              <p className="text-sm font-medium text-slate-400 mb-2">{t('recipeDetail.assignTags')}</p>
+              <RecipeTagPillsEditable
+                tags={Array.isArray(recipe.tags) ? recipe.tags : []}
+                onTagsChange={(tags) => updateRecipeTags.mutate(tags)}
+                disabled={updateRecipeTags.isPending}
+              />
+            </div>
+          ) : (
+            <RecipeTags recipe={{ ...recipe, is_favorite: isFavorite }} className="mb-4" />
+          )}
           {recipe.description && (
             <p className="text-slate-400 mb-4">{recipe.description}</p>
           )}
