@@ -103,7 +103,9 @@
     "decisionAidFavorites": "Favoriten",
     "decisionAidRecent": "Neu gespeicherte Rezepte",
     "discoverRecipes": "Entdecke Rezepte",
-    "noDiscoverRecipes": "Keine weiteren Rezepte zum Entdecken."
+    "noDiscoverRecipes": "Keine weiteren Rezepte zum Entdecken.",
+    "similarToFavorites": "Ähnlich zu deinen Favoriten",
+    "noSimilarRecipes": "Keine ähnlichen Rezepte."
   },
   "recipeMenu": {
     "ariaLabel": "Rezept-Menü",

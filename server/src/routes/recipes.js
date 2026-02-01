@@ -292,6 +292,83 @@ router.get('/external', async (req, res) => {
   }
 });
 
+// Helpers for similar-to-favorites: tokenize text and extract ingredients as single string
+function getTokens(text) {
+  if (!text || typeof text !== 'string') return [];
+  const normalized = text.toLowerCase().replace(/\s+/g, ' ');
+  const tokens = normalized.split(/[^a-z0-9äöüß]+/).filter((t) => t.length >= 2);
+  return [...new Set(tokens)];
+}
+function getIngredientsText(ingredients) {
+  if (!Array.isArray(ingredients)) return '';
+  return ingredients
+    .map((ing) => {
+      if (typeof ing === 'string') return ing;
+      if (ing && typeof ing === 'object') return ing.raw || ing.ingredient_key || '';
+      return '';
+    })
+    .filter(Boolean)
+    .join(' ');
+}
+
+// GET /api/recipes/similar-to-favorites — recipes similar to user's favorites (by title + ingredients), unsaved only, max 5
+router.get('/similar-to-favorites', authMiddleware, (req, res) => {
+  const userId = req.userId;
+  const limit = Math.min(parseInt(req.query.limit, 10) || 5, 10);
+
+  const favorites = db.prepare(`
+    SELECT r.id, r.title, r.ingredients
+    FROM recipes r
+    JOIN user_recipes ur ON ur.recipe_id = r.id AND ur.user_id = ? AND ur.is_favorite = 1
+  `).all(userId);
+
+  if (favorites.length === 0) {
+    return res.json({ recipes: [] });
+  }
+
+  const favoriteTokenSet = new Set();
+  for (const row of favorites) {
+    getTokens(row.title || '').forEach((t) => favoriteTokenSet.add(t));
+    let ingredients = [];
+    try {
+      ingredients = JSON.parse(row.ingredients || '[]');
+    } catch {
+      ingredients = [];
+    }
+    getTokens(getIngredientsText(ingredients)).forEach((t) => favoriteTokenSet.add(t));
+  }
+
+  const candidates = db.prepare(`
+    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
+           (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count,
+           (SELECT 1 FROM user_recipes WHERE user_id = ? AND recipe_id = r.id) AS saved_by_me
+    FROM recipes r
+    WHERE NOT EXISTS (SELECT 1 FROM user_recipes WHERE user_id = ? AND recipe_id = r.id)
+    LIMIT 200
+  `).all(userId, userId);
+
+  const scored = candidates.map((row) => {
+    const titleTokens = getTokens(row.title || '');
+    let ingredients = [];
+    try {
+      ingredients = JSON.parse(row.ingredients || '[]');
+    } catch {
+      ingredients = [];
+    }
+    const ingTokens = getTokens(getIngredientsText(ingredients));
+    const candidateSet = new Set([...titleTokens, ...ingTokens]);
+    let score = 0;
+    for (const t of favoriteTokenSet) {
+      if (candidateSet.has(t)) score += 1;
+    }
+    return { row, score };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+  const top = scored.slice(0, limit).map(({ row }) => row);
+  res.json({ recipes: top.map(rowToRecipe) });
+});
+
 function getUserIdFromHeader(req) {
   try {
     const token = req.headers.authorization?.replace(/^Bearer\s+/i, '');

@@ -42,6 +42,10 @@ export const recipes = {
     const q = new URLSearchParams(params).toString();
     return api(`/recipes${q ? `?${q}` : ''}`);
   },
+  similarToFavorites: (params = {}) => {
+    const q = new URLSearchParams(params).toString();
+    return api(`/recipes/similar-to-favorites${q ? `?${q}` : ''}`);
+  },
   get: (id) => api(`/recipes/${id}`),
   create: (body) => api('/recipes', { method: 'POST', body: JSON.stringify(body) }),
   update: (id, body) => api(`/recipes/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),

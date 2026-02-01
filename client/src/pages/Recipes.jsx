@@ -118,6 +118,7 @@ export default function Recipes() {
     mutationFn: (url) => recipesApi.importFromUrl(url),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipes', 'mine', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['recipes', 'similar-to-favorites', user?.id] });
       closeImport();
     },
     onError: (err) => {
@@ -131,6 +132,7 @@ export default function Recipes() {
     mutationFn: ({ id, is_favorite }) => recipesApi.updateUserRecipe(id, { is_favorite }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipes', 'mine', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['recipes', 'similar-to-favorites', user?.id] });
     },
   });
 
@@ -138,6 +140,7 @@ export default function Recipes() {
     mutationFn: (id) => recipesApi.unsave(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipes', 'mine', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['recipes', 'similar-to-favorites', user?.id] });
       setOpenMenuRecipeId(null);
     },
   });
@@ -187,12 +190,12 @@ export default function Recipes() {
   const totalCount = data?.pages?.[0]?.total ?? recipes.length;
   const loadMoreRef = React.useRef(null);
 
-  const { data: discoverData } = useQuery({
-    queryKey: ['recipes', 'discover-random', user?.id],
-    queryFn: () => recipesApi.list({ limit: 3, exclude_mine: '1' }),
+  const { data: similarData } = useQuery({
+    queryKey: ['recipes', 'similar-to-favorites', user?.id],
+    queryFn: () => recipesApi.similarToFavorites({ limit: 5 }),
     enabled: !!user?.id,
   });
-  const discoverRecipes = discoverData?.recipes ?? [];
+  const similarRecipes = similarData?.recipes ?? [];
 
   React.useEffect(() => {
     const el = loadMoreRef.current;
@@ -471,12 +474,12 @@ export default function Recipes() {
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4">
-            <h2 className="font-semibold text-slate-800 mb-3">{t('recipes.discoverRecipes')}</h2>
-            {discoverRecipes.length === 0 ? (
-              <p className="text-slate-500 text-sm">{t('recipes.noDiscoverRecipes')}</p>
+            <h2 className="font-semibold text-slate-800 mb-3">{t('recipes.similarToFavorites')}</h2>
+            {similarRecipes.length === 0 ? (
+              <p className="text-slate-500 text-sm">{t('recipes.noSimilarRecipes')}</p>
             ) : (
               <ul className="space-y-2">
-                {discoverRecipes.map((r) => (
+                {similarRecipes.map((r) => (
                   <li key={r.id}>
                     <Link
                       to={`/app/recipes/${r.id}`}

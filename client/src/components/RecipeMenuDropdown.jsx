@@ -77,7 +77,7 @@ export default function RecipeMenuDropdown({ recipe, isOpen, onToggle, onClose, 
       <button
         type="button"
         onClick={handleButtonClick}
-        className="flex items-center justify-center w-8 h-8 rounded-full bg-white/80 hover:bg-white text-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
+        className="flex items-center justify-center w-8 h-8 rounded-full bg-white/50 text-slate-500 hover:bg-white/90 hover:text-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1"
         aria-label={t('recipeMenu.ariaLabel')}
         aria-expanded={isOpen}
         aria-haspopup="true"
