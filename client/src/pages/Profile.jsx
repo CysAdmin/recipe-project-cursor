@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { auth as authApi } from '../api/client';
@@ -9,23 +9,10 @@ const LANGUAGE_LABELS = { de: 'Deutsch', en: 'English' };
 
 export default function Profile() {
   const { t, i18n } = useTranslation();
-  const { user, refreshUser } = useAuth();
-  const [displayName, setDisplayName] = useState(user?.display_name ?? '');
-
-  useEffect(() => {
-    setDisplayName(user?.display_name ?? '');
-  }, [user?.display_name]);
+  const { user } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newPasswordConfirm, setNewPasswordConfirm] = useState('');
-
-  const profileMutation = useMutation({
-    mutationFn: (body) => authApi.updateProfile(body),
-    onSuccess: (data) => {
-      refreshUser();
-      if (data?.user) setDisplayName(data.user.display_name ?? '');
-    },
-  });
 
   const passwordMutation = useMutation({
     mutationFn: () => authApi.changePassword(currentPassword, newPassword),
@@ -35,11 +22,6 @@ export default function Profile() {
       setNewPasswordConfirm('');
     },
   });
-
-  const handleProfileSubmit = (e) => {
-    e.preventDefault();
-    profileMutation.mutate({ display_name: displayName.trim() || null });
-  };
 
   const handlePasswordSubmit = (e) => {
     e.preventDefault();
@@ -79,33 +61,6 @@ export default function Profile() {
               </option>
             ))}
           </select>
-        </section>
-
-        <section className="rounded-xl border border-slate-200 bg-white shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-slate-800 mb-3">{t('profile.displayName')}</h2>
-          <form onSubmit={handleProfileSubmit} className="space-y-3">
-            <input
-              type="text"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder={t('profile.displayNamePlaceholder')}
-              className="w-full px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-            />
-            <p className="text-slate-500 text-sm">{t('profile.emailLogin')} {user?.email}</p>
-            <button
-              type="submit"
-              disabled={profileMutation.isPending}
-              className="px-4 py-2 rounded-lg bg-brand-600 text-white font-medium hover:bg-brand-700 transition-colors disabled:opacity-50"
-            >
-              {profileMutation.isPending ? t('common.saving') : t('common.save')}
-            </button>
-            {profileMutation.isSuccess && (
-              <p className="text-green-500 text-sm">{t('profile.saveSuccess')}</p>
-            )}
-            {profileMutation.isError && (
-              <p className="text-red-400 text-sm">{profileMutation.error?.message ?? t('profile.saveError')}</p>
-            )}
-          </form>
         </section>
 
         <section className="rounded-xl border border-slate-200 bg-white shadow-sm p-6">

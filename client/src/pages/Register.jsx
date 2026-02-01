@@ -17,6 +17,10 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (!displayName?.trim()) {
+      setError(t('register.errorDisplayNameRequired'));
+      return;
+    }
     if (password.length < 8) {
       setError(t('register.errorPasswordLength'));
       return;
@@ -30,7 +34,7 @@ export default function Register() {
       const { token, user: userData } = await auth.register({
         email,
         password,
-        display_name: displayName || undefined,
+        display_name: displayName.trim(),
       });
       login(token, userData);
       navigate('/app');
@@ -41,18 +45,22 @@ export default function Register() {
     }
   };
 
+  const inputClass =
+    'w-full px-4 py-2.5 rounded-lg bg-white border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500';
+  const labelClass = 'block text-sm font-medium text-slate-700 mb-1';
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-slate-50">
       <div className="w-full max-w-sm">
-        <h1 className="font-display text-2xl font-bold text-white mb-6 text-center">{t('register.title')}</h1>
+        <h1 className="font-display text-2xl font-bold text-slate-900 mb-6 text-center">{t('register.title')}</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+            <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
               {error}
             </div>
           )}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-slate-400 mb-1">
+            <label htmlFor="email" className={labelClass}>
               {t('register.email')}
             </label>
             <input
@@ -61,12 +69,12 @@ export default function Register() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className={inputClass}
               placeholder={t('register.placeholderEmail')}
             />
           </div>
           <div>
-            <label htmlFor="displayName" className="block text-sm font-medium text-slate-400 mb-1">
+            <label htmlFor="displayName" className={labelClass}>
               {t('register.displayName')}
             </label>
             <input
@@ -74,12 +82,13 @@ export default function Register() {
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              required
+              className={inputClass}
               placeholder={t('register.placeholderName')}
             />
           </div>
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-slate-400 mb-1">
+            <label htmlFor="password" className={labelClass}>
               {t('register.password')}
             </label>
             <input
@@ -89,20 +98,20 @@ export default function Register() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={8}
-              className="w-full px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              className={inputClass}
             />
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 rounded-lg bg-brand-500 text-white font-medium hover:bg-brand-600 disabled:opacity-50 transition-colors"
+            className="w-full py-2.5 rounded-lg bg-brand-600 text-white font-medium hover:bg-brand-700 disabled:opacity-50 transition-colors"
           >
             {loading ? t('register.submitting') : t('register.submit')}
           </button>
         </form>
-        <p className="mt-4 text-center text-slate-500 text-sm">
+        <p className="mt-4 text-center text-slate-600 text-sm">
           {t('register.hasAccount')}{' '}
-          <Link to="/login" className="text-brand-400 hover:underline">
+          <Link to="/login" className="text-brand-600 hover:underline font-medium">
             {t('register.logInLink')}
           </Link>
         </p>

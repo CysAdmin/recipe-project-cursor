@@ -36,8 +36,8 @@
     "goToDashboard": "Go to Dashboard",
     "logIn": "Log in",
     "signUp": "Sign up",
-    "headline": "Collect recipes. Plan meals. Shop smarter.",
-    "subline": "Import and manage recipes from your favorite sites—all in one place.",
+    "headline": "Collect recipes. Save favorites. All in one place.",
+    "subline": "Import and manage recipes from your favorite sites—organize with favorites and tags.",
     "getStartedFree": "Get started free",
     "footer": "Cookmarker — Recipe collection"
   },
@@ -55,7 +55,7 @@
   "register": {
     "title": "Sign up",
     "email": "Email",
-    "displayName": "Display name (optional)",
+    "displayName": "Display name",
     "password": "Password (min 8 chars, letters and numbers)",
     "submit": "Create account",
     "submitting": "Creating account…",
@@ -63,6 +63,7 @@
     "logInLink": "Log in",
     "placeholderName": "Your name",
     "placeholderEmail": "you@example.com",
+    "errorDisplayNameRequired": "Please enter a display name.",
     "errorPasswordLength": "Password must be at least 8 characters",
     "errorPasswordChars": "Password must contain both letters and numbers",
     "errorRegister": "Registration failed"

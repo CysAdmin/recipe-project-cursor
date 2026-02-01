@@ -15,6 +15,11 @@ router.post('/register', (req, res) => {
     return res.status(400).json({ error: 'Email and password are required' });
   }
 
+  const displayNameTrimmed = displayName != null ? String(displayName).trim() : '';
+  if (!displayNameTrimmed) {
+    return res.status(400).json({ error: 'Display name is required' });
+  }
+
   if (password.length < PASSWORD_MIN_LENGTH) {
     return res.status(400).json({ error: 'Password must be at least 8 characters' });
   }
@@ -31,7 +36,7 @@ router.post('/register', (req, res) => {
       INSERT INTO users (email, password_hash, display_name, is_admin)
       VALUES (?, ?, ?, 0)
     `);
-    const result = stmt.run(emailNorm, passwordHash, displayName?.trim() || null);
+    const result = stmt.run(emailNorm, passwordHash, displayNameTrimmed);
     const userId = result.lastInsertRowid;
 
     const token = signToken(userId, emailNorm);
@@ -40,7 +45,7 @@ router.post('/register', (req, res) => {
       user: {
         id: userId,
         email: emailNorm,
-        display_name: displayName?.trim() || null,
+        display_name: displayNameTrimmed,
         is_admin: 0,
       },
     });
