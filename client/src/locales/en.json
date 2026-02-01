@@ -76,6 +76,7 @@
     "password": "Password (min 8 chars, letters and numbers)",
     "submit": "Create account",
     "submitting": "Creating account…",
+    "checkEmail": "Registration successful. Please check your email and verify your account.",
     "hasAccount": "Already have an account?",
     "logInLink": "Log in",
     "placeholderName": "Your name",

@@ -1,14 +1,18 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import db from '../db/index.js';
 import { authMiddleware, signToken } from '../middleware/auth.js';
+import { sendVerificationEmail } from '../services/email.js';
 
 const router = express.Router();
 
 const PASSWORD_MIN_LENGTH = 8;
 const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const VERIFICATION_TOKEN_EXPIRY_HOURS = 24;
 
-router.post('/register', (req, res) => {
+router.post('/register', async (req, res) => {
   const { email, password, display_name: displayName } = req.body;
 
   if (!email || !password) {
@@ -30,24 +34,26 @@ router.post('/register', (req, res) => {
 
   const emailNorm = String(email).trim().toLowerCase();
   const passwordHash = bcrypt.hashSync(password, 10);
+  const verificationToken = crypto.randomBytes(32).toString('hex');
+  const expiresAt = new Date(Date.now() + VERIFICATION_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000)
+    .toISOString()
+    .replace('T', ' ')
+    .replace('Z', '');
 
   try {
     const stmt = db.prepare(`
-      INSERT INTO users (email, password_hash, display_name, is_admin)
-      VALUES (?, ?, ?, 0)
+      INSERT INTO users (email, password_hash, display_name, is_admin, verification_token, verification_token_expires_at)
+      VALUES (?, ?, ?, 0, ?, ?)
     `);
-    const result = stmt.run(emailNorm, passwordHash, displayNameTrimmed);
+    const result = stmt.run(emailNorm, passwordHash, displayNameTrimmed, verificationToken, expiresAt);
     const userId = result.lastInsertRowid;
 
-    const token = signToken(userId, emailNorm);
+    const verificationLink = `${FRONTEND_URL.replace(/\/$/, '')}/verify-email?token=${verificationToken}`;
+    await sendVerificationEmail(emailNorm, verificationLink);
+
     res.status(201).json({
-      token,
-      user: {
-        id: userId,
-        email: emailNorm,
-        display_name: displayNameTrimmed,
-        is_admin: 0,
-      },
+      message: 'Registration successful. Please check your email to verify your account.',
+      email: emailNorm,
     });
   } catch (err) {
     if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
@@ -65,10 +71,19 @@ router.post('/login', (req, res) => {
   }
 
   const emailNorm = String(email).trim().toLowerCase();
-  const row = db.prepare('SELECT id, email, password_hash, display_name, is_admin FROM users WHERE email = ?').get(emailNorm);
+  const row = db.prepare(
+    'SELECT id, email, password_hash, display_name, is_admin, email_verified_at FROM users WHERE email = ?'
+  ).get(emailNorm);
 
   if (!row || !bcrypt.compareSync(password, row.password_hash)) {
     return res.status(401).json({ error: 'Invalid email or password' });
+  }
+
+  if (!row.email_verified_at) {
+    return res.status(403).json({
+      error: 'Email not verified',
+      code: 'EMAIL_NOT_VERIFIED',
+    });
   }
 
   const token = signToken(row.id, row.email);
@@ -130,6 +145,30 @@ router.patch('/me', authMiddleware, (req, res) => {
       created_at: row.created_at,
     },
   });
+});
+
+router.get('/verify-email', (req, res) => {
+  const token = (req.query.token || '').trim();
+  if (!token) {
+    return res.status(400).json({ error: 'Token is required' });
+  }
+
+  const row = db.prepare(
+    'SELECT id FROM users WHERE verification_token = ? AND verification_token_expires_at > datetime(\'now\')'
+  ).get(token);
+
+  if (!row) {
+    return res.status(400).json({
+      error: 'Invalid or expired token',
+      code: 'INVALID_OR_EXPIRED_TOKEN',
+    });
+  }
+
+  db.prepare(
+    'UPDATE users SET email_verified_at = datetime(\'now\'), verification_token = NULL, verification_token_expires_at = NULL WHERE id = ?'
+  ).run(row.id);
+
+  res.json({ success: true, message: 'Email verified. You can now log in.' });
 });
 
 router.post('/change-password', authMiddleware, (req, res) => {

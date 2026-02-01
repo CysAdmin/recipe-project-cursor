@@ -67,7 +67,16 @@
     "noAccount": "Noch kein Konto?",
     "signUpLink": "Registrieren",
     "placeholderEmail": "max.mustermann@beispiel.local",
-    "errorLogin": "Anmeldung fehlgeschlagen"
+    "errorLogin": "Anmeldung fehlgeschlagen",
+    "errorEmailNotVerified": "Bitte bestätige zuerst deine E-Mail-Adresse über den Link in der E-Mail."
+  },
+  "verifyEmail": {
+    "title": "E-Mail bestätigen",
+    "success": "Deine E-Mail wurde bestätigt. Du kannst dich jetzt anmelden.",
+    "error": "Link ungültig oder abgelaufen.",
+    "missingToken": "Kein Bestätigungslink angegeben.",
+    "goToLogin": "Zum Anmelden",
+    "backToLogin": "Zurück zur Anmeldung"
   },
   "register": {
     "title": "Registrieren",
@@ -76,6 +85,7 @@
     "password": "Passwort (min. 8 Zeichen, Buchstaben und Zahlen)",
     "submit": "Konto erstellen",
     "submitting": "Konto wird erstellt…",
+    "checkEmail": "Registrierung erfolgreich. Bitte prüfe deine E-Mail und bestätige dein Konto.",
     "hasAccount": "Bereits ein Konto?",
     "logInLink": "Anmelden",
     "placeholderName": "Dein Name",

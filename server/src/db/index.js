@@ -50,4 +50,27 @@ try {
   if (!e.message.includes('duplicate column name')) throw e;
 }
 
+// Email verification (users)
+try {
+  db.exec('ALTER TABLE users ADD COLUMN email_verified_at DATETIME');
+} catch (e) {
+  if (!e.message.includes('duplicate column name')) throw e;
+}
+try {
+  db.exec('ALTER TABLE users ADD COLUMN verification_token VARCHAR(255)');
+} catch (e) {
+  if (!e.message.includes('duplicate column name')) throw e;
+}
+try {
+  db.exec('ALTER TABLE users ADD COLUMN verification_token_expires_at DATETIME');
+} catch (e) {
+  if (!e.message.includes('duplicate column name')) throw e;
+}
+// Mark existing users (no verification token) as verified so they can still log in
+try {
+  db.exec(
+    "UPDATE users SET email_verified_at = created_at WHERE email_verified_at IS NULL AND (verification_token IS NULL OR verification_token = '')"
+  );
+} catch (_) {}
+
 export default db;

@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { auth } from '../api/client';
 
 export default function Login() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
-  const navigate = useNavigate();
+  const successMessage = location.state?.message;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,7 +24,11 @@ export default function Login() {
       login(token, userData);
       navigate('/app');
     } catch (err) {
-      setError(err.data?.error || err.message || t('login.errorLogin'));
+      const msg =
+        err.data?.code === 'EMAIL_NOT_VERIFIED'
+          ? t('login.errorEmailNotVerified')
+          : err.data?.error || err.message || t('login.errorLogin');
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -33,6 +39,11 @@ export default function Login() {
       <div className="w-full max-w-sm">
         <h1 className="font-display text-2xl font-bold text-slate-800 mb-6 text-center">{t('login.title')}</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {successMessage && (
+            <div className="p-3 rounded-lg bg-brand-50 border border-brand-200 text-brand-800 text-sm">
+              {successMessage}
+            </div>
+          )}
           {error && (
             <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-600 text-sm">
               {error}

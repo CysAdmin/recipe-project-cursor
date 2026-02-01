@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '../context/AuthContext';
 import { auth } from '../api/client';
 
 export default function Register() {
@@ -11,7 +10,6 @@ export default function Register() {
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -31,13 +29,12 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      const { token, user: userData } = await auth.register({
+      await auth.register({
         email,
         password,
         display_name: displayName.trim(),
       });
-      login(token, userData);
-      navigate('/app');
+      navigate('/login', { state: { message: t('register.checkEmail') } });
     } catch (err) {
       setError(err.data?.error || err.message || t('register.errorRegister'));
     } finally {
