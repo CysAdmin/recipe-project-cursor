@@ -1,7 +1,7 @@
 {
   "name": "recipe-platform-server",
   "version": "1.0.0",
-  "description": "Recipe Collection & Meal Planning Platform - Backend",
+  "description": "Cookmarker - Recipe collection backend",
   "type": "module",
   "main": "src/index.js",
   "scripts": {

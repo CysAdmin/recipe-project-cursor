@@ -10,7 +10,7 @@
     "favorite": "Favorite"
   },
   "common": {
-    "appName": "Recipe Planner",
+    "appName": "Cookmarker",
     "loading": "Loading…",
     "save": "Save",
     "saving": "Saving…",
@@ -39,7 +39,7 @@
     "headline": "Collect recipes. Plan meals. Shop smarter.",
     "subline": "Import and manage recipes from your favorite sites—all in one place.",
     "getStartedFree": "Get started free",
-    "footer": "Recipe Collection & Meal Planning Platform — Local development version"
+    "footer": "Cookmarker — Recipe collection"
   },
   "login": {
     "title": "Log in",

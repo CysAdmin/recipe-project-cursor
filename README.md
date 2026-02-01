@@ -1,6 +1,6 @@
-# Recipe Collection & Meal Planning Platform
+# Cookmarker
 
-Local development version of the Recipe Collection & Meal Planning web app (per PRD v1.0).
+Recipe collection app — save and manage recipes from your favorite sites (per PRD v1.0).
 
 ## Features (MVP)
 

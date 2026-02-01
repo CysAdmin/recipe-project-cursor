@@ -417,7 +417,7 @@ router.post('/', authMiddleware, (req, res) => {
   const ingredients = Array.isArray(body.ingredients) ? body.ingredients : [];
   const ingredientsJson = JSON.stringify(ingredients);
 
-  const sourceUrl = body.source_url?.trim() || `https://recipe-platform.local/manual/${Date.now()}`;
+  const sourceUrl = body.source_url?.trim() || `https://cookmarker.local/manual/${Date.now()}`;
   const existing = db.prepare('SELECT id FROM recipes WHERE source_url = ?').get(sourceUrl);
   if (existing) {
     db.prepare(

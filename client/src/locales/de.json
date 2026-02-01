@@ -10,7 +10,7 @@
     "favorite": "Favorit"
   },
   "common": {
-    "appName": "Recipe Planner",
+    "appName": "Cookmarker",
     "loading": "Laden…",
     "save": "Speichern",
     "saving": "Speichern…",
@@ -39,7 +39,7 @@
     "headline": "Rezepte sammeln. Mahlzeiten planen. Besser einkaufen.",
     "subline": "Rezepte von deinen Lieblingsseiten importieren, wöchentlichen Speiseplan erstellen und Einkaufsliste generieren – alles an einem Ort.",
     "getStartedFree": "Kostenlos starten",
-    "footer": "Rezept-Sammlung & Meal-Planning — Lokale Entwicklung"
+    "footer": "Cookmarker — Rezept-Sammlung"
   },
   "login": {
     "title": "Anmelden",

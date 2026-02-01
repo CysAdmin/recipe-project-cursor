@@ -11,7 +11,7 @@ const BASE_URL = 'https://www.chefkoch.de';
 const SOURCE_NAME = 'Chefkoch';
 
 const DEFAULT_HEADERS = {
-  'User-Agent': 'RecipePlatform/1.0 (Meal Planning; +https://recipe-platform.local)',
+  'User-Agent': 'Cookmarker/1.0 (Recipe collection; +https://cookmarker.local)',
   Accept: 'text/html,application/xhtml+xml',
   'Accept-Language': 'de-DE,de;q=0.9,en;q=0.8',
 };
