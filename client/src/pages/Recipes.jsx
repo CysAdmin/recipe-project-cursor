@@ -429,7 +429,7 @@ export default function Recipes() {
             <h2 className="font-semibold text-slate-800 mb-4">{t('recipes.todayCook')}</h2>
             <nav className="space-y-2" aria-label={t('recipes.todayCook')}>
               <Link
-                to="/app/recipes?max_minutes=30"
+                to={quickByTime && !favoritesOnly ? '/app/recipes' : '/app/recipes?max_minutes=30'}
                 className={`flex items-center gap-3 w-full py-3 px-3 rounded-lg text-left font-medium transition-colors ${
                   quickByTime && !favoritesOnly
                     ? 'bg-brand-100 text-brand-800 border border-brand-200'
@@ -443,7 +443,7 @@ export default function Recipes() {
                 <IconChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
               </Link>
               <Link
-                to="/app/recipes?favorites=1"
+                to={favoritesOnly ? '/app/recipes' : '/app/recipes?favorites=1'}
                 className={`flex items-center gap-3 w-full py-3 px-3 rounded-lg text-left font-medium transition-colors ${
                   favoritesOnly
                     ? 'bg-brand-100 text-brand-800 border border-brand-200'
