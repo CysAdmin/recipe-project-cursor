@@ -35,8 +35,17 @@ export default function AdminUsers() {
   if (isLoading) return <p className="text-slate-500">{t('admin.loadingUsers')}</p>;
   if (error) return <p className="text-red-600">{error.message}</p>;
 
+  const verifyError = verifyEmailMutation.isError && (verifyEmailMutation.error?.message || verifyEmailMutation.error?.data?.error);
+  const deleteError = deleteMutation.isError && (deleteMutation.error?.message || deleteMutation.error?.data?.error);
+
   return (
     <div className="space-y-4">
+      {(verifyError || deleteError) && (
+        <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+          {verifyError && <p>{verifyError}</p>}
+          {deleteError && <p>{deleteError}</p>}
+        </div>
+      )}
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold text-slate-800">{t('admin.users')}</h2>
         <Link
@@ -74,8 +83,9 @@ export default function AdminUsers() {
                       onClick={() => verifyEmailMutation.mutate(u.id)}
                       disabled={verifyEmailMutation.isPending}
                       className="text-brand-600 hover:underline font-medium disabled:opacity-50"
+                      title={verifyEmailMutation.isPending ? t('common.loading') : ''}
                     >
-                      {t('admin.verifyEmail')}
+                      {verifyEmailMutation.isPending ? t('common.loading') : t('admin.verifyEmail')}
                     </button>
                   )}
                 </td>
