@@ -1,0 +1,26 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@v4
+
+      - name: SSH Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd /var/www/recipe-app
+            git pull
+            cd /var/www/recipe-app/server && npm install
+            pm2 restart recipe-api
