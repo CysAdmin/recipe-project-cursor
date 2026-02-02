@@ -70,7 +70,7 @@ router.patch('/users/:id', (req, res) => {
   }
 
   const displayNameVal = displayName !== undefined ? (displayName?.trim() || null) : row.display_name;
-  if (displayNameVal) {
+  if (displayName !== undefined && displayNameVal) {
     const existing = db.prepare(
       'SELECT id FROM users WHERE LOWER(display_name) = LOWER(?) AND id != ?'
     ).get(displayNameVal, id);
