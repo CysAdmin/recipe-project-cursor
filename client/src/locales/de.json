@@ -100,6 +100,24 @@
     "passwordsMismatch": "Die Passwörter stimmen nicht überein.",
     "backToLogin": "Zurück zur Anmeldung"
   },
+  "onboarding": {
+    "step1Title": "Willkommen bei SimplyKeepIt!",
+    "step1Message": "Dein digitales Rezepte-Notizbuch. In wenigen Sekunden bist du startklar.",
+    "step1Cta": "Los geht's!",
+    "step2Title": "Rezepte entdecken",
+    "step2Message": "Suche und speichere Rezepte von beliebten Kochseiten wie GuteKueche, Chefkoch und mehr. Füge eine URL ein oder suche nach Name.",
+    "step2Cta": "Weiter",
+    "step3Title": "Organisieren & taggen",
+    "step3Message": "Markiere Favoriten, vergib Tags (Schnell, Vegetarisch, Comfort Food) und füge persönliche Notizen hinzu – so machst du Rezepte zu deinen eigenen.",
+    "step3Cta": "Weiter",
+    "step4Title": "Bereit zum Kochen!",
+    "step4Message": "Starte mit deinem ersten Rezept. Nutze den grünen „+“-Button oder erkunde die Entdecken-Seite.",
+    "step4CtaPrimary": "Mein erstes Rezept hinzufügen",
+    "step4CtaSecondary": "Später",
+    "step4DontShowAgain": "Nicht wieder anzeigen",
+    "skip": "Überspringen",
+    "back": "Zurück"
+  },
   "register": {
     "title": "Registrieren",
     "email": "E-Mail",
@@ -270,6 +288,8 @@
   "profile": {
     "title": "Profil & Einstellungen",
     "subline": "Nutzername und Passwort verwalten.",
+    "showTutorial": "Tutorial anzeigen",
+    "showTutorialDesc": "Die Einführung erneut anzeigen.",
     "language": "Sprache",
     "languageDesc": "Sprache der Oberfläche.",
     "displayName": "Nutzername",
@@ -299,6 +319,8 @@
     "admin": "Admin",
     "created": "Erstellt",
     "actions": "Aktionen",
+    "emailVerified": "E-Mail verifiziert",
+    "verifyEmail": "Als verifiziert markieren",
     "loadingUsers": "Lade Benutzer…",
     "loadingRecipes": "Lade Rezepte…",
     "editUser": "Benutzer bearbeiten",

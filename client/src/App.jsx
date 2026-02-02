@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { OnboardingProvider } from './context/OnboardingContext';
 import Layout from './components/Layout';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
@@ -44,7 +45,9 @@ function AppRoutes() {
         path="/app"
         element={
           <PrivateRoute>
-            <Layout />
+            <OnboardingProvider>
+              <Layout />
+            </OnboardingProvider>
           </PrivateRoute>
         }
       >

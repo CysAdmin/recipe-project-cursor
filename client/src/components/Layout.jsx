@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
+import { useOnboarding } from '../context/OnboardingContext';
+import { auth as authApi } from '../api/client';
 import IdleTracker from './IdleTracker';
+import OnboardingModal from './OnboardingModal';
 
 function IconHome({ className = 'w-6 h-6', active }) {
   const c = active ? 'text-brand-600' : 'text-slate-400';
@@ -48,9 +51,41 @@ function IconFolder({ className = 'w-6 h-6', active }) {
 
 export default function Layout() {
   const { t } = useTranslation();
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
+  const { isTutorialForced, closeTutorial } = useOnboarding();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  const showOnboarding = user && (!user.onboarding_completed || isTutorialForced);
+
+  const handleOnboardingComplete = useCallback(async () => {
+    if (isTutorialForced) {
+      closeTutorial();
+      return;
+    }
+    try {
+      await authApi.completeOnboarding();
+      await refreshUser();
+      closeTutorial();
+      navigate('/app/search');
+    } catch {
+      closeTutorial();
+    }
+  }, [isTutorialForced, closeTutorial, refreshUser, navigate]);
+
+  const handleOnboardingSkip = useCallback(async () => {
+    if (isTutorialForced) {
+      closeTutorial();
+      return;
+    }
+    try {
+      await authApi.completeOnboarding();
+      await refreshUser();
+      closeTutorial();
+    } catch {
+      closeTutorial();
+    }
+  }, [isTutorialForced, closeTutorial, refreshUser]);
 
   const nav = [
     { to: '/app', end: true, labelKey: 'nav.dashboard' },
@@ -77,6 +112,12 @@ export default function Layout() {
   return (
     <>
       <IdleTracker />
+      <OnboardingModal
+        isOpen={!!showOnboarding}
+        isReplay={isTutorialForced}
+        onComplete={handleOnboardingComplete}
+        onSkip={handleOnboardingSkip}
+      />
       <div className="min-h-screen flex flex-col bg-slate-50">
       {/* Top header: full nav on desktop, logo + Profil on mobile */}
       <header className="border-b border-slate-200 bg-white sticky top-0 z-20">

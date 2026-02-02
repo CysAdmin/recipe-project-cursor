@@ -34,6 +34,8 @@ export const auth = {
     api('/auth/resend-verification-email', { method: 'POST', body: JSON.stringify({ email }) }),
   me: () => api('/auth/me'),
   updateProfile: (body) => api('/auth/me', { method: 'PATCH', body: JSON.stringify(body) }),
+  completeOnboarding: () =>
+    api('/auth/me', { method: 'PATCH', body: JSON.stringify({ onboarding_completed: true }) }),
   changePassword: (currentPassword, newPassword) =>
     api('/auth/change-password', {
       method: 'POST',

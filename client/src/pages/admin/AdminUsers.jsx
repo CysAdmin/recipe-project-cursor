@@ -23,6 +23,13 @@ export default function AdminUsers() {
     },
   });
 
+  const verifyEmailMutation = useMutation({
+    mutationFn: (id) => admin.users.update(id, { email_verified: true }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+    },
+  });
+
   const users = data?.users ?? [];
 
   if (isLoading) return <p className="text-slate-500">{t('admin.loadingUsers')}</p>;
@@ -46,6 +53,7 @@ export default function AdminUsers() {
               <th className="px-4 py-3">{t('admin.id')}</th>
               <th className="px-4 py-3">{t('admin.email')}</th>
               <th className="px-4 py-3">{t('admin.displayName')}</th>
+              <th className="px-4 py-3">{t('admin.emailVerified')}</th>
               <th className="px-4 py-3">{t('admin.admin')}</th>
               <th className="px-4 py-3">{t('admin.created')}</th>
               <th className="px-4 py-3">{t('admin.actions')}</th>
@@ -57,6 +65,20 @@ export default function AdminUsers() {
                 <td className="px-4 py-2">{u.id}</td>
                 <td className="px-4 py-2">{u.email}</td>
                 <td className="px-4 py-2">{u.display_name || t('common.dash')}</td>
+                <td className="px-4 py-2">
+                  {u.email_verified ? (
+                    <span className="text-brand-600">{t('common.yes')}</span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => verifyEmailMutation.mutate(u.id)}
+                      disabled={verifyEmailMutation.isPending}
+                      className="text-brand-600 hover:underline font-medium disabled:opacity-50"
+                    >
+                      {t('admin.verifyEmail')}
+                    </button>
+                  )}
+                </td>
                 <td className="px-4 py-2">{u.is_admin ? t('common.yes') : t('common.no')}</td>
                 <td className="px-4 py-2">{u.created_at ? new Date(u.created_at).toLocaleDateString() : t('common.dash')}</td>
                 <td className="px-4 py-2 flex gap-2">

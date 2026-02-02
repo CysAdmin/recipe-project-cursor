@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { auth as authApi } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { useOnboarding } from '../context/OnboardingContext';
 import { STORAGE_KEY, supportedLngs } from '../i18n';
 
 const LANGUAGE_LABELS = { de: 'Deutsch', en: 'English' };
@@ -10,6 +11,7 @@ const LANGUAGE_LABELS = { de: 'Deutsch', en: 'English' };
 export default function Profile() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const { openTutorial } = useOnboarding();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newPasswordConfirm, setNewPasswordConfirm] = useState('');
@@ -61,6 +63,18 @@ export default function Profile() {
               </option>
             ))}
           </select>
+        </section>
+
+        <section className="rounded-xl border border-slate-200 bg-white shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-slate-800 mb-3">{t('profile.showTutorial')}</h2>
+          <p className="text-slate-500 text-sm mb-3">{t('profile.showTutorialDesc')}</p>
+          <button
+            type="button"
+            onClick={openTutorial}
+            className="px-4 py-2 rounded-lg border border-slate-200 text-slate-700 font-medium hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+          >
+            {t('profile.showTutorial')}
+          </button>
         </section>
 
         <section className="rounded-xl border border-slate-200 bg-white shadow-sm p-6">

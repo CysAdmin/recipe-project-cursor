@@ -44,8 +44,8 @@ router.post('/register', async (req, res) => {
 
   try {
     const stmt = db.prepare(`
-      INSERT INTO users (email, password_hash, display_name, is_admin, verification_token, verification_token_expires_at)
-      VALUES (?, ?, ?, 0, ?, ?)
+      INSERT INTO users (email, password_hash, display_name, is_admin, verification_token, verification_token_expires_at, onboarding_completed)
+      VALUES (?, ?, ?, 0, ?, ?, 0)
     `);
     const result = stmt.run(emailNorm, passwordHash, displayNameTrimmed, verificationToken, expiresAt);
     const userId = result.lastInsertRowid;
@@ -74,7 +74,7 @@ router.post('/login', (req, res) => {
 
   const emailNorm = String(email).trim().toLowerCase();
   const row = db.prepare(
-    'SELECT id, email, password_hash, display_name, is_admin, email_verified_at FROM users WHERE email = ?'
+    'SELECT id, email, password_hash, display_name, is_admin, email_verified_at, onboarding_completed FROM users WHERE email = ?'
   ).get(emailNorm);
 
   if (!row || !bcrypt.compareSync(password, row.password_hash)) {
@@ -96,12 +96,13 @@ router.post('/login', (req, res) => {
       email: row.email,
       display_name: row.display_name,
       is_admin: row.is_admin ? 1 : 0,
+      onboarding_completed: row.onboarding_completed ? 1 : 0,
     },
   });
 });
 
 router.get('/me', authMiddleware, (req, res) => {
-  const row = db.prepare('SELECT id, email, display_name, is_admin, created_at FROM users WHERE id = ?').get(req.userId);
+  const row = db.prepare('SELECT id, email, display_name, is_admin, created_at, onboarding_completed FROM users WHERE id = ?').get(req.userId);
   if (!row) return res.status(401).json({ error: 'User not found' });
   res.json({
     user: {
@@ -110,34 +111,50 @@ router.get('/me', authMiddleware, (req, res) => {
       display_name: row.display_name,
       is_admin: row.is_admin ? 1 : 0,
       created_at: row.created_at,
+      onboarding_completed: row.onboarding_completed ? 1 : 0,
     },
   });
 });
 
 router.patch('/me', authMiddleware, (req, res) => {
-  const { display_name: displayName } = req.body;
+  const { display_name: displayName, onboarding_completed: onboardingCompleted } = req.body;
   const userId = req.userId;
-  const value = displayName != null ? String(displayName).trim() || null : undefined;
-  if (value === undefined) {
-    return res.status(400).json({ error: 'display_name is required' });
-  }
-  if (value) {
-    const existing = db.prepare(
-      'SELECT id FROM users WHERE LOWER(display_name) = LOWER(?) AND id != ?'
-    ).get(value, userId);
-    if (existing) {
-      return res.status(409).json({ error: 'Nutzername bereits vergeben' });
+  const updates = [];
+  const params = [];
+
+  if (displayName !== undefined) {
+    const value = String(displayName).trim() || null;
+    if (value) {
+      const existing = db.prepare(
+        'SELECT id FROM users WHERE LOWER(display_name) = LOWER(?) AND id != ?'
+      ).get(value, userId);
+      if (existing) {
+        return res.status(409).json({ error: 'Nutzername bereits vergeben' });
+      }
     }
+    updates.push('display_name = ?');
+    params.push(value);
   }
+
+  if (typeof onboardingCompleted === 'boolean') {
+    updates.push('onboarding_completed = ?');
+    params.push(onboardingCompleted ? 1 : 0);
+  }
+
+  if (updates.length === 0) {
+    return res.status(400).json({ error: 'display_name or onboarding_completed is required' });
+  }
+
+  params.push(userId);
   try {
-    db.prepare('UPDATE users SET display_name = ? WHERE id = ?').run(value, userId);
+    db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...params);
   } catch (err) {
     if (err.code === 'SQLITE_CONSTRAINT') {
       return res.status(400).json({ error: 'Invalid value' });
     }
     throw err;
   }
-  const row = db.prepare('SELECT id, email, display_name, is_admin, created_at FROM users WHERE id = ?').get(userId);
+  const row = db.prepare('SELECT id, email, display_name, is_admin, created_at, onboarding_completed FROM users WHERE id = ?').get(userId);
   res.json({
     user: {
       id: row.id,
@@ -145,6 +162,7 @@ router.patch('/me', authMiddleware, (req, res) => {
       display_name: row.display_name,
       is_admin: row.is_admin ? 1 : 0,
       created_at: row.created_at,
+      onboarding_completed: row.onboarding_completed ? 1 : 0,
     },
   });
 });
