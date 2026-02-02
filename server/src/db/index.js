@@ -85,6 +85,13 @@ try {
   if (!e.message.includes('duplicate column name')) throw e;
 }
 
+// Onboarding (users) — first-time user tour
+try {
+  db.exec('ALTER TABLE users ADD COLUMN onboarding_completed INTEGER DEFAULT 0');
+} catch (e) {
+  if (!e.message.includes('duplicate column name')) throw e;
+}
+
 // User rating 1–5 per recipe (user_recipes)
 try {
   db.exec('ALTER TABLE user_recipes ADD COLUMN rating INTEGER');

@@ -14,7 +14,7 @@ router.use(adminMiddleware);
 // GET /api/admin/users — list all users
 router.get('/users', (req, res) => {
   const rows = db.prepare(`
-    SELECT id, email, display_name, is_admin, created_at
+    SELECT id, email, display_name, is_admin, created_at, email_verified_at
     FROM users
     ORDER BY id
   `).all();
@@ -25,6 +25,7 @@ router.get('/users', (req, res) => {
       display_name: r.display_name,
       is_admin: !!r.is_admin,
       created_at: r.created_at,
+      email_verified: !!r.email_verified_at,
     })),
   });
 });
@@ -59,7 +60,7 @@ router.patch('/users/:id', (req, res) => {
   const row = db.prepare('SELECT id, email, display_name, is_admin FROM users WHERE id = ?').get(id);
   if (!row) return res.status(404).json({ error: 'User not found' });
 
-  const { email, display_name: displayName, is_admin: isAdmin, new_password: newPassword } = req.body;
+  const { email, display_name: displayName, is_admin: isAdmin, new_password: newPassword, email_verified: emailVerified } = req.body;
 
   let emailNorm = row.email;
   if (email != null && String(email).trim()) {
@@ -99,6 +100,11 @@ router.patch('/users/:id', (req, res) => {
       return res.status(400).json({ error: 'New password must contain both letters and numbers' });
     updates.push('password_hash = ?');
     params.push(bcrypt.hashSync(newPassword, 10));
+  }
+  if (typeof emailVerified === 'boolean' && emailVerified) {
+    updates.push('email_verified_at = datetime(\'now\')');
+    updates.push('verification_token = NULL');
+    updates.push('verification_token_expires_at = NULL');
   }
   if (updates.length) {
     params.push(id);

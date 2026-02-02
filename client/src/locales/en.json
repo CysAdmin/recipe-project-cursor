@@ -92,6 +92,24 @@
     "passwordsMismatch": "Passwords do not match.",
     "backToLogin": "Back to log in"
   },
+  "onboarding": {
+    "step1Title": "Welcome to SimplyKeepIt!",
+    "step1Message": "Your digital recipe notebook. Let's get you started in just a few seconds.",
+    "step1Cta": "Let's go!",
+    "step2Title": "Discover recipes",
+    "step2Message": "Search and save recipes from popular cooking websites like GuteKueche, Chefkoch and more. Just paste a URL or search by name.",
+    "step2Cta": "Next",
+    "step3Title": "Organize & tag",
+    "step3Message": "Mark favorites, add tags (Quick, Vegetarian, Comfort Food), and add personal notes to make recipes your own.",
+    "step3Cta": "Next",
+    "step4Title": "Ready to cook!",
+    "step4Message": "Start by adding your first recipe. Use the green '+' button or explore the Discover page.",
+    "step4CtaPrimary": "Add my first recipe",
+    "step4CtaSecondary": "Skip for now",
+    "step4DontShowAgain": "Don't show this again",
+    "skip": "Skip",
+    "back": "Back"
+  },
   "register": {
     "title": "Sign up",
     "email": "Email",
@@ -262,6 +280,8 @@
   "profile": {
     "title": "Profile & Settings",
     "subline": "Manage display name and password.",
+    "showTutorial": "Show tutorial",
+    "showTutorialDesc": "Show the intro tour again.",
     "language": "Language",
     "languageDesc": "Interface language.",
     "displayName": "Display name",
@@ -291,6 +311,8 @@
     "admin": "Admin",
     "created": "Created",
     "actions": "Actions",
+    "emailVerified": "Email verified",
+    "verifyEmail": "Mark as verified",
     "loadingUsers": "Loading users…",
     "loadingRecipes": "Loading recipes…",
     "editUser": "Edit user",
