@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { recipes as recipesApi } from '../api/client';
+import { useAuth } from '../context/AuthContext';
 import RecipeSource from '../components/RecipeSource';
 import RecipeTags from '../components/RecipeTags';
 import { RecipeTagPillsEditable } from '../components/TagFilterPills';
@@ -21,10 +22,25 @@ function IconHeartOutline({ className = 'w-5 h-5' }) {
     </svg>
   );
 }
+function IconStarFilled({ className = 'w-5 h-5' }) {
+  return (
+    <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+    </svg>
+  );
+}
+function IconStarOutline({ className = 'w-5 h-5' }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
+      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+    </svg>
+  );
+}
 
 export default function RecipeDetail() {
   const { t } = useTranslation();
   const { id } = useParams();
+  const { user } = useAuth();
   const [notes, setNotes] = useState('');
   const queryClient = useQueryClient();
 
@@ -43,7 +59,12 @@ export default function RecipeDetail() {
 
   const updateUserRecipe = useMutation({
     mutationFn: (body) => recipesApi.updateUserRecipe(id, body),
-    onSuccess: () => {
+    onSuccess: (res) => {
+      queryClient.setQueryData(['recipe', id], (prev) => ({
+        ...prev,
+        recipe: res.recipe ?? prev?.recipe,
+        user_recipe: res.user_recipe ?? prev?.user_recipe,
+      }));
       queryClient.invalidateQueries({ queryKey: ['recipe', id] });
       queryClient.invalidateQueries({ queryKey: ['recipes', 'mine'] });
     },
@@ -138,14 +159,56 @@ export default function RecipeDetail() {
         </div>
         <div className="p-6">
           <h1 className="font-display text-2xl font-bold text-slate-800 mb-2">{recipe.title}</h1>
-          <div className="flex flex-wrap items-center gap-4 text-slate-500 text-sm mb-2">
-            <RecipeSource recipe={recipe} className="text-slate-500" />
-            {recipe.prep_time != null && <span>{t('recipeDetail.prep')}: {recipe.prep_time} {t('recipeDetail.min')}</span>}
-            {recipe.cook_time != null && <span>{t('recipeDetail.cook')}: {recipe.cook_time} {t('recipeDetail.min')}</span>}
-            {recipe.servings != null && <span>{recipe.servings} {t('recipeDetail.servings')}</span>}
-            {recipe.save_count != null && recipe.save_count > 1 && (
-              <span>{recipe.save_count} {t('recipeDetail.saved')}</span>
-            )}
+          <div className="flex flex-wrap items-center justify-between gap-4 text-slate-500 text-sm mb-2">
+            <div className="flex flex-wrap items-center gap-4">
+              <RecipeSource recipe={recipe} className="text-slate-500" />
+              {recipe.prep_time != null && <span>{t('recipeDetail.prep')}: {recipe.prep_time} {t('recipeDetail.min')}</span>}
+              {recipe.cook_time != null && <span>{t('recipeDetail.cook')}: {recipe.cook_time} {t('recipeDetail.min')}</span>}
+              {recipe.servings != null && <span>{recipe.servings} {t('recipeDetail.servings')}</span>}
+              {recipe.save_count != null && recipe.save_count > 1 && (
+                <span>{recipe.save_count} {t('recipeDetail.saved')}</span>
+              )}
+            </div>
+            <div className="flex flex-col items-end gap-1">
+              <div className="flex items-center gap-1.5 text-slate-600">
+                {recipe.rating_count != null && recipe.rating_count > 0 ? (
+                  <>
+                    <span className="font-medium">{Number(recipe.average_rating).toFixed(1)}</span>
+                    <IconStarFilled className="w-4 h-4 text-amber-500" />
+                    <span className="text-slate-500 text-xs">
+                      ({t('recipeDetail.ratingCount', { count: recipe.rating_count })})
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-slate-400 text-xs">{t('recipeDetail.noRatingsYet')}</span>
+                )}
+              </div>
+              {user && (
+                <div className="flex items-center gap-0.5" role="group" aria-label={t('recipeDetail.yourRating')}>
+                  {[1, 2, 3, 4, 5].map((n) => {
+                    const myRating = userRecipe?.rating ?? 0;
+                    const filled = n <= myRating;
+                    return (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => updateUserRecipe.mutate({ rating: n })}
+                        disabled={updateUserRecipe.isPending}
+                        className="p-0.5 rounded focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-1 disabled:opacity-50 text-amber-500 hover:text-amber-600"
+                        aria-label={`${n} ${n === 1 ? 'Stern' : 'Sterne'}`}
+                        aria-pressed={filled}
+                      >
+                        {filled ? (
+                          <IconStarFilled className="w-5 h-5" />
+                        ) : (
+                          <IconStarOutline className="w-5 h-5 text-slate-300 hover:text-amber-400" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
           {userRecipe ? (
             <div className="mb-4">

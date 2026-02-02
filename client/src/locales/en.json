@@ -179,7 +179,12 @@
     "loading": "Loading recipe…",
     "notFound": "Recipe not found.",
     "savedInList": "Saved",
-    "notSavedInList": "Not saved"
+    "notSavedInList": "Not saved",
+    "ratingLabel": "Rating",
+    "averageRating": "Average",
+    "ratingCount": "{{count}} ratings",
+    "noRatingsYet": "No ratings yet",
+    "yourRating": "Your rating"
   },
   "search": {
     "title": "Discover recipes",

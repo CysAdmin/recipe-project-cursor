@@ -139,7 +139,7 @@ router.post('/import', authMiddleware, async (req, res) => {
 
     // Ensure user-recipe link
     db.prepare(
-      `INSERT OR IGNORE INTO user_recipes (user_id, recipe_id, is_favorite, personal_notes, saved_at) VALUES (?, ?, 0, NULL, datetime('now'))`
+      `INSERT OR IGNORE INTO user_recipes (user_id, recipe_id, is_favorite, personal_notes, saved_at, rating) VALUES (?, ?, 0, NULL, datetime('now'), NULL)`
     ).run(userId, recipeId);
 
     const row = db.prepare(`
@@ -395,7 +395,9 @@ router.get('/:id', (req, res) => {
 
   const row = db.prepare(`
     SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
-           (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count
+           (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count,
+           (SELECT ROUND(AVG(rating), 1) FROM user_recipes WHERE recipe_id = r.id AND rating IS NOT NULL) AS average_rating,
+           (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id AND rating IS NOT NULL) AS rating_count
     FROM recipes r WHERE r.id = ?
   `).get(id);
 
@@ -404,7 +406,7 @@ router.get('/:id', (req, res) => {
   const userId = getUserIdFromHeader(req);
   let userRecipe = null;
   if (userId) {
-    userRecipe = db.prepare('SELECT is_favorite, personal_notes, saved_at, tags FROM user_recipes WHERE user_id = ? AND recipe_id = ?').get(userId, id);
+    userRecipe = db.prepare('SELECT is_favorite, personal_notes, saved_at, tags, rating FROM user_recipes WHERE user_id = ? AND recipe_id = ?').get(userId, id);
   }
 
   // Tags only for the user who set them (from user_recipes)
@@ -412,7 +414,12 @@ router.get('/:id', (req, res) => {
   res.json({
     recipe: recipePayload,
     user_recipe: userRecipe
-      ? { is_favorite: !!userRecipe.is_favorite, personal_notes: userRecipe.personal_notes, saved_at: userRecipe.saved_at }
+      ? {
+          is_favorite: !!userRecipe.is_favorite,
+          personal_notes: userRecipe.personal_notes,
+          saved_at: userRecipe.saved_at,
+          rating: userRecipe.rating != null ? userRecipe.rating : null,
+        }
       : null,
   });
 });
@@ -431,7 +438,7 @@ router.post('/', authMiddleware, (req, res) => {
   const existing = db.prepare('SELECT id FROM recipes WHERE source_url = ?').get(sourceUrl);
   if (existing) {
     db.prepare(
-      `INSERT OR IGNORE INTO user_recipes (user_id, recipe_id, is_favorite, personal_notes, saved_at) VALUES (?, ?, 0, NULL, datetime('now'))`
+      `INSERT OR IGNORE INTO user_recipes (user_id, recipe_id, is_favorite, personal_notes, saved_at, rating) VALUES (?, ?, 0, NULL, datetime('now'), NULL)`
     ).run(userId, existing.id);
     const row = db.prepare(`
       SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
@@ -458,7 +465,7 @@ router.post('/', authMiddleware, (req, res) => {
   );
   const recipeId = result.lastInsertRowid;
   db.prepare(
-    `INSERT INTO user_recipes (user_id, recipe_id, is_favorite, personal_notes, saved_at) VALUES (?, ?, 0, NULL, datetime('now'))`
+    `INSERT INTO user_recipes (user_id, recipe_id, is_favorite, personal_notes, saved_at, rating) VALUES (?, ?, 0, NULL, datetime('now'), NULL)`
   ).run(userId, recipeId);
 
   const row = db.prepare(`
@@ -479,7 +486,7 @@ router.post('/:id/save', authMiddleware, (req, res) => {
   if (!recipe) return res.status(404).json({ error: 'Recipe not found' });
 
   db.prepare(
-    `INSERT OR IGNORE INTO user_recipes (user_id, recipe_id, is_favorite, personal_notes, saved_at) VALUES (?, ?, 0, NULL, datetime('now'))`
+    `INSERT OR IGNORE INTO user_recipes (user_id, recipe_id, is_favorite, personal_notes, saved_at, rating) VALUES (?, ?, 0, NULL, datetime('now'), NULL)`
   ).run(userId, recipeId);
 
   const row = db.prepare(`
@@ -522,33 +529,88 @@ router.patch('/:id', authMiddleware, (req, res) => {
     SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
            (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count FROM recipes r WHERE r.id = ?
   `).get(recipeId);
-  const userRecipe = db.prepare('SELECT is_favorite, personal_notes, saved_at, tags FROM user_recipes WHERE user_id = ? AND recipe_id = ?').get(userId, recipeId);
+  const userRecipe = db.prepare('SELECT is_favorite, personal_notes, saved_at, tags, rating FROM user_recipes WHERE user_id = ? AND recipe_id = ?').get(
+    userId,
+    recipeId
+  );
   const recipePayload = rowToRecipe(row, userRecipe && userRecipe.tags != null ? userRecipe.tags : '[]');
   res.json({
     recipe: recipePayload,
     user_recipe: userRecipe
-      ? { is_favorite: !!userRecipe.is_favorite, personal_notes: userRecipe.personal_notes, saved_at: userRecipe.saved_at }
+      ? {
+          is_favorite: !!userRecipe.is_favorite,
+          personal_notes: userRecipe.personal_notes,
+          saved_at: userRecipe.saved_at,
+          rating: userRecipe.rating != null ? userRecipe.rating : null,
+        }
       : null,
   });
 });
 
-// PATCH /api/recipes/:id/user-recipe — update favorite / personal notes
+// PATCH /api/recipes/:id/user-recipe — update favorite / personal notes / rating
 router.patch('/:id/user-recipe', authMiddleware, (req, res) => {
   const userId = req.userId;
   const recipeId = parseInt(req.params.id, 10);
   if (Number.isNaN(recipeId)) return res.status(400).json({ error: 'Invalid recipe ID' });
 
-  const { is_favorite: isFavorite, personal_notes: personalNotes } = req.body;
+  const recipe = db.prepare('SELECT id FROM recipes WHERE id = ?').get(recipeId);
+  if (!recipe) return res.status(404).json({ error: 'Recipe not found' });
+
+  const { is_favorite: isFavorite, personal_notes: personalNotes, rating } = req.body;
+  const ratingVal = rating !== undefined ? parseInt(rating, 10) : undefined;
+  if (ratingVal !== undefined && (Number.isNaN(ratingVal) || ratingVal < 1 || ratingVal > 5)) {
+    return res.status(400).json({ error: 'Rating must be an integer between 1 and 5' });
+  }
+
   db.prepare(
-    `UPDATE user_recipes SET is_favorite = COALESCE(?, is_favorite), personal_notes = COALESCE(?, personal_notes) WHERE user_id = ? AND recipe_id = ?`
-  ).run(isFavorite !== undefined ? (isFavorite ? 1 : 0) : undefined, personalNotes !== undefined ? personalNotes : undefined, userId, recipeId);
+    `INSERT OR IGNORE INTO user_recipes (user_id, recipe_id, is_favorite, personal_notes, saved_at, rating) VALUES (?, ?, 0, NULL, datetime('now'), NULL)`
+  ).run(userId, recipeId);
+
+  const updates = [];
+  const params = [];
+  if (isFavorite !== undefined) {
+    updates.push('is_favorite = ?');
+    params.push(isFavorite ? 1 : 0);
+  }
+  if (personalNotes !== undefined) {
+    updates.push('personal_notes = ?');
+    params.push(personalNotes);
+  }
+  if (ratingVal !== undefined) {
+    updates.push('rating = ?');
+    params.push(ratingVal);
+  }
+  if (updates.length) {
+    db.prepare(`UPDATE user_recipes SET ${updates.join(', ')} WHERE user_id = ? AND recipe_id = ?`).run(
+      ...params,
+      userId,
+      recipeId
+    );
+  }
 
   const row = db.prepare(`
-    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
-           (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count FROM recipes r WHERE r.id = ?
+    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
+           (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count,
+           (SELECT ROUND(AVG(rating), 1) FROM user_recipes WHERE recipe_id = r.id AND rating IS NOT NULL) AS average_rating,
+           (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id AND rating IS NOT NULL) AS rating_count
+    FROM recipes r WHERE r.id = ?
   `).get(recipeId);
-  const urTags = db.prepare('SELECT tags FROM user_recipes WHERE user_id = ? AND recipe_id = ?').get(userId, recipeId);
-  res.json({ recipe: rowToRecipe(row, urTags?.tags ?? '[]') });
+  const userRecipe = db.prepare('SELECT is_favorite, personal_notes, saved_at, tags, rating FROM user_recipes WHERE user_id = ? AND recipe_id = ?').get(
+    userId,
+    recipeId
+  );
+  const recipePayload = rowToRecipe(row, userRecipe && userRecipe.tags != null ? userRecipe.tags : '[]');
+  res.json({
+    recipe: recipePayload,
+    user_recipe: userRecipe
+      ? {
+          is_favorite: !!userRecipe.is_favorite,
+          personal_notes: userRecipe.personal_notes,
+          saved_at: userRecipe.saved_at,
+          rating: userRecipe.rating != null ? userRecipe.rating : null,
+        }
+      : null,
+  });
 });
 
 function sourceDomainFromUrl(url) {
@@ -578,7 +640,7 @@ function rowToRecipe(row, tagsJsonOverride) {
     ingredients = [];
   }
   const tags = tagsJsonOverride !== undefined ? parseTags(tagsJsonOverride) : parseTags(row.tags);
-  return {
+  const out = {
     id: row.id,
     source_url: row.source_url,
     source_domain: sourceDomainFromUrl(row.source_url),
@@ -598,6 +660,9 @@ function rowToRecipe(row, tagsJsonOverride) {
     personal_notes: row.personal_notes,
     saved_at: row.saved_at,
   };
+  if (row.average_rating != null) out.average_rating = row.average_rating;
+  if (row.rating_count != null) out.rating_count = row.rating_count ?? 0;
+  return out;
 }
 
 export default router;

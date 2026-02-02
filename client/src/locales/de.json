@@ -187,7 +187,12 @@
     "loading": "Rezept wird geladen…",
     "notFound": "Rezept nicht gefunden.",
     "savedInList": "Gespeichert",
-    "notSavedInList": "Nicht gespeichert"
+    "notSavedInList": "Nicht gespeichert",
+    "ratingLabel": "Bewertung",
+    "averageRating": "Durchschnitt",
+    "ratingCount": "{{count}} Bewertungen",
+    "noRatingsYet": "Noch keine Bewertungen",
+    "yourRating": "Deine Bewertung"
   },
   "search": {
     "title": "Rezepte entdecken",

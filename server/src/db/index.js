@@ -85,4 +85,11 @@ try {
   if (!e.message.includes('duplicate column name')) throw e;
 }
 
+// User rating 1–5 per recipe (user_recipes)
+try {
+  db.exec('ALTER TABLE user_recipes ADD COLUMN rating INTEGER');
+} catch (e) {
+  if (!e.message.includes('duplicate column name')) throw e;
+}
+
 export default db;
