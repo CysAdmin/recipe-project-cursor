@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useInfiniteQuery, useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient, useQuery, keepPreviousData } from '@tanstack/react-query';
 import { recipes as recipesApi } from '../api/client';
 import RecipeSource from '../components/RecipeSource';
 import RecipeTags from '../components/RecipeTags';
@@ -9,6 +9,8 @@ import TagFilterPills from '../components/TagFilterPills';
 import RecipeMenuDropdown from '../components/RecipeMenuDropdown';
 import AddToCollectionModal from '../components/AddToCollectionModal';
 import { useAuth } from '../context/AuthContext';
+
+const SEARCH_DEBOUNCE_MS = 400;
 
 function IconSearch({ className = 'w-5 h-5' }) {
   return (
@@ -87,7 +89,13 @@ export default function Recipes() {
   };
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState('');
   const searchInputRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearchQuery(searchQuery.trim()), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
 
   const openSearch = () => {
     setSearchOpen(true);
@@ -173,7 +181,7 @@ export default function Recipes() {
     hasNextPage,
     fetchNextPage,
   } = useInfiniteQuery({
-    queryKey: ['recipes', 'mine', user?.id, tagFilter || null, favoritesOnly, maxMinutes || null, (searchQuery || '').trim() || null],
+    queryKey: ['recipes', 'mine', user?.id, tagFilter || null, favoritesOnly, maxMinutes || null, debouncedSearchQuery || null],
     queryFn: ({ pageParam }) =>
       recipesApi.list({
         mine: '1',
@@ -182,7 +190,7 @@ export default function Recipes() {
         ...(tagFilter && { tag: tagFilter }),
         ...(favoritesOnly && { favorites: '1' }),
         ...(maxMinutes && { max_minutes: maxMinutes }),
-        ...(searchQuery.trim() && { q: searchQuery.trim() }),
+        ...(debouncedSearchQuery && { q: debouncedSearchQuery }),
       }),
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
@@ -190,6 +198,7 @@ export default function Recipes() {
       return lastPage.total != null && loaded < lastPage.total ? loaded : undefined;
     },
     enabled: !!user?.id,
+    placeholderData: keepPreviousData,
   });
 
   const recipes = data?.pages?.flatMap((p) => p.recipes ?? []) ?? [];

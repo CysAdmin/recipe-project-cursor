@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { recipes as recipesApi } from '../api/client';
 import RecipeSource from '../components/RecipeSource';
 import RecipeTags from '../components/RecipeTags';
 import TagFilterPills from '../components/TagFilterPills';
 
 const EXTERNAL_PAGE_SIZE = 20;
+const SEARCH_DEBOUNCE_MS = 400;
 
 const EXTERNAL_PROVIDERS = [
   { id: 'gutekueche', label: 'GuteKueche' },
@@ -28,52 +29,62 @@ function shuffle(arr) {
 export default function Search() {
   const { t } = useTranslation();
   const [q, setQ] = useState('');
+  const [debouncedQ, setDebouncedQ] = useState('');
   const [tagFilter, setTagFilter] = useState('');
   const [selectedProviders, setSelectedProviders] = useState(EXTERNAL_PROVIDERS.map((p) => p.id));
   const [externalVisibleCount, setExternalVisibleCount] = useState(EXTERNAL_PAGE_SIZE);
   const queryClient = useQueryClient();
 
-  const trimmedQ = q.trim();
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQ(q.trim()), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [q]);
+
   useEffect(() => {
     setExternalVisibleCount(EXTERNAL_PAGE_SIZE);
-  }, [trimmedQ]);
+  }, [debouncedQ]);
 
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['recipes', 'discover', trimmedQ || '_all', tagFilter || null],
+    queryKey: ['recipes', 'discover', debouncedQ || '_all', tagFilter || null],
     queryFn: () =>
       recipesApi.list({
-        ...(trimmedQ ? { q: trimmedQ } : {}),
+        ...(debouncedQ ? { q: debouncedQ } : {}),
         limit: 30,
         ...(tagFilter ? { tag: tagFilter } : {}),
       }),
     enabled: true,
     staleTime: 0,
+    placeholderData: keepPreviousData,
   });
 
-  const shouldFetchExternal = !!trimmedQ;
+  const shouldFetchExternal = !!debouncedQ;
   const externalGk = useQuery({
-    queryKey: ['recipes', 'external', trimmedQ, 'gutekueche'],
-    queryFn: () => recipesApi.externalSearch(trimmedQ, 'gutekueche'),
+    queryKey: ['recipes', 'external', debouncedQ, 'gutekueche'],
+    queryFn: () => recipesApi.externalSearch(debouncedQ, 'gutekueche'),
     enabled: shouldFetchExternal && selectedProviders.includes('gutekueche'),
     staleTime: 60 * 1000,
+    placeholderData: keepPreviousData,
   });
   const externalCk = useQuery({
-    queryKey: ['recipes', 'external', trimmedQ, 'chefkoch'],
-    queryFn: () => recipesApi.externalSearch(trimmedQ, 'chefkoch'),
+    queryKey: ['recipes', 'external', debouncedQ, 'chefkoch'],
+    queryFn: () => recipesApi.externalSearch(debouncedQ, 'chefkoch'),
     enabled: shouldFetchExternal && selectedProviders.includes('chefkoch'),
     staleTime: 60 * 1000,
+    placeholderData: keepPreviousData,
   });
   const externalAr = useQuery({
-    queryKey: ['recipes', 'external', trimmedQ, 'allrecipes'],
-    queryFn: () => recipesApi.externalSearch(trimmedQ, 'allrecipes'),
+    queryKey: ['recipes', 'external', debouncedQ, 'allrecipes'],
+    queryFn: () => recipesApi.externalSearch(debouncedQ, 'allrecipes'),
     enabled: shouldFetchExternal && selectedProviders.includes('allrecipes'),
     staleTime: 60 * 1000,
+    placeholderData: keepPreviousData,
   });
   const externalTasty = useQuery({
-    queryKey: ['recipes', 'external', trimmedQ, 'tasty'],
-    queryFn: () => recipesApi.externalSearch(trimmedQ, 'tasty'),
+    queryKey: ['recipes', 'external', debouncedQ, 'tasty'],
+    queryFn: () => recipesApi.externalSearch(debouncedQ, 'tasty'),
     enabled: shouldFetchExternal && selectedProviders.includes('tasty'),
     staleTime: 60 * 1000,
+    placeholderData: keepPreviousData,
   });
 
   const external = useMemo(() => {
@@ -121,7 +132,7 @@ export default function Search() {
   const externalToShow = external.slice(0, externalVisibleCount);
   const hasMoreExternal = external.length > externalVisibleCount;
   const hasExternal = external.length > 0;
-  const showExternalSection = !!trimmedQ && (hasExternal || externalLoading);
+  const showExternalSection = !!debouncedQ && (hasExternal || externalLoading);
 
   const emptyState =
     !isLoading && !isFetching && recipes.length === 0 && !showExternalSection;
@@ -146,7 +157,7 @@ export default function Search() {
         <p className="text-slate-500">{t('common.loading')}</p>
       ) : emptyState ? (
         <p className="text-slate-500">
-          {trimmedQ ? t('search.noResultsQuery') : t('search.noResultsEmpty')}
+          {debouncedQ ? t('search.noResultsQuery') : t('search.noResultsEmpty')}
         </p>
       ) : (
         <>
@@ -210,7 +221,7 @@ export default function Search() {
             </div>
           )}
 
-          {trimmedQ && (
+          {debouncedQ && (
             <div className="mb-6">
               <h2 className="text-lg font-semibold text-slate-800 mb-2">{t('search.externalProviders')}</h2>
               <p className="text-slate-600 text-sm mb-3">{t('search.externalProvidersDesc')}</p>
