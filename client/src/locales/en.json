@@ -173,7 +173,13 @@
     "editName": "Edit name",
     "deleteCollection": "Delete collection",
     "deleteConfirm": "Really delete this collection? All recipes remain in My Recipes.",
-    "noRecipesInCollection": "No recipes in this collection yet."
+    "noRecipesInCollection": "No recipes in this collection yet.",
+    "searchRecipes": "Search recipes…",
+    "noRecipesMatch": "No recipes found.",
+    "loadMore": "Load more",
+    "addSelected": "Add {{count}} selected",
+    "addSelected_one": "Add 1 recipe",
+    "addSelected_other": "Add {{count}} recipes"
   },
   "addToCollection": {
     "title": "Choose collection",

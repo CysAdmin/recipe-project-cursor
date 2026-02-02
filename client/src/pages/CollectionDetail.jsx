@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { collections as collectionsApi } from '../api/client';
 import { recipes as recipesApi } from '../api/client';
 import RecipeSource from '../components/RecipeSource';
 import RecipeTags from '../components/RecipeTags';
+
+const ADD_RECIPE_PAGE_SIZE = 20;
+const SEARCH_DEBOUNCE_MS = 300;
 
 function IconPlus({ className = 'w-5 h-5' }) {
   return (
@@ -21,12 +24,49 @@ function IconTrash({ className = 'w-5 h-5' }) {
     </svg>
   );
 }
+function IconSearch({ className = 'w-5 h-5' }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    </svg>
+  );
+}
+function IconCheck({ className = 'w-5 h-5' }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
+  );
+}
 
 export default function CollectionDetail() {
   const { t } = useTranslation();
   const { id } = useParams();
   const queryClient = useQueryClient();
   const [addRecipeOpen, setAddRecipeOpen] = useState(false);
+  const [addRecipeSearchInput, setAddRecipeSearchInput] = useState('');
+  const [addRecipeSearchQuery, setAddRecipeSearchQuery] = useState('');
+  const [selectedRecipeIds, setSelectedRecipeIds] = useState([]);
+  const addRecipeListRef = useRef(null);
+
+  useEffect(() => {
+    if (!addRecipeOpen) return;
+    const t = setTimeout(() => setAddRecipeSearchQuery(addRecipeSearchInput.trim()), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [addRecipeOpen, addRecipeSearchInput]);
+
+  useEffect(() => {
+    if (!addRecipeOpen) {
+      setAddRecipeSearchInput('');
+      setSelectedRecipeIds([]);
+    }
+  }, [addRecipeOpen]);
+
+  const toggleRecipeSelection = (recipeId) => {
+    setSelectedRecipeIds((prev) =>
+      prev.includes(recipeId) ? prev.filter((id) => id !== recipeId) : [...prev, recipeId]
+    );
+  };
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['collection', id],
@@ -34,17 +74,37 @@ export default function CollectionDetail() {
     enabled: !!id,
   });
 
-  const { data: myRecipesData } = useQuery({
-    queryKey: ['recipes', 'mine'],
-    queryFn: () => recipesApi.list({ mine: 1, limit: 100 }),
+  const {
+    data: myRecipesData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isLoadingRecipes,
+  } = useInfiniteQuery({
+    queryKey: ['recipes', 'mine', 'add-to-collection', addRecipeSearchQuery],
+    queryFn: ({ pageParam = 0 }) =>
+      recipesApi.list({
+        mine: 1,
+        limit: ADD_RECIPE_PAGE_SIZE,
+        offset: pageParam,
+        ...(addRecipeSearchQuery ? { q: addRecipeSearchQuery } : {}),
+      }),
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((acc, p) => acc + (p.recipes?.length ?? 0), 0);
+      return lastPage.recipes?.length === ADD_RECIPE_PAGE_SIZE ? loaded : undefined;
+    },
+    initialPageParam: 0,
     enabled: addRecipeOpen,
   });
 
-  const addRecipeMutation = useMutation({
-    mutationFn: (recipeId) => collectionsApi.addRecipe(id, recipeId),
+  const addRecipesMutation = useMutation({
+    mutationFn: async (recipeIds) => {
+      await Promise.all(recipeIds.map((recipeId) => collectionsApi.addRecipe(id, recipeId)));
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['collection', id] });
       queryClient.invalidateQueries({ queryKey: ['collections'] });
+      setSelectedRecipeIds([]);
       setAddRecipeOpen(false);
     },
   });
@@ -59,7 +119,7 @@ export default function CollectionDetail() {
 
   const collection = data?.collection;
   const recipes = data?.recipes ?? [];
-  const myRecipes = myRecipesData?.recipes ?? [];
+  const myRecipes = myRecipesData?.pages?.flatMap((p) => p.recipes ?? []) ?? [];
   const recipeIdsInCollection = new Set(recipes.map((r) => r.id));
   const recipesToAdd = myRecipes.filter((r) => !recipeIdsInCollection.has(r.id));
 
@@ -101,33 +161,92 @@ export default function CollectionDetail() {
             <h2 id="add-recipe-dialog-title" className="font-semibold text-slate-800 mb-3">
               {t('collections.addRecipe')}
             </h2>
-            <div className="flex-1 overflow-y-auto min-h-0 space-y-2">
-              {recipesToAdd.length === 0 ? (
-                <p className="text-slate-500 text-sm">{t('recipes.noRecipesBefore')}</p>
+            <div className="relative mb-3">
+              <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+              <input
+                type="search"
+                value={addRecipeSearchInput}
+                onChange={(e) => setAddRecipeSearchInput(e.target.value)}
+                placeholder={t('collections.searchRecipes')}
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
+                aria-label={t('collections.searchRecipes')}
+              />
+            </div>
+            <div
+              ref={addRecipeListRef}
+              className="flex-1 overflow-y-auto min-h-0 space-y-2"
+              onScroll={() => {
+                const el = addRecipeListRef.current;
+                if (!el || !hasNextPage || isFetchingNextPage) return;
+                const { scrollTop, scrollHeight, clientHeight } = el;
+                if (scrollTop + clientHeight >= scrollHeight - 100) fetchNextPage();
+              }}
+            >
+              {isLoadingRecipes ? (
+                <p className="text-slate-500 text-sm py-4">{t('common.loading')}</p>
+              ) : recipesToAdd.length === 0 ? (
+                <p className="text-slate-500 text-sm py-4">{t('collections.noRecipesMatch')}</p>
               ) : (
-                recipesToAdd.map((r) => (
+                recipesToAdd.map((r) => {
+                  const selected = selectedRecipeIds.includes(r.id);
+                  return (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => toggleRecipeSelection(r.id)}
+                      className={`w-full text-left flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+                        selected
+                          ? 'border-brand-500 bg-brand-50'
+                          : 'border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="w-5 h-5 rounded border-2 border-slate-300 flex items-center justify-center shrink-0">
+                        {selected ? (
+                          <IconCheck className="w-3 h-3 text-brand-600" />
+                        ) : (
+                          <span className="w-3 h-3" aria-hidden />
+                        )}
+                      </div>
+                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-200 shrink-0">
+                        {r.image_url ? (
+                          <img src={r.image_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">
+                            {t('common.noImage')}
+                          </div>
+                        )}
+                      </div>
+                      <span className="font-medium text-slate-800 text-sm line-clamp-2 flex-1 min-w-0">{r.title}</span>
+                    </button>
+                  );
+                })
+              )}
+              {hasNextPage && (
+                <div className="py-2 flex justify-center">
                   <button
-                    key={r.id}
                     type="button"
-                    onClick={() => addRecipeMutation.mutate(r.id)}
-                    disabled={addRecipeMutation.isPending}
-                    className="w-full text-left flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                    className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50 disabled:opacity-50"
                   >
-                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-200 shrink-0">
-                      {r.image_url ? (
-                        <img src={r.image_url} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">
-                          {t('common.noImage')}
-                        </div>
-                      )}
-                    </div>
-                    <span className="font-medium text-slate-800 text-sm line-clamp-2 flex-1 min-w-0">{r.title}</span>
+                    {isFetchingNextPage ? t('common.loading') : t('collections.loadMore')}
                   </button>
-                ))
+                </div>
               )}
             </div>
-            <div className="mt-4 pt-3 border-t border-slate-200">
+            <div className="mt-4 pt-3 border-t border-slate-200 space-y-2">
+              {selectedRecipeIds.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => addRecipesMutation.mutate(selectedRecipeIds)}
+                  disabled={addRecipesMutation.isPending}
+                  className="w-full px-4 py-2 rounded-lg bg-brand-600 text-white font-medium text-sm hover:bg-brand-700 disabled:opacity-50"
+                >
+                  {addRecipesMutation.isPending
+                    ? t('common.loading')
+                    : t('collections.addSelected', { count: selectedRecipeIds.length })}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setAddRecipeOpen(false)}

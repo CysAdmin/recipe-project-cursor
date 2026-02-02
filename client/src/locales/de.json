@@ -181,7 +181,13 @@
     "editName": "Name bearbeiten",
     "deleteCollection": "Kollektion löschen",
     "deleteConfirm": "Kollektion wirklich löschen? Alle Rezepte bleiben in Meine Rezepte erhalten.",
-    "noRecipesInCollection": "Noch keine Rezepte in dieser Kollektion."
+    "noRecipesInCollection": "Noch keine Rezepte in dieser Kollektion.",
+    "searchRecipes": "Rezepte durchsuchen…",
+    "noRecipesMatch": "Keine Rezepte gefunden.",
+    "loadMore": "Mehr laden",
+    "addSelected": "{{count}} hinzufügen",
+    "addSelected_one": "1 Rezept hinzufügen",
+    "addSelected_other": "{{count}} Rezepte hinzufügen"
   },
   "addToCollection": {
     "title": "Kollektion wählen",
