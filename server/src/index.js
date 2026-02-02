@@ -12,7 +12,11 @@ import './db/index.js'; // ensure DB exists
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors({ origin: true, credentials: true }));
+const frontendUrl = (process.env.FRONTEND_URL || '').replace(/\/$/, '');
+const corsOrigin = frontendUrl
+  ? [frontendUrl, 'http://localhost:5173', 'http://127.0.0.1:5173']
+  : true;
+app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(helmet());
 app.use(express.json());
 
