@@ -1,4 +1,5 @@
-const API = '/api';
+const baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+const API = baseUrl ? `${baseUrl}/api` : '/api';
 
 function getToken() {
   return localStorage.getItem('token');
