@@ -3,6 +3,7 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
+import IdleTracker from './IdleTracker';
 
 function IconHome({ className = 'w-6 h-6', active }) {
   const c = active ? 'text-brand-600' : 'text-slate-400';
@@ -65,7 +66,9 @@ export default function Layout() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <>
+      <IdleTracker />
+      <div className="min-h-screen flex flex-col bg-slate-50">
       {/* Top header: full nav on desktop, logo + Profil on mobile */}
       <header className="border-b border-slate-200 bg-white sticky top-0 z-20">
         <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-14">
@@ -155,6 +158,7 @@ export default function Layout() {
           ))}
         </div>
       </nav>
-    </div>
+      </div>
+    </>
   );
 }

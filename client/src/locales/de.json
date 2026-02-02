@@ -71,7 +71,8 @@
     "errorEmailNotVerified": "Bitte bestätige zuerst deine E-Mail-Adresse über den Link in der E-Mail.",
     "resendVerificationEmail": "Verifizierungs-E-Mail erneut senden",
     "resendVerificationEmailSent": "Falls dein Konto noch nicht bestätigt ist, haben wir einen neuen Link gesendet.",
-    "forgotPassword": "Passwort vergessen?"
+    "forgotPassword": "Passwort vergessen?",
+    "idleLogoutMessage": "Sie wurden wegen Inaktivität abgemeldet."
   },
   "verifyEmail": {
     "title": "E-Mail bestätigen",
