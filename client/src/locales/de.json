@@ -240,7 +240,7 @@
     "placeholder": "Nach Name, Zutaten, Schlagwörtern suchen…",
     "noResultsQuery": "Keine Rezepte gefunden. Andere Suche versuchen oder in Meine Rezepte von URL importieren.",
     "noResultsEmpty": "Noch keine Rezepte in der Community. Importiere in Meine Rezepte von einer URL, um zu starten.",
-    "internalRecipes": "Interne Rezepte",
+    "alreadySaved": "Bereits gespeichert",
     "inYourRecipes": "In deinen Rezepten",
     "saveToMine": "In meine Rezepte speichern",
     "externalProviders": "Externe Anbieter",

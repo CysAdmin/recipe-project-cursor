@@ -232,7 +232,7 @@
     "placeholder": "Search by name, ingredients, keywords…",
     "noResultsQuery": "No recipes found. Try a different search or import from URL in My Recipes.",
     "noResultsEmpty": "No recipes in the community yet. Import from URL in My Recipes to get started.",
-    "internalRecipes": "Internal recipes",
+    "alreadySaved": "Already saved",
     "inYourRecipes": "In your recipes",
     "saveToMine": "Save to my recipes",
     "externalProviders": "External providers",

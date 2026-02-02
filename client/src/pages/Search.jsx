@@ -163,7 +163,7 @@ export default function Search() {
         <>
           {recipes.length > 0 && (
             <div className="mb-8">
-              <h2 className="text-lg font-semibold text-slate-800 mb-3">{t('search.internalRecipes')}</h2>
+              <h2 className="text-lg font-semibold text-slate-800 mb-3">{t('search.alreadySaved')}</h2>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {recipes.map((r) => (
                   <div
