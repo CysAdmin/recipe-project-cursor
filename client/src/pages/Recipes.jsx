@@ -201,6 +201,23 @@ export default function Recipes() {
   });
   const similarRecipes = similarData?.recipes ?? [];
 
+  // Anzahl „Ähnlich zu deinen Favoriten“ abhängig von Bildschirmhöhe (1–5), damit die Sidebar auf Laptops nicht abgeschnitten wird
+  const getSimilarVisibleCount = () => {
+    if (typeof window === 'undefined') return 5;
+    const h = window.innerHeight;
+    if (h < 600) return 1;
+    if (h < 700) return 2;
+    if (h < 800) return 3;
+    if (h < 900) return 4;
+    return 5;
+  };
+  const [similarVisibleCount, setSimilarVisibleCount] = React.useState(getSimilarVisibleCount);
+  React.useEffect(() => {
+    const updateCount = () => setSimilarVisibleCount(getSimilarVisibleCount());
+    window.addEventListener('resize', updateCount);
+    return () => window.removeEventListener('resize', updateCount);
+  }, []);
+
   React.useEffect(() => {
     const el = loadMoreRef.current;
     if (!el || !hasNextPage || isFetchingNextPage) return;
@@ -483,7 +500,7 @@ export default function Recipes() {
               <p className="text-slate-500 text-sm">{t('recipes.noSimilarRecipes')}</p>
             ) : (
               <ul className="space-y-2">
-                {similarRecipes.map((r) => (
+                {similarRecipes.slice(0, similarVisibleCount).map((r) => (
                   <li key={r.id}>
                     <Link
                       to={`/app/recipes/${r.id}`}
