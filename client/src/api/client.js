@@ -56,6 +56,15 @@ export const recipes = {
     const q = new URLSearchParams(params).toString();
     return api(`/recipes/similar-to-favorites${q ? `?${q}` : ''}`);
   },
+  byIngredients: (ingredients) => {
+    const list = Array.isArray(ingredients)
+      ? ingredients
+      : typeof ingredients === 'string'
+        ? ingredients.split(',').map((s) => s.trim()).filter(Boolean)
+        : [];
+    const q = list.length ? `ingredients=${encodeURIComponent(list.join(','))}` : '';
+    return api(`/recipes/by-ingredients${q ? `?${q}` : ''}`);
+  },
   get: (id) => api(`/recipes/${id}`),
   create: (body) => api('/recipes', { method: 'POST', body: JSON.stringify(body) }),
   update: (id, body) => api(`/recipes/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),

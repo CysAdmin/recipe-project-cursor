@@ -54,6 +54,13 @@ function IconClock({ className = 'w-5 h-5' }) {
     </svg>
   );
 }
+function IconBasket({ className = 'w-5 h-5' }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+    </svg>
+  );
+}
 function IconHeartFilled({ className = 'w-5 h-5' }) {
   return (
     <svg className={className} fill="currentColor" viewBox="0 0 24 24">
@@ -511,6 +518,16 @@ export default function Recipes() {
                   <IconClock className="w-5 h-5" />
                 </span>
                 <span className="flex-1 min-w-0">{t('recipes.decisionAidRecent')}</span>
+                <IconChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+              </Link>
+              <Link
+                to="/app/recipes/by-ingredients"
+                className="flex items-center gap-3 w-full py-3 px-3 rounded-lg text-left font-medium transition-colors bg-slate-100 text-slate-800 hover:bg-slate-200 border border-transparent"
+              >
+                <span className="text-amber-500 shrink-0" aria-hidden>
+                  <IconBasket className="w-5 h-5" />
+                </span>
+                <span className="flex-1 min-w-0">{t('recipes.decisionAidByIngredients')}</span>
                 <IconChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
               </Link>
             </nav>

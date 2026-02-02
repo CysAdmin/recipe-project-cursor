@@ -377,6 +377,62 @@ router.get('/similar-to-favorites', authMiddleware, (req, res) => {
   res.json({ recipes: top.map((row) => rowToRecipe(row, '[]')) });
 });
 
+// GET /api/recipes/by-ingredients — user's saved recipes scored by ingredient overlap
+router.get('/by-ingredients', authMiddleware, (req, res) => {
+  const userId = req.userId;
+  const raw = (req.query.ingredients || '').trim();
+  const ingredientsList = raw
+    ? raw.split(',').map((s) => s.trim()).filter(Boolean)
+    : [];
+  const userTokenSet = new Set();
+  if (ingredientsList.length > 0) {
+    getTokens(ingredientsList.join(' ')).forEach((t) => userTokenSet.add(t));
+  }
+
+  const rows = db.prepare(`
+    SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
+           ur.is_favorite, ur.personal_notes, ur.saved_at, COALESCE(ur.tags,'[]') AS user_tags,
+           (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count,
+           1 AS saved_by_me
+    FROM recipes r
+    JOIN user_recipes ur ON ur.recipe_id = r.id AND ur.user_id = ?
+    ORDER BY ur.saved_at DESC
+  `).all(userId);
+
+  if (userTokenSet.size === 0) {
+    return res.json({
+      recipes: rows.map((row) => ({ ...rowToRecipe(row, row.user_tags), match_count: 0, match_total: 0 })),
+      total: rows.length,
+    });
+  }
+
+  const scored = rows.map((row) => {
+    let ingredients = [];
+    try {
+      ingredients = JSON.parse(row.ingredients || '[]');
+    } catch {
+      ingredients = [];
+    }
+    const recipeTokens = getTokens(getIngredientsText(ingredients));
+    const recipeSet = new Set(recipeTokens);
+    let score = 0;
+    for (const t of userTokenSet) {
+      if (recipeSet.has(t)) score += 1;
+    }
+    return { row, score };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+  const total = scored.length;
+  const recipes = scored.map(({ row, score }) => ({
+    ...rowToRecipe(row, row.user_tags),
+    match_count: score,
+    match_total: userTokenSet.size,
+  }));
+
+  res.json({ recipes, total });
+});
+
 function getUserIdFromHeader(req) {
   try {
     const token = req.headers.authorization?.replace(/^Bearer\s+/i, '');

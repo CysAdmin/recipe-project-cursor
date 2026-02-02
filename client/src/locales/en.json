@@ -145,10 +145,20 @@
     "decisionAidQuickEasy": "Quick & easy",
     "decisionAidFavorites": "Favorites",
     "decisionAidRecent": "Newly saved recipes",
+    "decisionAidByIngredients": "What can I cook?",
     "discoverRecipes": "Discover recipes",
     "noDiscoverRecipes": "No other recipes to discover.",
     "similarToFavorites": "Similar to your Favorites",
     "noSimilarRecipes": "No similar recipes."
+  },
+  "byIngredientsPage": {
+    "title": "What can I cook?",
+    "placeholder": "Enter ingredients, e.g. tomatoes, mozzarella, basil",
+    "findRecipes": "Find recipes",
+    "backToRecipes": "Back to My Recipes",
+    "enterIngredients": "Enter ingredients (comma-separated) and click \"Find recipes\" to see matching recipes from your collection.",
+    "noResults": "No recipes found. Add more recipes to your collection or try different ingredients.",
+    "matchCount": "{{count}} of {{total}} ingredients match"
   },
   "recipeMenu": {
     "ariaLabel": "Recipe menu",

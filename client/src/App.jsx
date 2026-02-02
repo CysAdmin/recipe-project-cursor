@@ -11,6 +11,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import Recipes from './pages/Recipes';
+import RecipeByIngredients from './pages/RecipeByIngredients';
 import RecipeDetail from './pages/RecipeDetail';
 import Collections from './pages/Collections';
 import CollectionDetail from './pages/CollectionDetail';
@@ -49,6 +50,7 @@ function AppRoutes() {
       >
         <Route index element={<Dashboard />} />
         <Route path="recipes" element={<Recipes />} />
+        <Route path="recipes/by-ingredients" element={<RecipeByIngredients />} />
         <Route path="recipes/:id" element={<RecipeDetail />} />
         <Route path="collections" element={<Collections />} />
         <Route path="collections/:id" element={<CollectionDetail />} />
