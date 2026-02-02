@@ -10,6 +10,7 @@ import adminRoutes from './routes/admin.js';
 import './db/index.js'; // ensure DB exists
 
 const app = express();
+app.set('trust proxy', 1); // Trust first proxy (nginx) for X-Forwarded-For, rate limiting, etc.
 const PORT = process.env.PORT || 3001;
 
 const frontendUrl = (process.env.FRONTEND_URL || '').replace(/\/$/, '');
