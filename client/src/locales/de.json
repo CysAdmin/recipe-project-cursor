@@ -28,7 +28,7 @@
     "dashboard": "Dashboard",
     "myRecipes": "Meine Rezepte",
     "collections": "Kollektionen",
-    "discover": "Discover",
+    "discover": "Entdecken",
     "admin": "Admin",
     "profile": "Profil",
     "logout": "Abmelden"
@@ -122,7 +122,7 @@
     "subline": "Dein Rezept- und Planungs-Hub.",
     "myRecipes": "Meine Rezepte",
     "saved": "gespeichert",
-    "discover": "Discover",
+    "discover": "Entdecken",
     "discoverDesc": "Rezepte suchen und speichern",
     "recentRecipes": "Letzte Rezepte",
     "viewAll": "Alle anzeigen",
