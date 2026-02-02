@@ -170,6 +170,13 @@ router.delete('/users/:id', (req, res) => {
   if (Number.isNaN(id)) return res.status(400).json({ error: 'Invalid user ID' });
   const row = db.prepare('SELECT id FROM users WHERE id = ?').get(id);
   if (!row) return res.status(404).json({ error: 'User not found' });
+
+  // Manually cascade delete dependent records (SQLite foreign_keys off by default)
+  db.prepare('DELETE FROM meal_schedules WHERE user_id = ?').run(id);
+  db.prepare('DELETE FROM user_recipes WHERE user_id = ?').run(id);
+  db.prepare('DELETE FROM collection_recipes WHERE collection_id IN (SELECT id FROM collections WHERE user_id = ?)').run(id);
+  db.prepare('DELETE FROM collections WHERE user_id = ?').run(id);
+
   db.prepare('DELETE FROM users WHERE id = ?').run(id);
   res.status(204).send();
 });
