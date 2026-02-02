@@ -7,6 +7,7 @@ import RecipeSource from '../components/RecipeSource';
 import RecipeTags from '../components/RecipeTags';
 import TagFilterPills from '../components/TagFilterPills';
 import RecipeMenuDropdown from '../components/RecipeMenuDropdown';
+import AddToCollectionModal from '../components/AddToCollectionModal';
 import { useAuth } from '../context/AuthContext';
 
 function IconSearch({ className = 'w-5 h-5' }) {
@@ -131,6 +132,7 @@ export default function Recipes() {
   });
 
   const [openMenuRecipeId, setOpenMenuRecipeId] = React.useState(null);
+  const [addToCollectionRecipe, setAddToCollectionRecipe] = React.useState(null);
 
   const toggleFavoriteMutation = useMutation({
     mutationFn: ({ id, is_favorite }) => recipesApi.updateUserRecipe(id, { is_favorite }),
@@ -297,6 +299,13 @@ export default function Recipes() {
         </div>
       </div>
 
+      {addToCollectionRecipe && (
+        <AddToCollectionModal
+          recipe={addToCollectionRecipe}
+          onClose={() => setAddToCollectionRecipe(null)}
+        />
+      )}
+
       {/* Import-Overlay: abgedunkelter Hintergrund, Klick außerhalb schließt */}
       {importOpen && (
         <div
@@ -428,6 +437,10 @@ export default function Recipes() {
                       onToggle={() => setOpenMenuRecipeId((prev) => (prev === r.id ? null : r.id))}
                       onClose={() => setOpenMenuRecipeId(null)}
                       onRemove={(recipe) => unsaveMutation.mutate(recipe.id)}
+                      onAddToCollection={(recipe) => {
+                        setOpenMenuRecipeId(null);
+                        setAddToCollectionRecipe(recipe);
+                      }}
                     />
                   </Link>
                 </li>

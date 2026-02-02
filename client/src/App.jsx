@@ -12,6 +12,8 @@ import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import Recipes from './pages/Recipes';
 import RecipeDetail from './pages/RecipeDetail';
+import Collections from './pages/Collections';
+import CollectionDetail from './pages/CollectionDetail';
 import Search from './pages/Search';
 import Profile from './pages/Profile';
 import AdminLayout from './pages/admin/AdminLayout';
@@ -48,6 +50,8 @@ function AppRoutes() {
         <Route index element={<Dashboard />} />
         <Route path="recipes" element={<Recipes />} />
         <Route path="recipes/:id" element={<RecipeDetail />} />
+        <Route path="collections" element={<Collections />} />
+        <Route path="collections/:id" element={<CollectionDetail />} />
         <Route path="search" element={<Search />} />
         <Route path="profile" element={<Profile />} />
         <Route path="admin" element={<AdminLayout />}>

@@ -27,6 +27,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "myRecipes": "Meine Rezepte",
+    "collections": "Kollektionen",
     "discover": "Discover",
     "admin": "Admin",
     "profile": "Profil",
@@ -163,7 +164,30 @@
     "copyLink": "Link kopieren",
     "remove": "Entfernen",
     "copyLinkSuccess": "Link kopiert",
-    "removeConfirm": "Rezept aus Meine Rezepte entfernen?"
+    "removeConfirm": "Rezept aus Meine Rezepte entfernen?",
+    "addToCollection": "Zu Kollektion hinzufügen"
+  },
+  "collections": {
+    "title": "Kollektionen",
+    "newCollection": "Neue Kollektion",
+    "createCollection": "Kollektion anlegen",
+    "collectionName": "Name der Kollektion",
+    "noCollectionsYet": "Noch keine Kollektionen.",
+    "addRecipe": "Rezept hinzufügen",
+    "removeFromCollection": "Aus Kollektion entfernen",
+    "recipeCount": "{{count}} Rezept",
+    "recipeCount_other": "{{count}} Rezepte",
+    "backToCollections": "← Zurück zu Kollektionen",
+    "editName": "Name bearbeiten",
+    "deleteCollection": "Kollektion löschen",
+    "deleteConfirm": "Kollektion wirklich löschen? Alle Rezepte bleiben in Meine Rezepte erhalten.",
+    "noRecipesInCollection": "Noch keine Rezepte in dieser Kollektion."
+  },
+  "addToCollection": {
+    "title": "Kollektion wählen",
+    "createNew": "Neue Kollektion anlegen und hinzufügen",
+    "placeholderName": "Name der Kollektion",
+    "added": "Rezept zur Kollektion hinzugefügt"
   },
   "recipeDetail": {
     "backToRecipes": "← Zurück zu Meine Rezepte",

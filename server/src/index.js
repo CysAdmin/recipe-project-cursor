@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import authRoutes from './routes/auth.js';
 import recipeRoutes from './routes/recipes.js';
+import collectionRoutes from './routes/collections.js';
 import adminRoutes from './routes/admin.js';
 import './db/index.js'; // ensure DB exists
 
@@ -24,6 +25,7 @@ app.use('/api', limiter);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/recipes', recipeRoutes);
+app.use('/api/collections', collectionRoutes);
 app.use('/api/admin', adminRoutes);
 
 app.get('/api/health', (req, res) => {

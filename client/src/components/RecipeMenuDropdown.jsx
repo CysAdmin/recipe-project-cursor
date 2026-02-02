@@ -12,14 +12,15 @@ function IconDotsVertical({ className = 'w-5 h-5' }) {
 }
 
 /**
- * Three-dots menu for a recipe: Open original, Copy link, Remove.
+ * Three-dots menu for a recipe: Open original, Copy link, Add to collection, Remove.
  * @param {Object} recipe - { id, source_url }
  * @param {boolean} isOpen - whether dropdown is visible
  * @param {function} onToggle - called when button is clicked (e.g. toggle open state)
  * @param {function} onClose - called when menu should close (click outside, or after action)
  * @param {function} onRemove - called when "Remove" is chosen. Parent should call unsave(id) and invalidate/redirect.
+ * @param {function} onAddToCollection - called when "Add to collection" is chosen. Parent should open AddToCollectionModal with this recipe.
  */
-export default function RecipeMenuDropdown({ recipe, isOpen, onToggle, onClose, onRemove }) {
+export default function RecipeMenuDropdown({ recipe, isOpen, onToggle, onClose, onRemove, onAddToCollection }) {
   const { t } = useTranslation();
   const containerRef = useRef(null);
   const [copySuccess, setCopySuccess] = useState(false);
@@ -61,6 +62,13 @@ export default function RecipeMenuDropdown({ recipe, isOpen, onToggle, onClose, 
     } catch (_) {
       // ignore
     }
+  };
+
+  const handleAddToCollection = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onClose();
+    onAddToCollection?.(recipe);
   };
 
   const handleRemove = (e) => {
@@ -107,6 +115,16 @@ export default function RecipeMenuDropdown({ recipe, isOpen, onToggle, onClose, 
           >
             {copySuccess ? t('recipeMenu.copyLinkSuccess') : t('recipeMenu.copyLink')}
           </button>
+          {onAddToCollection && (
+            <button
+              type="button"
+              onClick={handleAddToCollection}
+              className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
+              role="menuitem"
+            >
+              {t('recipeMenu.addToCollection')}
+            </button>
+          )}
           <button
             type="button"
             onClick={handleRemove}

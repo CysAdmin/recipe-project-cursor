@@ -27,6 +27,7 @@
   "nav": {
     "dashboard": "Dashboard",
     "myRecipes": "My Recipes",
+    "collections": "Collections",
     "discover": "Discover",
     "admin": "Admin",
     "profile": "Profile",
@@ -155,7 +156,30 @@
     "copyLink": "Copy link",
     "remove": "Remove",
     "copyLinkSuccess": "Link copied",
-    "removeConfirm": "Remove recipe from My Recipes?"
+    "removeConfirm": "Remove recipe from My Recipes?",
+    "addToCollection": "Add to collection"
+  },
+  "collections": {
+    "title": "Collections",
+    "newCollection": "New collection",
+    "createCollection": "Create collection",
+    "collectionName": "Collection name",
+    "noCollectionsYet": "No collections yet.",
+    "addRecipe": "Add recipe",
+    "removeFromCollection": "Remove from collection",
+    "recipeCount": "{{count}} recipe",
+    "recipeCount_other": "{{count}} recipes",
+    "backToCollections": "← Back to Collections",
+    "editName": "Edit name",
+    "deleteCollection": "Delete collection",
+    "deleteConfirm": "Really delete this collection? All recipes remain in My Recipes.",
+    "noRecipesInCollection": "No recipes in this collection yet."
+  },
+  "addToCollection": {
+    "title": "Choose collection",
+    "createNew": "Create new collection and add",
+    "placeholderName": "Collection name",
+    "added": "Recipe added to collection"
   },
   "recipeDetail": {
     "backToRecipes": "← Back to My Recipes",

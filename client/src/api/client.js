@@ -68,6 +68,18 @@ export const recipes = {
     api(`/recipes/external?q=${encodeURIComponent(query)}&provider=${encodeURIComponent(provider)}`),
 };
 
+export const collections = {
+  list: () => api('/collections'),
+  create: (body) => api('/collections', { method: 'POST', body: JSON.stringify(body) }),
+  get: (id) => api(`/collections/${id}`),
+  update: (id, body) => api(`/collections/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  delete: (id) => api(`/collections/${id}`, { method: 'DELETE' }),
+  addRecipe: (collectionId, recipeId) =>
+    api(`/collections/${collectionId}/recipes`, { method: 'POST', body: JSON.stringify({ recipe_id: recipeId }) }),
+  removeRecipe: (collectionId, recipeId) =>
+    api(`/collections/${collectionId}/recipes/${recipeId}`, { method: 'DELETE' }),
+};
+
 export const admin = {
   users: {
     list: () => api('/admin/users'),

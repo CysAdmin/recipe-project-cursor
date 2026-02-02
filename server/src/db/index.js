@@ -92,4 +92,30 @@ try {
   if (!e.message.includes('duplicate column name')) throw e;
 }
 
+// Collections (user-owned recipe collections)
+try {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS collections (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      name VARCHAR(255) NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+} catch (e) {
+  if (!e.message.includes('duplicate column name') && !e.message?.includes('already exists')) throw e;
+}
+try {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS collection_recipes (
+      collection_id INTEGER NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
+      recipe_id INTEGER NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+      added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (collection_id, recipe_id)
+    )
+  `);
+} catch (e) {
+  if (!e.message.includes('duplicate column name') && !e.message?.includes('already exists')) throw e;
+}
+
 export default db;

@@ -58,10 +58,26 @@ db.exec(`
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
+  CREATE TABLE IF NOT EXISTS collections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS collection_recipes (
+    collection_id INTEGER NOT NULL REFERENCES collections(id) ON DELETE CASCADE,
+    recipe_id INTEGER NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+    added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (collection_id, recipe_id)
+  );
+
   CREATE INDEX IF NOT EXISTS idx_recipes_source_url ON recipes(source_url);
   CREATE INDEX IF NOT EXISTS idx_recipes_title ON recipes(title);
   CREATE INDEX IF NOT EXISTS idx_user_recipes_user ON user_recipes(user_id);
   CREATE INDEX IF NOT EXISTS idx_meal_schedules_user_date ON meal_schedules(user_id, meal_date);
+  CREATE INDEX IF NOT EXISTS idx_collections_user ON collections(user_id);
+  CREATE INDEX IF NOT EXISTS idx_collection_recipes_collection ON collection_recipes(collection_id);
 `);
 
 try {
