@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -38,13 +38,14 @@ function IconStarOutline({ className = 'w-5 h-5' }) {
 }
 
 export default function RecipeDetail() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [notes, setNotes] = useState('');
   const queryClient = useQueryClient();
+  const bringWidgetRef = useRef(null);
 
   const loginRedirect = `/login?next=${encodeURIComponent(`${location.pathname}${location.search ?? ''}`)}`;
   const isAuthenticated = !!user;
@@ -131,6 +132,43 @@ export default function RecipeDetail() {
     }
   };
 
+  useEffect(() => {
+    const recipeForBring = data?.recipe;
+    if (!recipeForBring || !bringWidgetRef.current) return;
+    const bringImportUrl =
+      recipeForBring.source_url ||
+      (typeof window !== 'undefined' ? `${window.location.origin}/recipes/${recipeForBring.id}` : '');
+    if (!bringImportUrl) return;
+    const el = bringWidgetRef.current;
+    const lang = i18n.language === 'de' ? 'de' : 'en';
+    const servings =
+      recipeForBring.servings != null && Number(recipeForBring.servings) > 0 ? Number(recipeForBring.servings) : 4;
+    const tryRender = () => {
+      if (typeof window !== 'undefined' && window.bringwidgets?.import?.render) {
+        el.innerHTML = '';
+        window.bringwidgets.import.render(el, {
+          url: bringImportUrl,
+          language: lang,
+          theme: 'light',
+          baseQuantity: String(servings),
+          requestedQuantity: String(servings),
+        });
+        return true;
+      }
+      return false;
+    };
+    if (tryRender()) return;
+    let cancelled = false;
+    const id = setInterval(() => {
+      if (cancelled) return;
+      if (tryRender()) clearInterval(id);
+    }, 150);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [data?.recipe?.source_url, data?.recipe?.id, data?.recipe?.servings, i18n.language]);
+
   if (isLoading) return <p className="text-slate-500">{t('recipeDetail.loading')}</p>;
   if (error || !data?.recipe) return <p className="text-red-600">{t('recipeDetail.notFound')}</p>;
 
@@ -141,9 +179,6 @@ export default function RecipeDetail() {
   const bringImportUrl =
     recipe.source_url ||
     (typeof window !== 'undefined' ? `${window.location.origin}/recipes/${recipe.id}` : '');
-  const bringHref = bringImportUrl
-    ? `https://api.getbring.com/rest/bringrecipes/deeplink?url=${encodeURIComponent(bringImportUrl)}&source=web`
-    : null;
 
   return (
     <div className="max-w-3xl w-full mx-auto flex flex-col gap-6 px-4 sm:px-0 py-4">
@@ -301,16 +336,7 @@ export default function RecipeDetail() {
       <section className="rounded-xl border border-slate-200 bg-white shadow-sm p-6 mx-4 sm:mx-0">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-display text-lg font-semibold text-slate-800">{t('recipeDetail.ingredients')}</h2>
-          {bringHref && (
-            <a
-              href={bringHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center px-3 py-1.5 rounded-md border border-brand-600 text-brand-600 text-sm font-medium hover:bg-brand-50 transition-colors"
-            >
-              {t('recipeDetail.addToBring')}
-            </a>
-          )}
+          {bringImportUrl && <div ref={bringWidgetRef} />}
         </div>
         <ul className="list-disc list-inside text-slate-600 space-y-1">
           {(recipe.ingredients || []).map((ing, i) => (
