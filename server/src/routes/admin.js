@@ -315,6 +315,7 @@ router.delete('/users/:id', (req, res) => {
   db.prepare('DELETE FROM user_recipes WHERE user_id = ?').run(id);
   db.prepare('DELETE FROM collection_recipes WHERE collection_id IN (SELECT id FROM collections WHERE user_id = ?)').run(id);
   db.prepare('DELETE FROM collections WHERE user_id = ?').run(id);
+  db.prepare('UPDATE recipes SET created_by_user_id = NULL WHERE created_by_user_id = ?').run(id);
 
   db.prepare('DELETE FROM users WHERE id = ?').run(id);
   res.status(204).send();
