@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { auth as authApi } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useOnboarding } from '../context/OnboardingContext';
@@ -10,11 +11,13 @@ const LANGUAGE_LABELS = { de: 'Deutsch', en: 'English' };
 
 export default function Profile() {
   const { t, i18n } = useTranslation();
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const { openTutorial } = useOnboarding();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newPasswordConfirm, setNewPasswordConfirm] = useState('');
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
 
   const passwordMutation = useMutation({
     mutationFn: () => authApi.changePassword(currentPassword, newPassword),
@@ -22,6 +25,14 @@ export default function Profile() {
       setCurrentPassword('');
       setNewPassword('');
       setNewPasswordConfirm('');
+    },
+  });
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: () => authApi.deleteAccount(),
+    onSuccess: () => {
+      logout();
+      navigate('/', { replace: true });
     },
   });
 
@@ -133,7 +144,56 @@ export default function Profile() {
             </button>
           </form>
         </section>
+
+        <section className="rounded-xl border border-red-200 bg-white shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-slate-800 mb-3">{t('profile.deleteAccount')}</h2>
+          <p className="text-slate-500 text-sm mb-3">{t('profile.deleteAccountDesc')}</p>
+          <button
+            type="button"
+            onClick={() => setShowDeleteConfirmModal(true)}
+            className="px-4 py-2 rounded-lg border border-red-500 text-red-600 font-medium hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+          >
+            {t('profile.deleteAccount')}
+          </button>
+        </section>
       </div>
+
+      {showDeleteConfirmModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-account-modal-title"
+        >
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h2 id="delete-account-modal-title" className="text-lg font-semibold text-slate-800 mb-2">
+              {t('profile.deleteAccount')}
+            </h2>
+            <p className="text-slate-600 text-sm mb-6">{t('profile.confirmDeleteAccount')}</p>
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirmModal(false)}
+                disabled={deleteAccountMutation.isPending}
+                className="px-4 py-2 rounded-lg border border-slate-200 text-slate-700 font-medium hover:bg-slate-50 transition-colors disabled:opacity-50"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={() => deleteAccountMutation.mutate()}
+                disabled={deleteAccountMutation.isPending}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                {deleteAccountMutation.isPending ? t('profile.deleting') : t('common.confirm')}
+              </button>
+            </div>
+            {deleteAccountMutation.isError && (
+              <p className="mt-3 text-red-600 text-sm">{deleteAccountMutation.error?.message}</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,31 +1,37 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { OnboardingProvider } from './context/OnboardingContext';
 import Layout from './components/Layout';
 import DocumentHead from './components/DocumentHead';
-import Landing from './pages/Landing';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import VerifyEmail from './pages/VerifyEmail';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import Dashboard from './pages/Dashboard';
-import Recipes from './pages/Recipes';
-import RecipeByIngredients from './pages/RecipeByIngredients';
-import RecipeDetail from './pages/RecipeDetail';
-import Collections from './pages/Collections';
-import CollectionDetail from './pages/CollectionDetail';
-import Search from './pages/Search';
-import Profile from './pages/Profile';
-import AdminLayout from './pages/admin/AdminLayout';
-import AdminUsers from './pages/admin/AdminUsers';
-import AdminUserForm from './pages/admin/AdminUserForm';
-import AdminRecipes from './pages/admin/AdminRecipes';
-import AdminRecipeEdit from './pages/admin/AdminRecipeEdit';
-import AdminLogs from './pages/admin/AdminLogs';
+
+const Landing = React.lazy(() => import('./pages/Landing'));
+const Login = React.lazy(() => import('./pages/Login'));
+const Register = React.lazy(() => import('./pages/Register'));
+const VerifyEmail = React.lazy(() => import('./pages/VerifyEmail'));
+const ForgotPassword = React.lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = React.lazy(() => import('./pages/ResetPassword'));
+const PrivacyPolicy = React.lazy(() => import('./pages/PrivacyPolicy'));
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const Recipes = React.lazy(() => import('./pages/Recipes'));
+const RecipeByIngredients = React.lazy(() => import('./pages/RecipeByIngredients'));
+const RecipeDetail = React.lazy(() => import('./pages/RecipeDetail'));
+const Collections = React.lazy(() => import('./pages/Collections'));
+const CollectionDetail = React.lazy(() => import('./pages/CollectionDetail'));
+const Search = React.lazy(() => import('./pages/Search'));
+const Profile = React.lazy(() => import('./pages/Profile'));
+const AdminLayout = React.lazy(() => import('./pages/admin/AdminLayout'));
+const AdminUsers = React.lazy(() => import('./pages/admin/AdminUsers'));
+const AdminUserForm = React.lazy(() => import('./pages/admin/AdminUserForm'));
+const AdminRecipes = React.lazy(() => import('./pages/admin/AdminRecipes'));
+const AdminRecipeEdit = React.lazy(() => import('./pages/admin/AdminRecipeEdit'));
+const AdminLogs = React.lazy(() => import('./pages/admin/AdminLogs'));
+
+function PageFallback() {
+  const { t } = useTranslation();
+  return <div className="flex items-center justify-center min-h-screen">{t('app.loading')}</div>;
+}
 
 function PrivateRoute({ children }) {
   const { t } = useTranslation();
@@ -39,7 +45,8 @@ function AppRoutes() {
   return (
     <>
       <DocumentHead />
-      <Routes>
+      <Suspense fallback={<PageFallback />}>
+        <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -77,7 +84,8 @@ function AppRoutes() {
         </Route>
       </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+        </Routes>
+      </Suspense>
     </>
   );
 }

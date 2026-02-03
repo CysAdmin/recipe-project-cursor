@@ -99,7 +99,7 @@ router.post('/', authMiddleware, (req, res) => {
   res.status(201).json({ collection: row });
 });
 
-// GET /api/collections/:id — one collection with recipes (owner only)
+// GET /api/collections/:id — one collection with recipes, paginated (owner only)
 router.get('/:id', authMiddleware, (req, res) => {
   const userId = req.userId;
   const id = parseInt(req.params.id, 10);
@@ -107,6 +107,12 @@ router.get('/:id', authMiddleware, (req, res) => {
   const collection = db.prepare('SELECT id, user_id, name, created_at FROM collections WHERE id = ?').get(id);
   if (!collection) return res.status(404).json({ error: 'Collection not found' });
   if (collection.user_id !== userId) return res.status(403).json({ error: 'Not allowed to view this collection' });
+  const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 50);
+  const offset = Math.max(0, parseInt(req.query.offset, 10) || 0);
+  const totalRow = db.prepare(
+    'SELECT COUNT(*) AS total FROM collection_recipes WHERE collection_id = ?'
+  ).get(id);
+  const total = totalRow?.total ?? 0;
   const recipeRows = db
     .prepare(
       `
@@ -118,11 +124,16 @@ router.get('/:id', authMiddleware, (req, res) => {
     FROM recipes r
     JOIN collection_recipes cr ON cr.recipe_id = r.id AND cr.collection_id = ?
     ORDER BY cr.added_at DESC
+    LIMIT ? OFFSET ?
   `
     )
-    .all(id);
+    .all(id, limit, offset);
   const recipes = recipeRows.map((row) => rowToRecipe(row, row.tags ?? '[]'));
-  res.json({ collection: { id: collection.id, name: collection.name, created_at: collection.created_at }, recipes });
+  res.json({
+    collection: { id: collection.id, name: collection.name, created_at: collection.created_at },
+    recipes,
+    total,
+  });
 });
 
 // PATCH /api/collections/:id — rename (owner only)

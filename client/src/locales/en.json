@@ -15,6 +15,7 @@
     "save": "Save",
     "saving": "Saving…",
     "cancel": "Cancel",
+    "confirm": "Confirm",
     "delete": "Delete",
     "confirmDelete": "Confirm delete",
     "edit": "Edit",
@@ -330,7 +331,11 @@
     "passwordsMismatch": "Passwords do not match",
     "changeButton": "Change password",
     "changing": "Changing…",
-    "passwordSuccess": "Password changed."
+    "passwordSuccess": "Password changed.",
+    "deleteAccount": "Delete account",
+    "deleteAccountDesc": "Permanently delete your account and all your data. This cannot be undone.",
+    "confirmDeleteAccount": "Are you sure you want to delete your account? All your recipes, collections and data will be permanently removed. This cannot be undone.",
+    "deleting": "Deleting…"
   },
   "seo": {
     "pageTitles": {
