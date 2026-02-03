@@ -8,6 +8,7 @@ import RecipeSource from '../components/RecipeSource';
 import RecipeTags from '../components/RecipeTags';
 
 const ADD_RECIPE_PAGE_SIZE = 20;
+const COLLECTION_RECIPES_PAGE_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 300;
 
 function IconPlus({ className = 'w-5 h-5' }) {
@@ -68,9 +69,25 @@ export default function CollectionDetail() {
     );
   };
 
-  const { data, isLoading, error } = useQuery({
+  const {
+    data: collectionData,
+    isLoading,
+    error,
+    fetchNextPage: fetchNextCollectionPage,
+    hasNextPage: hasNextCollectionPage,
+    isFetchingNextPage: isFetchingNextCollectionPage,
+  } = useInfiniteQuery({
     queryKey: ['collection', id],
-    queryFn: () => collectionsApi.get(id),
+    queryFn: ({ pageParam = 0 }) =>
+      collectionsApi.get(id, {
+        limit: COLLECTION_RECIPES_PAGE_SIZE,
+        offset: pageParam,
+      }),
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((acc, p) => acc + (p.recipes?.length ?? 0), 0);
+      return lastPage.total != null && loaded < lastPage.total ? loaded : undefined;
+    },
+    initialPageParam: 0,
     enabled: !!id,
   });
 
@@ -117,8 +134,8 @@ export default function CollectionDetail() {
     },
   });
 
-  const collection = data?.collection;
-  const recipes = data?.recipes ?? [];
+  const collection = collectionData?.pages?.[0]?.collection;
+  const recipes = collectionData?.pages?.flatMap((p) => p.recipes ?? []) ?? [];
   const myRecipes = myRecipesData?.pages?.flatMap((p) => p.recipes ?? []) ?? [];
   const recipeIdsInCollection = new Set(recipes.map((r) => r.id));
   const recipesToAdd = myRecipes.filter((r) => !recipeIdsInCollection.has(r.id));
@@ -303,6 +320,18 @@ export default function CollectionDetail() {
             </li>
           ))}
         </ul>
+      )}
+      {hasNextCollectionPage && (
+        <div className="mt-6 flex justify-center">
+          <button
+            type="button"
+            onClick={() => fetchNextCollectionPage()}
+            disabled={isFetchingNextCollectionPage}
+            className="px-6 py-2 rounded-lg border border-slate-200 text-slate-600 font-medium hover:bg-slate-50 transition-colors disabled:opacity-50"
+          >
+            {isFetchingNextCollectionPage ? t('common.loading') : t('collections.loadMore')}
+          </button>
+        </div>
       )}
     </div>
   );

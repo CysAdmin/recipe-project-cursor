@@ -367,31 +367,40 @@ function rowToRecipe(row) {
   };
 }
 
-// GET /api/admin/recipes — list all recipes
+// GET /api/admin/recipes — list recipes (paginated)
 router.get('/recipes', (req, res) => {
   const q = (req.query.q || '').trim();
-  const limit = Math.min(parseInt(req.query.limit, 10) || 100, 500);
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const limitRaw = parseInt(req.query.limit, 10) || 50;
+  const limit = Math.min([50, 100].includes(limitRaw) ? limitRaw : 50, 100);
+  const offset = (page - 1) * limit;
+  const pattern = q ? `%${q.replace(/%/g, '\\%')}%` : null;
+  const whereClause = pattern ? 'WHERE r.title LIKE ? OR r.description LIKE ? OR r.ingredients LIKE ?' : '';
+  const countParams = pattern ? [pattern, pattern, pattern] : [];
+  const totalRow = db.prepare(
+    `SELECT COUNT(*) AS total FROM recipes r ${whereClause}`
+  ).get(...countParams);
+  const total = totalRow?.total ?? 0;
   let rows;
-  if (q) {
-    const pattern = `%${q.replace(/%/g, '\\%')}%`;
+  if (pattern) {
     rows = db.prepare(`
       SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
              (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count
       FROM recipes r
       WHERE r.title LIKE ? OR r.description LIKE ? OR r.ingredients LIKE ?
       ORDER BY r.created_at DESC
-      LIMIT ?
-    `).all(pattern, pattern, pattern, limit);
+      LIMIT ? OFFSET ?
+    `).all(pattern, pattern, pattern, limit, offset);
   } else {
     rows = db.prepare(`
       SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.tags, r.created_at,
              (SELECT COUNT(*) FROM user_recipes WHERE recipe_id = r.id) AS save_count
       FROM recipes r
       ORDER BY r.created_at DESC
-      LIMIT ?
-    `).all(limit);
+      LIMIT ? OFFSET ?
+    `).all(limit, offset);
   }
-  res.json({ recipes: rows.map(rowToRecipe) });
+  res.json({ recipes: rows.map(rowToRecipe), total });
 });
 
 // GET /api/admin/recipes/:id — get one recipe (admin view)

@@ -84,7 +84,10 @@ export const recipes = {
 export const collections = {
   list: () => api('/collections'),
   create: (body) => api('/collections', { method: 'POST', body: JSON.stringify(body) }),
-  get: (id) => api(`/collections/${id}`),
+  get: (id, params = {}) => {
+    const q = new URLSearchParams(params).toString();
+    return api(`/collections/${id}${q ? `?${q}` : ''}`);
+  },
   update: (id, body) => api(`/collections/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   delete: (id) => api(`/collections/${id}`, { method: 'DELETE' }),
   addRecipe: (collectionId, recipeId) =>

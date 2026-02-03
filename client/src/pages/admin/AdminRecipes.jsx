@@ -4,15 +4,24 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { admin } from '../../api/client';
 
+const PAGE_SIZES = [50, 100];
+
 export default function AdminRecipes() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [q, setQ] = useState('');
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(50);
   const [deleteId, setDeleteId] = useState(null);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['admin', 'recipes', q],
-    queryFn: () => admin.recipes.list(q ? { q, limit: 100 } : { limit: 100 }),
+    queryKey: ['admin', 'recipes', q, page, limit],
+    queryFn: () =>
+      admin.recipes.list({
+        ...(q ? { q } : {}),
+        page,
+        limit,
+      }),
   });
 
   const deleteMutation = useMutation({
@@ -24,6 +33,15 @@ export default function AdminRecipes() {
   });
 
   const recipes = data?.recipes ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const hasPrev = page > 1;
+  const hasNext = page < totalPages;
+
+  const handleSearchChange = (e) => {
+    setQ(e.target.value);
+    setPage(1);
+  };
 
   if (isLoading) return <p className="text-slate-500">{t('admin.loadingRecipes')}</p>;
   if (error) return <p className="text-red-600">{error.message}</p>;
@@ -36,9 +54,29 @@ export default function AdminRecipes() {
           type="search"
           placeholder={t('admin.searchPlaceholder')}
           value={q}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={handleSearchChange}
           className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 w-48 focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
         />
+      </div>
+      <div className="flex flex-wrap items-center gap-4">
+        <span className="text-sm text-slate-600">{t('admin.pageSize')}:</span>
+        <div className="flex gap-1">
+          {PAGE_SIZES.map((size) => (
+            <button
+              key={size}
+              type="button"
+              onClick={() => {
+                setLimit(size);
+                setPage(1);
+              }}
+              className={`px-3 py-1.5 rounded text-sm font-medium ${
+                limit === size ? 'bg-brand-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              {size}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-sm text-left">
@@ -96,6 +134,29 @@ export default function AdminRecipes() {
             ))}
           </tbody>
         </table>
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <p className="text-sm text-slate-600">
+          {t('admin.pageOf', { current: page, total: totalPages })}
+        </p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={!hasPrev}
+            className="px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:pointer-events-none text-sm font-medium"
+          >
+            {t('admin.prevPage')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={!hasNext}
+            className="px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:pointer-events-none text-sm font-medium"
+          >
+            {t('admin.nextPage')}
+          </button>
+        </div>
       </div>
     </div>
   );
