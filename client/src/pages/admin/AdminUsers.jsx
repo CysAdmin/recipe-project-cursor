@@ -142,6 +142,8 @@ export default function AdminUsers() {
   const containerRef = useRef(null);
   const menuButtonRef = useRef(null);
   const menuContentRef = useRef(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'active' | 'blocked'
   const [openMenuId, setOpenMenuId] = useState(null);
   const [resetPasswordUser, setResetPasswordUser] = useState(null);
   const [confirmModal, setConfirmModal] = useState(null);
@@ -207,6 +209,17 @@ export default function AdminUsers() {
 
   const users = data?.users ?? [];
 
+  const filteredUsers = users.filter((u) => {
+    const matchesSearch =
+      !searchQuery.trim() ||
+      (u.email && u.email.toLowerCase().includes(searchQuery.trim().toLowerCase()));
+    const matchesStatus =
+      statusFilter === 'all' ||
+      (statusFilter === 'active' && !u.is_blocked) ||
+      (statusFilter === 'blocked' && u.is_blocked);
+    return matchesSearch && matchesStatus;
+  });
+
   const handleConfirm = (payload) => {
     if (payload.type === 'delete') {
       deleteMutation.mutate(payload.id);
@@ -242,14 +255,37 @@ export default function AdminUsers() {
       {successMessage && (
         <div className="p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">{successMessage}</div>
       )}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <h2 className="text-lg font-semibold text-slate-800">{t('admin.users')}</h2>
         <Link
           to="/app/admin/users/new"
-          className="px-3 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-700"
+          className="px-3 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-700 w-fit"
         >
           {t('admin.createUser')}
         </Link>
+      </div>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <input
+          type="search"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={t('admin.searchByEmail')}
+          className="w-full sm:max-w-xs px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
+          aria-label={t('admin.searchByEmail')}
+        />
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm text-slate-500">{t('admin.filterStatus')}:</span>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+            aria-label={t('admin.filterStatus')}
+          >
+            <option value="all">{t('admin.filterAll')}</option>
+            <option value="active">{t('admin.statusActive')}</option>
+            <option value="blocked">{t('admin.statusBlocked')}</option>
+          </select>
+        </div>
       </div>
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-sm text-left">
@@ -265,7 +301,7 @@ export default function AdminUsers() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 text-slate-700">
-            {users.map((u) => (
+            {filteredUsers.map((u) => (
               <tr key={u.id}>
                 <td className="px-4 py-2">{u.display_name || t('common.dash')}</td>
                 <td className="px-4 py-2">{u.email}</td>
