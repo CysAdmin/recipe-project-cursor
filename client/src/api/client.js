@@ -99,6 +99,8 @@ export const admin = {
     create: (body) => api('/admin/users', { method: 'POST', body: JSON.stringify(body) }),
     update: (id, body) => api(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
     delete: (id) => api(`/admin/users/${id}`, { method: 'DELETE' }),
+    resendVerification: (id) =>
+      api(`/admin/users/${id}/resend-verification`, { method: 'POST' }),
   },
   recipes: {
     list: (params = {}) => {
@@ -108,5 +110,11 @@ export const admin = {
     get: (id) => api(`/admin/recipes/${id}`),
     update: (id, body) => api(`/admin/recipes/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
     delete: (id) => api(`/admin/recipes/${id}`, { method: 'DELETE' }),
+  },
+  logs: {
+    list: (params = {}) => {
+      const q = new URLSearchParams(params).toString();
+      return api(`/admin/logs${q ? `?${q}` : ''}`);
+    },
   },
 };

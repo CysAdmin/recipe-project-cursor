@@ -4,6 +4,7 @@ import db from '../db/index.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { parseRecipeFromHtml, extractFaviconFromHtml } from '../services/recipeParser.js';
 import { searchExternal, searchExternalByProvider } from '../services/externalSearch.js';
+import { insertLog } from '../services/logService.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
 
@@ -544,6 +545,7 @@ router.post('/:id/save', authMiddleware, (req, res) => {
   db.prepare(
     `INSERT OR IGNORE INTO user_recipes (user_id, recipe_id, is_favorite, personal_notes, saved_at, rating) VALUES (?, ?, 0, NULL, datetime('now'), NULL)`
   ).run(userId, recipeId);
+  insertLog(db, { userId, action: 'recipe_saved', category: 'info', details: String(recipeId) });
 
   const row = db.prepare(`
     SELECT r.id, r.source_url, r.title, r.description, r.ingredients, r.prep_time, r.cook_time, r.servings, r.image_url, r.favicon_url, r.created_at,
@@ -560,6 +562,7 @@ router.delete('/:id/save', authMiddleware, (req, res) => {
   if (Number.isNaN(recipeId)) return res.status(400).json({ error: 'Invalid recipe ID' });
 
   db.prepare('DELETE FROM user_recipes WHERE user_id = ? AND recipe_id = ?').run(userId, recipeId);
+  insertLog(db, { userId, action: 'recipe_unsaved', category: 'info', details: String(recipeId) });
   res.status(204).send();
 });
 

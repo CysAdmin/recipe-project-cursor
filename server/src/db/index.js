@@ -92,6 +92,20 @@ try {
   if (!e.message.includes('duplicate column name')) throw e;
 }
 
+// Blocked (users) — admin can lock accounts
+try {
+  db.exec('ALTER TABLE users ADD COLUMN blocked INTEGER DEFAULT 0');
+} catch (e) {
+  if (!e.message.includes('duplicate column name')) throw e;
+}
+
+// Last login (users) — for admin detail view
+try {
+  db.exec('ALTER TABLE users ADD COLUMN last_login_at DATETIME');
+} catch (e) {
+  if (!e.message.includes('duplicate column name')) throw e;
+}
+
 // User rating 1–5 per recipe (user_recipes)
 try {
   db.exec('ALTER TABLE user_recipes ADD COLUMN rating INTEGER');
@@ -123,6 +137,26 @@ try {
   `);
 } catch (e) {
   if (!e.message.includes('duplicate column name') && !e.message?.includes('already exists')) throw e;
+}
+
+// Admin logs — audit trail for admin view
+try {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS admin_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      user_id INTEGER,
+      user_email VARCHAR(255),
+      user_display_name VARCHAR(255),
+      action VARCHAR(64) NOT NULL,
+      category VARCHAR(16) NOT NULL DEFAULT 'info',
+      details TEXT
+    )
+  `);
+  db.exec('CREATE INDEX IF NOT EXISTS idx_admin_logs_created_at ON admin_logs(created_at DESC)');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_admin_logs_category ON admin_logs(category)');
+} catch (e) {
+  if (!e.message?.includes('already exists') && !e.message?.includes('duplicate column name')) throw e;
 }
 
 export default db;
