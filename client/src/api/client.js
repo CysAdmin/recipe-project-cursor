@@ -99,6 +99,8 @@ export const admin = {
     create: (body) => api('/admin/users', { method: 'POST', body: JSON.stringify(body) }),
     update: (id, body) => api(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
     delete: (id) => api(`/admin/users/${id}`, { method: 'DELETE' }),
+    resendVerification: (id) =>
+      api(`/admin/users/${id}/resend-verification`, { method: 'POST' }),
   },
   recipes: {
     list: (params = {}) => {

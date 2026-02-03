@@ -92,6 +92,13 @@ try {
   if (!e.message.includes('duplicate column name')) throw e;
 }
 
+// Blocked (users) — admin can lock accounts
+try {
+  db.exec('ALTER TABLE users ADD COLUMN blocked INTEGER DEFAULT 0');
+} catch (e) {
+  if (!e.message.includes('duplicate column name')) throw e;
+}
+
 // User rating 1–5 per recipe (user_recipes)
 try {
   db.exec('ALTER TABLE user_recipes ADD COLUMN rating INTEGER');

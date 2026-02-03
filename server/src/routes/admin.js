@@ -1,11 +1,15 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import db from '../db/index.js';
 import { authMiddleware, adminMiddleware } from '../middleware/auth.js';
+import { sendVerificationEmail } from '../services/email.js';
 
 const router = express.Router();
 const PASSWORD_MIN_LENGTH = 8;
 const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const VERIFICATION_TOKEN_EXPIRY_HOURS = 24;
 
 router.use(authMiddleware);
 router.use(adminMiddleware);
@@ -14,7 +18,8 @@ router.use(adminMiddleware);
 // GET /api/admin/users — list all users
 router.get('/users', (req, res) => {
   const rows = db.prepare(`
-    SELECT id, email, display_name, is_admin, created_at, email_verified_at
+    SELECT id, email, display_name, is_admin, created_at, email_verified_at, blocked,
+           (SELECT COUNT(*) FROM user_recipes WHERE user_id = users.id) AS saved_recipes_count
     FROM users
     ORDER BY id
   `).all();
@@ -26,6 +31,8 @@ router.get('/users', (req, res) => {
       is_admin: !!r.is_admin,
       created_at: r.created_at,
       email_verified: !!r.email_verified_at,
+      is_blocked: !!r.blocked,
+      saved_recipes_count: r.saved_recipes_count ?? 0,
     })),
   });
 });
@@ -53,14 +60,38 @@ router.get('/users/:id', (req, res) => {
   });
 });
 
+// POST /api/admin/users/:id/resend-verification — admin resend verification email
+router.post('/users/:id/resend-verification', async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (Number.isNaN(id)) return res.status(400).json({ error: 'Invalid user ID' });
+  const user = db.prepare(
+    'SELECT id, email, display_name, email_verified_at FROM users WHERE id = ?'
+  ).get(id);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  if (user.email_verified_at) {
+    return res.status(400).json({ error: 'User is already verified' });
+  }
+  const verificationToken = crypto.randomBytes(32).toString('hex');
+  const expiresAt = new Date(Date.now() + VERIFICATION_TOKEN_EXPIRY_HOURS * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 19)
+    .replace('T', ' ');
+  db.prepare(
+    'UPDATE users SET verification_token = ?, verification_token_expires_at = ? WHERE id = ?'
+  ).run(verificationToken, expiresAt, user.id);
+  const verificationLink = `${FRONTEND_URL.replace(/\/$/, '')}/verify-email?token=${verificationToken}`;
+  await sendVerificationEmail(user.email, verificationLink, user.display_name || '');
+  return res.json({ message: 'Verification email sent.' });
+});
+
 // PATCH /api/admin/users/:id — update user (email, display_name, is_admin; optional password)
 router.patch('/users/:id', (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (Number.isNaN(id)) return res.status(400).json({ error: 'Invalid user ID' });
-  const row = db.prepare('SELECT id, email, display_name, is_admin FROM users WHERE id = ?').get(id);
+  const row = db.prepare('SELECT id, email, display_name, is_admin, blocked FROM users WHERE id = ?').get(id);
   if (!row) return res.status(404).json({ error: 'User not found' });
 
-  const { email, display_name: displayName, is_admin: isAdmin, new_password: newPassword, email_verified: emailVerified } = req.body;
+  const { email, display_name: displayName, is_admin: isAdmin, new_password: newPassword, email_verified: emailVerified, blocked: blockedVal } = req.body;
 
   let emailNorm = row.email;
   if (email != null && String(email).trim()) {
@@ -106,13 +137,17 @@ router.patch('/users/:id', (req, res) => {
     updates.push('verification_token = NULL');
     updates.push('verification_token_expires_at = NULL');
   }
+  if (typeof blockedVal === 'boolean') {
+    updates.push('blocked = ?');
+    params.push(blockedVal ? 1 : 0);
+  }
   if (updates.length) {
     params.push(id);
     db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...params);
   }
 
   const updated = db.prepare(
-    'SELECT id, email, display_name, is_admin, created_at FROM users WHERE id = ?'
+    'SELECT id, email, display_name, is_admin, created_at, blocked FROM users WHERE id = ?'
   ).get(id);
   res.json({
     user: {
@@ -121,6 +156,7 @@ router.patch('/users/:id', (req, res) => {
       display_name: updated.display_name,
       is_admin: !!updated.is_admin,
       created_at: updated.created_at,
+      is_blocked: !!updated.blocked,
     },
   });
 });

@@ -74,11 +74,18 @@ router.post('/login', (req, res) => {
 
   const emailNorm = String(email).trim().toLowerCase();
   const row = db.prepare(
-    'SELECT id, email, password_hash, display_name, is_admin, email_verified_at, onboarding_completed FROM users WHERE email = ?'
+    'SELECT id, email, password_hash, display_name, is_admin, email_verified_at, onboarding_completed, blocked FROM users WHERE email = ?'
   ).get(emailNorm);
 
   if (!row || !bcrypt.compareSync(password, row.password_hash)) {
     return res.status(401).json({ error: 'Invalid email or password' });
+  }
+
+  if (row.blocked) {
+    return res.status(403).json({
+      error: 'Account is locked',
+      code: 'ACCOUNT_BLOCKED',
+    });
   }
 
   if (!row.email_verified_at) {
