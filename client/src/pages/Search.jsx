@@ -36,6 +36,8 @@ export default function Search() {
   const [tagFilter, setTagFilter] = useState('');
   const [selectedProviders, setSelectedProviders] = useState(EXTERNAL_PROVIDERS.map((p) => p.id));
   const [externalVisibleCount, setExternalVisibleCount] = useState(EXTERNAL_PAGE_SIZE);
+  const [savedRecipeIds, setSavedRecipeIds] = useState(() => new Set());
+  const [importedOrImportingUrls, setImportedOrImportingUrls] = useState(() => new Set());
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -110,18 +112,21 @@ export default function Search() {
   const saveMutation = useMutation({
     mutationFn: (id) => recipesApi.save(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['recipes'] });
+      queryClient.invalidateQueries({ queryKey: ['recipes', 'mine'] });
     },
   });
 
   const importMutation = useMutation({
     mutationFn: (url) => recipesApi.importFromUrl(url),
     onSuccess: () => {
-      const scrollY = window.scrollY;
-      queryClient.invalidateQueries({ queryKey: ['recipes'] });
-      const restore = () => window.scrollTo(0, scrollY);
-      requestAnimationFrame(() => requestAnimationFrame(restore));
-      setTimeout(restore, 100);
+      queryClient.invalidateQueries({ queryKey: ['recipes', 'mine'] });
+    },
+    onError: (_err, url) => {
+      setImportedOrImportingUrls((prev) => {
+        const next = new Set(prev);
+        next.delete(url);
+        return next;
+      });
     },
   });
 
@@ -138,10 +143,14 @@ export default function Search() {
     debouncedQ.trim() &&
     suggestions.length > 0 &&
     !isFetching;
-  const externalToShow = external.slice(0, externalVisibleCount);
-  const hasMoreExternal = external.length > externalVisibleCount;
+  const externalFiltered = useMemo(
+    () => external.filter((r) => !importedOrImportingUrls.has(r.url)),
+    [external, importedOrImportingUrls]
+  );
+  const externalToShow = externalFiltered.slice(0, externalVisibleCount);
+  const hasMoreExternal = externalFiltered.length > externalVisibleCount;
   const hasExternal = external.length > 0;
-  const showExternalSection = !!debouncedQ && (hasExternal || externalLoading);
+  const showExternalSection = !!debouncedQ && (externalFiltered.length > 0 || externalLoading);
 
   const emptyState =
     !isLoading && !isFetching && recipes.length === 0 && !showExternalSection;
@@ -243,12 +252,15 @@ export default function Search() {
                       </div>
                     </Link>
                     <div className="p-4 pt-0">
-                      {r.saved_by_me ? (
+                      {r.saved_by_me || savedRecipeIds.has(r.id) ? (
                         <p className="text-slate-500 text-sm py-2">{t('search.inYourRecipes')}</p>
                       ) : (
                         <button
                           type="button"
-                          onClick={() => saveMutation.mutate(r.id)}
+                          onClick={() => {
+                            setSavedRecipeIds((prev) => new Set(prev).add(r.id));
+                            saveMutation.mutate(r.id);
+                          }}
                           disabled={saveMutation.isPending}
                           className="w-full py-2 rounded-lg border border-brand-500 text-brand-600 font-medium hover:bg-brand-50 transition-colors disabled:opacity-50"
                         >
@@ -330,13 +342,16 @@ export default function Search() {
                         <div className="p-4 pt-0">
                           <button
                             type="button"
-                            onClick={() => importMutation.mutate(r.url)}
+                            onClick={() => {
+                              setImportedOrImportingUrls((prev) => new Set(prev).add(r.url));
+                              importMutation.mutate(r.url);
+                            }}
                             disabled={importMutation.isPending}
                             className="w-full py-2 rounded-lg border border-brand-500 text-brand-600 font-medium hover:bg-brand-50 transition-colors disabled:opacity-50"
                           >
                             {importMutation.isPending && importMutation.variables === r.url
-                              ? 'Importing…'
-                              : 'Import into my recipes'}
+                              ? t('recipeDetail.importing')
+                              : t('search.importIntoMine')}
                           </button>
                         </div>
                       </div>
