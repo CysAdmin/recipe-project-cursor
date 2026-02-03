@@ -11,6 +11,7 @@ import Register from './pages/Register';
 import VerifyEmail from './pages/VerifyEmail';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import Dashboard from './pages/Dashboard';
 import Recipes from './pages/Recipes';
 import RecipeByIngredients from './pages/RecipeByIngredients';
@@ -45,6 +46,7 @@ function AppRoutes() {
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/datenschutz" element={<PrivacyPolicy />} />
         <Route path="/recipes/:id" element={<RecipeDetail />} />
         <Route
         path="/app"

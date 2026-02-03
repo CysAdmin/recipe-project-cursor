@@ -57,7 +57,33 @@
     "ctaTitle": "Bereit loszulegen?",
     "ctaSubline": "Starte jetzt kostenlos und organisiere deine Rezepte wie nie zuvor.",
     "ctaButton": "Jetzt registrieren",
-    "footer": "© 2026 SimplyKeepIt. Alle Rechte vorbehalten."
+    "footer": "© 2026 SimplyKeepIt. Alle Rechte vorbehalten.",
+    "privacy": "Datenschutz"
+  },
+  "privacy": {
+    "title": "Datenschutzerklärung",
+    "backToHome": "Zur Startseite",
+    "intro": "Mit dieser Datenschutzerklärung informieren wir Sie über die Verarbeitung personenbezogener Daten bei der Nutzung von SimplyKeepIt.",
+    "controllerTitle": "Verantwortlicher",
+    "controller": "Verantwortlich für die Datenverarbeitung ist der Betreiber dieser Anwendung. Kontaktmöglichkeiten finden Sie auf der Website.",
+    "dataTitle": "Welche Daten wir erheben",
+    "dataIntro": "Wir verarbeiten nur Daten, die für den Betrieb des Dienstes nötig sind:",
+    "dataAccount": "Kontodaten: E-Mail, Anzeigename und (verschlüsselt gespeichertes) Passwort bei Registrierung und Anmeldung.",
+    "dataRecipes": "Rezeptdaten: von Ihnen gespeicherte Rezepte, Tags, Favoriten und persönliche Notizen.",
+    "dataCollections": "Kollektionen: von Ihnen angelegte Sammlungen und die Zuordnung von Rezepten dazu.",
+    "dataAdmin": "Administration: Bei Admin-Nutzung werden Aktionen (z. B. Benutzerverwaltung) protokolliert.",
+    "purposeTitle": "Zweck der Verarbeitung",
+    "purpose": "Die Daten dienen ausschließlich dem Betrieb der Anwendung: Bereitstellung Ihres Kontos, Speicherung und Anzeige Ihrer Rezepte und Kollektionen sowie technische und rechtliche Sicherheit.",
+    "emailTitle": "E-Mail-Versand",
+    "email": "Für E-Mails (z. B. E-Mail-Verifizierung, Passwort-Zurücksetzen) nutzen wir den Anbieter Resend. Dabei werden E-Mail-Adresse und ggf. Anzeigename an Resend übermittelt. Resend verarbeitet Daten in Übereinstimmung mit deren Datenschutzbestimmungen.",
+    "retentionTitle": "Speicherdauer",
+    "retention": "Personenbezogene Daten werden gespeichert, solange Ihr Konto besteht. Nach Löschung des Kontos werden die zugehörigen Daten in einem mit der technischen Umsetzung vereinbaren Zeitraum gelöscht.",
+    "rightsTitle": "Ihre Rechte",
+    "rights": "Sie haben das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung Ihrer Daten sowie auf Datenübertragbarkeit. Sie können sich bei einer Aufsichtsbehörde beschweren. Für die Ausübung Ihrer Rechte wenden Sie sich an den Betreiber der Anwendung.",
+    "cookiesTitle": "Cookies und Technik",
+    "cookies": "Wir setzen technisch notwendige Cookies bzw. Speicher (z. B. für die Anmeldung) ein. Es erfolgt keine Tracking- oder Werbeanalyse durch uns.",
+    "changesTitle": "Änderungen",
+    "changes": "Diese Datenschutzerklärung kann bei Bedarf angepasst werden. Die aktuelle Version finden Sie stets auf dieser Seite."
   },
   "login": {
     "title": "Anmelden",
@@ -321,6 +347,7 @@
       "resetPassword": "Passwort zurücksetzen | SimplyKeepIt",
       "verifyEmail": "E-Mail bestätigen | SimplyKeepIt",
       "publicRecipe": "Rezept ansehen | SimplyKeepIt",
+      "datenschutz": "Datenschutz | SimplyKeepIt",
       "default": "SimplyKeepIt — Collect, Plan, Shop"
     },
     "descriptions": {
@@ -331,6 +358,7 @@
       "resetPassword": "Setze dein SimplyKeepIt Passwort sicher zurück.",
       "verifyEmail": "Bestätige deine E-Mail-Adresse, um SimplyKeepIt vollständig nutzen zu können.",
       "publicRecipe": "Entdecke ein SimplyKeepIt Lieblingsrezept mit Zutaten, Zubereitung und Quelle.",
+      "datenschutz": "Datenschutzerklärung von SimplyKeepIt – Umgang mit Ihren Daten.",
       "default": "SimplyKeepIt – Rezepte speichern, organisieren und entdecken."
     }
   },

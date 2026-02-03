@@ -57,7 +57,33 @@
     "ctaTitle": "Ready to get started?",
     "ctaSubline": "Start for free now and organize your recipes like never before.",
     "ctaButton": "Sign up now",
-    "footer": "© 2026 SimplyKeepIt. All rights reserved."
+    "footer": "© 2026 SimplyKeepIt. All rights reserved.",
+    "privacy": "Privacy"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "backToHome": "Back to home",
+    "intro": "This privacy policy explains how we process personal data when you use SimplyKeepIt.",
+    "controllerTitle": "Data controller",
+    "controller": "The data controller is the operator of this application. You can find contact details on the website.",
+    "dataTitle": "What data we collect",
+    "dataIntro": "We only process data necessary to run the service:",
+    "dataAccount": "Account data: email, display name, and (stored hashed) password for registration and login.",
+    "dataRecipes": "Recipe data: recipes you save, tags, favorites, and personal notes.",
+    "dataCollections": "Collections: collections you create and which recipes you add to them.",
+    "dataAdmin": "Administration: when using admin features, actions (e.g. user management) are logged.",
+    "purposeTitle": "Purpose of processing",
+    "purpose": "Data is used solely to operate the application: providing your account, storing and displaying your recipes and collections, and for technical and legal security.",
+    "emailTitle": "Email delivery",
+    "email": "For emails (e.g. email verification, password reset) we use the provider Resend. Your email address and, if applicable, display name are sent to Resend. Resend processes data in accordance with their privacy policy.",
+    "retentionTitle": "Retention",
+    "retention": "Personal data is stored for as long as your account exists. After account deletion, associated data is removed within a period consistent with our technical implementation.",
+    "rightsTitle": "Your rights",
+    "rights": "You have the right to access, rectify, delete, and restrict processing of your data, and to data portability. You may lodge a complaint with a supervisory authority. To exercise your rights, contact the operator of the application.",
+    "cookiesTitle": "Cookies and technology",
+    "cookies": "We use technically necessary cookies or storage (e.g. for login). We do not use tracking or advertising analytics.",
+    "changesTitle": "Changes",
+    "changes": "This privacy policy may be updated when needed. The current version is always available on this page."
   },
   "login": {
     "title": "Log in",
@@ -313,6 +339,7 @@
       "resetPassword": "Reset password | SimplyKeepIt",
       "verifyEmail": "Verify email | SimplyKeepIt",
       "publicRecipe": "View recipe | SimplyKeepIt",
+      "datenschutz": "Privacy | SimplyKeepIt",
       "default": "SimplyKeepIt — Collect, Plan, Shop"
     },
     "descriptions": {
@@ -323,6 +350,7 @@
       "resetPassword": "Securely reset your SimplyKeepIt password.",
       "verifyEmail": "Verify your email address to use all SimplyKeepIt features.",
       "publicRecipe": "Discover a SimplyKeepIt recipe with ingredients, preparation and source information.",
+      "datenschutz": "SimplyKeepIt privacy policy – how we handle your data.",
       "default": "SimplyKeepIt – Save, organize, and discover recipes."
     }
   },
