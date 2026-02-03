@@ -299,6 +299,26 @@
     "changing": "Changing…",
     "passwordSuccess": "Password changed."
   },
+  "seo": {
+    "pageTitles": {
+      "home": "SimplyKeepIt – Collect, plan, cook",
+      "login": "Log in | SimplyKeepIt",
+      "register": "Sign up | SimplyKeepIt",
+      "forgotPassword": "Forgot password | SimplyKeepIt",
+      "resetPassword": "Reset password | SimplyKeepIt",
+      "verifyEmail": "Verify email | SimplyKeepIt",
+      "default": "SimplyKeepIt — Collect, Plan, Shop"
+    },
+    "descriptions": {
+      "home": "SimplyKeepIt is your digital recipe notebook. Save recipes from across the web, organize them with tags, and plan your cooking ideas.",
+      "login": "Sign in to SimplyKeepIt to manage your saved recipes and discover new inspiration.",
+      "register": "Create a SimplyKeepIt account to save recipes, organize them with tags, and access them anywhere.",
+      "forgotPassword": "Request a link to reset your SimplyKeepIt password.",
+      "resetPassword": "Securely reset your SimplyKeepIt password.",
+      "verifyEmail": "Verify your email address to use all SimplyKeepIt features.",
+      "default": "SimplyKeepIt – Save, organize, and discover recipes."
+    }
+  },
   "admin": {
     "title": "Admin",
     "loading": "Loading…",
