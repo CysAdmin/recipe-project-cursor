@@ -334,9 +334,13 @@ export default function RecipeDetail() {
       </div>
 
       <section className="rounded-xl border border-slate-200 bg-white shadow-sm p-6 mx-4 sm:mx-0">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-col gap-2 mb-3 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
           <h2 className="font-display text-lg font-semibold text-slate-800">{t('recipeDetail.ingredients')}</h2>
-          {bringImportUrl && <div ref={bringWidgetRef} />}
+          {bringImportUrl && (
+            <div className="inline-block origin-top-left scale-[0.7] self-start sm:scale-100 sm:origin-top-right sm:self-auto">
+              <div ref={bringWidgetRef} />
+            </div>
+          )}
         </div>
         <ul className="list-disc list-inside text-slate-600 space-y-1">
           {(recipe.ingredients || []).map((ing, i) => (
