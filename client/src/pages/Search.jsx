@@ -6,6 +6,7 @@ import { recipes as recipesApi } from '../api/client';
 import RecipeSource from '../components/RecipeSource';
 import RecipeTags from '../components/RecipeTags';
 import TagFilterPills from '../components/TagFilterPills';
+import { RecipeCardSkeleton } from '../components/skeletons';
 
 const EXTERNAL_PAGE_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 400;
@@ -203,8 +204,12 @@ export default function Search() {
         <TagFilterPills selectedTag={tagFilter} onSelectTag={setTagFilter} />
       </div>
 
-      {isLoading || isFetching ? (
-        <p className="text-slate-500">{t('common.loading')}</p>
+      {(isLoading || isFetching) && recipes.length === 0 ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[...Array(6)].map((_, i) => (
+            <RecipeCardSkeleton key={`skeleton-${i}`} />
+          ))}
+        </div>
       ) : emptyState ? (
         <p className="text-slate-500">
           {debouncedQ ? t('search.noResultsQuery') : t('search.noResultsEmpty')}
@@ -301,7 +306,11 @@ export default function Search() {
             <div>
               <h2 className="text-lg font-semibold text-slate-800 mb-3">{t('search.externalResults')}</h2>
               {externalLoading ? (
-                <p className="text-slate-500">{t('search.loadingExternal')}</p>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {[...Array(6)].map((_, i) => (
+                    <RecipeCardSkeleton key={`external-skeleton-${i}`} />
+                  ))}
+                </div>
               ) : (
                 <>
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
