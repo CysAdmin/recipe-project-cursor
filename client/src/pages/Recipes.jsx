@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useInfiniteQuery, useMutation, useQueryClient, useQuery, keepPreviousData } from '@tanstack/react-query';
 import { recipes as recipesApi } from '../api/client';
@@ -11,6 +11,7 @@ import AddToCollectionModal from '../components/AddToCollectionModal';
 import { useAuth } from '../context/AuthContext';
 
 const SEARCH_DEBOUNCE_MS = 400;
+const SUGGESTIONS_MAX = 6;
 
 function IconSearch({ className = 'w-5 h-5' }) {
   return (
@@ -78,6 +79,7 @@ function IconHeartOutline({ className = 'w-5 h-5' }) {
 
 export default function Recipes() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const tagFilter = searchParams.get('tag') || '';
@@ -97,6 +99,7 @@ export default function Recipes() {
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState('');
+  const [suggestionsVisible, setSuggestionsVisible] = React.useState(false);
   const searchInputRef = React.useRef(null);
 
   React.useEffect(() => {
@@ -184,6 +187,7 @@ export default function Recipes() {
   const {
     data,
     isLoading,
+    isFetching,
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
@@ -210,6 +214,13 @@ export default function Recipes() {
 
   const recipes = data?.pages?.flatMap((p) => p.recipes ?? []) ?? [];
   const totalCount = data?.pages?.[0]?.total ?? recipes.length;
+  const suggestions = recipes.slice(0, SUGGESTIONS_MAX);
+  const showSuggestionsDropdown =
+    searchOpen &&
+    suggestionsVisible &&
+    debouncedSearchQuery.trim() &&
+    suggestions.length > 0 &&
+    !isFetching;
   const loadMoreRef = React.useRef(null);
 
   const { data: similarData } = useQuery({
@@ -257,22 +268,53 @@ export default function Recipes() {
         <div className="flex items-center gap-2">
           <div className="flex items-center">
             <div
-              className={`overflow-hidden transition-[width] duration-300 ease-out flex items-center ${
+              className={`relative transition-[width] duration-300 ease-out ${
                 searchOpen ? 'w-48 sm:w-56' : 'w-0'
               }`}
             >
-              <input
-                ref={searchInputRef}
-                type="search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onBlur={() => {
-                  if (!searchQuery.trim()) setSearchOpen(false);
-                }}
-                placeholder={t('recipes.searchPlaceholder')}
-                className="w-full min-w-0 py-2 pl-3 pr-2 rounded-l-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
-                aria-label={t('recipes.searchPlaceholder')}
-              />
+              <div className="overflow-hidden h-full">
+                <input
+                  ref={searchInputRef}
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setSuggestionsVisible(true)}
+                  onBlur={() => {
+                    setSuggestionsVisible(false);
+                    if (!searchQuery.trim()) setSearchOpen(false);
+                  }}
+                  placeholder={t('recipes.searchPlaceholder')}
+                  className="w-full min-w-0 py-2 pl-3 pr-2 rounded-l-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
+                  aria-label={t('recipes.searchPlaceholder')}
+                  aria-autocomplete="list"
+                  aria-controls="recipes-search-suggestions"
+                  aria-expanded={showSuggestionsDropdown}
+                />
+              </div>
+              {showSuggestionsDropdown && (
+                <ul
+                  id="recipes-search-suggestions"
+                  role="listbox"
+                  aria-label={t('recipes.searchSuggestions')}
+                  className="absolute top-full left-0 right-0 z-20 mt-1 py-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-auto"
+                >
+                  {suggestions.map((r) => (
+                    <li key={r.id} role="option">
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          closeSearch();
+                          navigate(`/app/recipes/${r.id}`);
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm text-slate-800 hover:bg-slate-100 truncate"
+                      >
+                        {r.title}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
             <button
               type="button"
