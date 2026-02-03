@@ -20,8 +20,8 @@ function IconDotsVertical({ className = 'w-5 h-5' }) {
 
 function ConfirmModal({ title, message, onConfirm, onCancel, confirmLabel, danger }) {
   const { t } = useTranslation();
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true">
+  const content = (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
       <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 space-y-4">
         <h3 className="text-lg font-semibold text-slate-800">{title}</h3>
         <p className="text-slate-600 text-sm">{message}</p>
@@ -48,6 +48,7 @@ function ConfirmModal({ title, message, onConfirm, onCancel, confirmLabel, dange
       </div>
     </div>
   );
+  return typeof document !== 'undefined' ? createPortal(content, document.body) : content;
 }
 
 function ResetPasswordModal({ user, onClose, onSuccess }) {
@@ -86,8 +87,8 @@ function ResetPasswordModal({ user, onClose, onSuccess }) {
   };
 
   if (!user) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true">
+  const content = (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
       <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
         <h3 className="text-lg font-semibold text-slate-800 mb-4">{t('admin.resetPasswordAsAdmin')}</h3>
         {error && (
@@ -132,6 +133,7 @@ function ResetPasswordModal({ user, onClose, onSuccess }) {
       </div>
     </div>
   );
+  return typeof document !== 'undefined' ? createPortal(content, document.body) : content;
 }
 
 export default function AdminUsers() {
