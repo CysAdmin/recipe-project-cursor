@@ -8,6 +8,7 @@ import RecipeTags from '../components/RecipeTags';
 import TagFilterPills from '../components/TagFilterPills';
 import RecipeMenuDropdown from '../components/RecipeMenuDropdown';
 import AddToCollectionModal from '../components/AddToCollectionModal';
+import { RecipeRowSkeleton } from '../components/skeletons';
 import { useAuth } from '../context/AuthContext';
 
 const SEARCH_DEBOUNCE_MS = 400;
@@ -434,7 +435,13 @@ export default function Recipes() {
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
         <div className="flex-1 min-w-0">
           {isLoading ? (
-            <p className="text-slate-500">{t('common.loading')}</p>
+            <ul className="space-y-4">
+              {[...Array(6)].map((_, i) => (
+                <li key={`skeleton-${i}`}>
+                  <RecipeRowSkeleton />
+                </li>
+              ))}
+            </ul>
           ) : recipes.length === 0 ? (
             <p className="text-slate-500">
               {t('recipes.noRecipesBefore')}
@@ -506,9 +513,12 @@ export default function Recipes() {
             </ul>
           )}
           {hasNextPage != null && hasNextPage && (
-            <div ref={loadMoreRef} className="py-4 flex justify-center">
+            <div ref={loadMoreRef} className="py-4">
               {isFetchingNextPage && (
-                <p className="text-slate-500 text-sm">{t('common.loading')}</p>
+                <ul className="space-y-4">
+                  <li><RecipeRowSkeleton /></li>
+                  <li><RecipeRowSkeleton /></li>
+                </ul>
               )}
             </div>
           )}
