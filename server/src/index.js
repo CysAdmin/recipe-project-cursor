@@ -7,7 +7,8 @@ import authRoutes from './routes/auth.js';
 import recipeRoutes from './routes/recipes.js';
 import collectionRoutes from './routes/collections.js';
 import adminRoutes from './routes/admin.js';
-import './db/index.js'; // ensure DB exists
+import db from './db/index.js';
+import { insertLog } from './services/logService.js';
 
 const app = express();
 app.set('trust proxy', 1); // Trust first proxy (nginx) for X-Forwarded-For, rate limiting, etc.
@@ -40,6 +41,17 @@ app.get('/api/health', (req, res) => {
 
 app.use((err, req, res, next) => {
   console.error(err);
+  try {
+    insertLog(db, {
+      userId: req.userId ?? null,
+      userEmail: req.userEmail ?? null,
+      action: 'api_error',
+      category: 'error',
+      details: err.message || String(err),
+    });
+  } catch (logErr) {
+    console.error('Failed to write audit log:', logErr);
+  }
   res.status(500).json({ error: 'Internal server error' });
 });
 

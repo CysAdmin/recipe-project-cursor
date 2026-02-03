@@ -11,6 +11,7 @@ import Register from './pages/Register';
 import VerifyEmail from './pages/VerifyEmail';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import Dashboard from './pages/Dashboard';
 import Recipes from './pages/Recipes';
 import RecipeByIngredients from './pages/RecipeByIngredients';
@@ -24,6 +25,7 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminUserForm from './pages/admin/AdminUserForm';
 import AdminRecipes from './pages/admin/AdminRecipes';
 import AdminRecipeEdit from './pages/admin/AdminRecipeEdit';
+import AdminLogs from './pages/admin/AdminLogs';
 
 function PrivateRoute({ children }) {
   const { t } = useTranslation();
@@ -44,6 +46,7 @@ function AppRoutes() {
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/datenschutz" element={<PrivacyPolicy />} />
         <Route path="/recipes/:id" element={<RecipeDetail />} />
         <Route
         path="/app"
@@ -70,6 +73,7 @@ function AppRoutes() {
           <Route path="users/:id" element={<AdminUserForm />} />
           <Route path="recipes" element={<AdminRecipes />} />
           <Route path="recipes/:id" element={<AdminRecipeEdit />} />
+          <Route path="logs" element={<AdminLogs />} />
         </Route>
       </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

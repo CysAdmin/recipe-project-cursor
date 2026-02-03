@@ -112,6 +112,9 @@ export default function Landing() {
 
       {/* Footer */}
       <footer className="mt-auto bg-white border-t border-slate-200 py-6 text-center text-slate-500 text-sm">
+        <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mb-2">
+          <Link to="/datenschutz" className="hover:text-slate-700">{t('landing.privacy')}</Link>
+        </div>
         <p>{t('landing.footer')}</p>
       </footer>
     </div>

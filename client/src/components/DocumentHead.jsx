@@ -9,6 +9,7 @@ const ROUTE_CONFIG = [
   { key: 'forgotPassword', pattern: /^\/forgot-password$/, canonical: '/forgot-password' },
   { key: 'resetPassword', pattern: /^\/reset-password$/, canonical: '/reset-password' },
   { key: 'verifyEmail', pattern: /^\/verify-email$/, canonical: '/verify-email' },
+  { key: 'datenschutz', pattern: /^\/datenschutz$/, canonical: '/datenschutz' },
   { key: 'publicRecipe', pattern: /^\/recipes\/\d+$/, getCanonical: (pathname) => pathname },
 ];
 
