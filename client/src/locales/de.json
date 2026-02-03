@@ -246,6 +246,11 @@
     "notFound": "Rezept nicht gefunden.",
     "savedInList": "Gespeichert",
     "notSavedInList": "Nicht gespeichert",
+    "loginToSave": "Anmelden, um zu speichern",
+    "loginToAddNotes": "Melde dich an, um persönliche Notizen zu hinterlassen.",
+    "addToBring": "In Bring! öffnen",
+    "loginPrompt": "Tipps & Notizen speicherst du nach dem Login.",
+    "loginToRate": "Melde dich an, um selbst zu bewerten.",
     "ratingLabel": "Bewertung",
     "averageRating": "Durchschnitt",
     "ratingCount": "{{count}} Bewertungen",
@@ -306,6 +311,28 @@
     "changeButton": "Passwort ändern",
     "changing": "Ändern…",
     "passwordSuccess": "Passwort wurde geändert."
+  },
+  "seo": {
+    "pageTitles": {
+      "home": "SimplyKeepIt – Rezepte sammeln & organisieren",
+      "login": "Anmelden | SimplyKeepIt",
+      "register": "Registrieren | SimplyKeepIt",
+      "forgotPassword": "Passwort vergessen | SimplyKeepIt",
+      "resetPassword": "Passwort zurücksetzen | SimplyKeepIt",
+      "verifyEmail": "E-Mail bestätigen | SimplyKeepIt",
+      "publicRecipe": "Rezept ansehen | SimplyKeepIt",
+      "default": "SimplyKeepIt — Collect, Plan, Shop"
+    },
+    "descriptions": {
+      "home": "SimplyKeepIt ist dein digitales Rezepte-Notizbuch. Sammle Rezepte aus dem Web, markiere Favoriten und plane deine Kochideen.",
+      "login": "Melde dich bei SimplyKeepIt an, um deine gespeicherten Rezepte zu verwalten und neue Ideen zu entdecken.",
+      "register": "Erstelle ein SimplyKeepIt Konto, um Rezepte zu speichern, mit Tags zu organisieren und von überall darauf zuzugreifen.",
+      "forgotPassword": "Fordere einen Link zum Zurücksetzen deines SimplyKeepIt Passworts an.",
+      "resetPassword": "Setze dein SimplyKeepIt Passwort sicher zurück.",
+      "verifyEmail": "Bestätige deine E-Mail-Adresse, um SimplyKeepIt vollständig nutzen zu können.",
+      "publicRecipe": "Entdecke ein SimplyKeepIt Lieblingsrezept mit Zutaten, Zubereitung und Quelle.",
+      "default": "SimplyKeepIt – Rezepte speichern, organisieren und entdecken."
+    }
   },
   "admin": {
     "title": "Admin",

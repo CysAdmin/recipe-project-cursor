@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Allow: /login
+Allow: /register
+Disallow: /app
+
+Sitemap: https://simplykeepit.com/sitemap.xml
