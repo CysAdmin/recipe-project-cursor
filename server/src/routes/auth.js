@@ -345,4 +345,30 @@ router.post('/change-password', authMiddleware, (req, res) => {
   res.json({ success: true });
 });
 
+router.delete('/me', authMiddleware, (req, res) => {
+  const userId = req.userId;
+  const row = db.prepare('SELECT id, email, display_name FROM users WHERE id = ?').get(userId);
+  if (!row) {
+    return res.status(401).json({ error: 'User not found' });
+  }
+  insertLog(db, {
+    userId: row.id,
+    userEmail: row.email,
+    userDisplayName: row.display_name,
+    action: 'delete_account_self',
+    category: 'info',
+  });
+  const collectionIds = db.prepare('SELECT id FROM collections WHERE user_id = ?').all(userId).map((r) => r.id);
+  if (collectionIds.length > 0) {
+    const placeholders = collectionIds.map(() => '?').join(',');
+    db.prepare(`DELETE FROM collection_recipes WHERE collection_id IN (${placeholders})`).run(...collectionIds);
+  }
+  db.prepare('DELETE FROM collections WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM meal_schedules WHERE user_id = ?').run(userId);
+  db.prepare('DELETE FROM user_recipes WHERE user_id = ?').run(userId);
+  db.prepare('UPDATE recipes SET created_by_user_id = NULL WHERE created_by_user_id = ?').run(userId);
+  db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+  res.json({ success: true, message: 'Account deleted.' });
+});
+
 export default router;

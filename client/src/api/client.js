@@ -48,6 +48,7 @@ export const auth = {
       method: 'POST',
       body: JSON.stringify({ token, new_password: newPassword }),
     }),
+  deleteAccount: () => api('/auth/me', { method: 'DELETE' }),
 };
 
 export const recipes = {

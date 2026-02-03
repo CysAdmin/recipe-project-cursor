@@ -15,6 +15,7 @@
     "save": "Speichern",
     "saving": "Speichern…",
     "cancel": "Abbrechen",
+    "confirm": "Bestätigen",
     "delete": "Löschen",
     "confirmDelete": "Löschen bestätigen",
     "edit": "Bearbeiten",
@@ -338,7 +339,11 @@
     "passwordsMismatch": "Passwörter stimmen nicht überein",
     "changeButton": "Passwort ändern",
     "changing": "Ändern…",
-    "passwordSuccess": "Passwort wurde geändert."
+    "passwordSuccess": "Passwort wurde geändert.",
+    "deleteAccount": "Account löschen",
+    "deleteAccountDesc": "Deinen Account und alle Daten dauerhaft löschen. Dies kann nicht rückgängig gemacht werden.",
+    "confirmDeleteAccount": "Möchtest du deinen Account wirklich löschen? Alle deine Rezepte, Sammlungen und Daten werden dauerhaft entfernt. Dies kann nicht rückgängig gemacht werden.",
+    "deleting": "Wird gelöscht…"
   },
   "seo": {
     "pageTitles": {
