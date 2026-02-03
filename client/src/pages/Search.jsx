@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { recipes as recipesApi } from '../api/client';
@@ -9,6 +9,7 @@ import TagFilterPills from '../components/TagFilterPills';
 
 const EXTERNAL_PAGE_SIZE = 20;
 const SEARCH_DEBOUNCE_MS = 400;
+const SUGGESTIONS_MAX = 6;
 
 const EXTERNAL_PROVIDERS = [
   { id: 'gutekueche', label: 'GuteKueche' },
@@ -28,8 +29,10 @@ function shuffle(arr) {
 
 export default function Search() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [q, setQ] = useState('');
   const [debouncedQ, setDebouncedQ] = useState('');
+  const [suggestionsVisible, setSuggestionsVisible] = useState(false);
   const [tagFilter, setTagFilter] = useState('');
   const [selectedProviders, setSelectedProviders] = useState(EXTERNAL_PROVIDERS.map((p) => p.id));
   const [externalVisibleCount, setExternalVisibleCount] = useState(EXTERNAL_PAGE_SIZE);
@@ -129,6 +132,12 @@ export default function Search() {
   };
 
   const recipes = data?.recipes || [];
+  const suggestions = recipes.slice(0, SUGGESTIONS_MAX);
+  const showSuggestionsDropdown =
+    suggestionsVisible &&
+    debouncedQ.trim() &&
+    suggestions.length > 0 &&
+    !isFetching;
   const externalToShow = external.slice(0, externalVisibleCount);
   const hasMoreExternal = external.length > externalVisibleCount;
   const hasExternal = external.length > 0;
@@ -143,13 +152,45 @@ export default function Search() {
       <p className="text-slate-600 mb-2">{t('search.subline')}</p>
 
       <div className="space-y-3">
-        <input
-          type="search"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder={t('search.placeholder')}
-          className="w-full max-w-md px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-        />
+        <div className="relative max-w-md">
+          <input
+            type="search"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            onFocus={() => setSuggestionsVisible(true)}
+            onBlur={() => setSuggestionsVisible(false)}
+            placeholder={t('search.placeholder')}
+            className="w-full px-4 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+            aria-label={t('search.placeholder')}
+            aria-autocomplete="list"
+            aria-controls="search-suggestions"
+            aria-expanded={showSuggestionsDropdown}
+          />
+          {showSuggestionsDropdown && (
+            <ul
+              id="search-suggestions"
+              role="listbox"
+              aria-label={t('search.searchSuggestions')}
+              className="absolute top-full left-0 right-0 z-10 mt-1 py-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-auto"
+            >
+              {suggestions.map((r) => (
+                <li key={r.id} role="option">
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => {
+                      setSuggestionsVisible(false);
+                      navigate(`/app/recipes/${r.id}`);
+                    }}
+                    className="w-full text-left px-3 py-2 text-sm text-slate-800 hover:bg-slate-100 truncate"
+                  >
+                    {r.title}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         <TagFilterPills selectedTag={tagFilter} onSelectTag={setTagFilter} />
       </div>
 
