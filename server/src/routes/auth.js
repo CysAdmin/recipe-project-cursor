@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import db from '../db/index.js';
 import { authMiddleware, signToken } from '../middleware/auth.js';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../services/email.js';
+import { insertLog } from '../services/logService.js';
 
 const router = express.Router();
 
@@ -96,6 +97,13 @@ router.post('/login', (req, res) => {
   }
 
   db.prepare('UPDATE users SET last_login_at = datetime(\'now\') WHERE id = ?').run(row.id);
+  insertLog(db, {
+    userId: row.id,
+    userEmail: row.email,
+    userDisplayName: row.display_name,
+    action: 'login',
+    category: 'info',
+  });
   const token = signToken(row.id, row.email);
   res.json({
     token,

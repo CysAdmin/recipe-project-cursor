@@ -111,4 +111,10 @@ export const admin = {
     update: (id, body) => api(`/admin/recipes/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
     delete: (id) => api(`/admin/recipes/${id}`, { method: 'DELETE' }),
   },
+  logs: {
+    list: (params = {}) => {
+      const q = new URLSearchParams(params).toString();
+      return api(`/admin/logs${q ? `?${q}` : ''}`);
+    },
+  },
 };

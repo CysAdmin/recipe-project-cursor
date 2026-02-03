@@ -24,6 +24,7 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminUserForm from './pages/admin/AdminUserForm';
 import AdminRecipes from './pages/admin/AdminRecipes';
 import AdminRecipeEdit from './pages/admin/AdminRecipeEdit';
+import AdminLogs from './pages/admin/AdminLogs';
 
 function PrivateRoute({ children }) {
   const { t } = useTranslation();
@@ -70,6 +71,7 @@ function AppRoutes() {
           <Route path="users/:id" element={<AdminUserForm />} />
           <Route path="recipes" element={<AdminRecipes />} />
           <Route path="recipes/:id" element={<AdminRecipeEdit />} />
+          <Route path="logs" element={<AdminLogs />} />
         </Route>
       </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

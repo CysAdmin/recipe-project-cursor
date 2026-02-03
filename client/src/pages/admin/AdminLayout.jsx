@@ -8,7 +8,8 @@ export default function AdminLayout() {
   const { user, loading } = useAuth();
   const adminNav = [
     { to: '/app/admin/users', end: false, label: t('admin.users') },
-    { to: '/app/admin/recipes', end: true, label: t('admin.recipes') },
+    { to: '/app/admin/recipes', end: false, label: t('admin.recipes') },
+    { to: '/app/admin/logs', end: true, label: t('admin.logs') },
   ];
   if (loading) return <div className="p-4 text-slate-500">{t('admin.loading')}</div>;
   if (!user?.is_admin) return <Navigate to="/app" replace />;
