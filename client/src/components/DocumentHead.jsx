@@ -9,6 +9,7 @@ const ROUTE_CONFIG = [
   { key: 'forgotPassword', pattern: /^\/forgot-password$/, canonical: '/forgot-password' },
   { key: 'resetPassword', pattern: /^\/reset-password$/, canonical: '/reset-password' },
   { key: 'verifyEmail', pattern: /^\/verify-email$/, canonical: '/verify-email' },
+  { key: 'publicRecipe', pattern: /^\/recipes\/\d+$/, getCanonical: (pathname) => pathname },
 ];
 
 const getAppUrl = () => {
@@ -50,12 +51,14 @@ export default function DocumentHead() {
   const title = t(`seo.pageTitles.${routeConfig.key}`, t('seo.pageTitles.default'));
   const description = t(`seo.descriptions.${routeConfig.key}`, t('seo.descriptions.default'));
 
-  const canonicalUrl =
-    APP_URL && routeConfig.canonical !== undefined
-      ? `${APP_URL}${ensureLeadingSlash(routeConfig.canonical)}`
-      : APP_URL
-        ? `${APP_URL}${ensureLeadingSlash(location.pathname)}`
-        : undefined;
+const canonicalPath =
+  routeConfig.getCanonical?.(location.pathname) ??
+  routeConfig.canonical ??
+  location.pathname;
+
+const canonicalUrl = APP_URL
+  ? `${APP_URL}${ensureLeadingSlash(canonicalPath)}`
+  : undefined;
 
   useEffect(() => {
     document.title = title;

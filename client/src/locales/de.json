@@ -246,6 +246,11 @@
     "notFound": "Rezept nicht gefunden.",
     "savedInList": "Gespeichert",
     "notSavedInList": "Nicht gespeichert",
+    "loginToSave": "Anmelden, um zu speichern",
+    "loginToAddNotes": "Melde dich an, um persönliche Notizen zu hinterlassen.",
+    "addToBring": "In Bring! öffnen",
+    "loginPrompt": "Tipps & Notizen speicherst du nach dem Login.",
+    "loginToRate": "Melde dich an, um selbst zu bewerten.",
     "ratingLabel": "Bewertung",
     "averageRating": "Durchschnitt",
     "ratingCount": "{{count}} Bewertungen",
@@ -315,6 +320,7 @@
       "forgotPassword": "Passwort vergessen | SimplyKeepIt",
       "resetPassword": "Passwort zurücksetzen | SimplyKeepIt",
       "verifyEmail": "E-Mail bestätigen | SimplyKeepIt",
+      "publicRecipe": "Rezept ansehen | SimplyKeepIt",
       "default": "SimplyKeepIt — Collect, Plan, Shop"
     },
     "descriptions": {
@@ -324,6 +330,7 @@
       "forgotPassword": "Fordere einen Link zum Zurücksetzen deines SimplyKeepIt Passworts an.",
       "resetPassword": "Setze dein SimplyKeepIt Passwort sicher zurück.",
       "verifyEmail": "Bestätige deine E-Mail-Adresse, um SimplyKeepIt vollständig nutzen zu können.",
+      "publicRecipe": "Entdecke ein SimplyKeepIt Lieblingsrezept mit Zutaten, Zubereitung und Quelle.",
       "default": "SimplyKeepIt – Rezepte speichern, organisieren und entdecken."
     }
   },
