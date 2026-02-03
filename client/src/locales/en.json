@@ -391,7 +391,12 @@
     "confirmPassword": "Confirm password",
     "passwordMismatch": "Passwords do not match.",
     "passwordTooShort": "Password must be at least 8 characters.",
-    "passwordRequiresLettersAndNumbers": "Password must contain both letters and numbers."
+    "passwordRequiresLettersAndNumbers": "Password must contain both letters and numbers.",
+    "verified": "Verified",
+    "registered": "Registered",
+    "lastLogin": "Last login",
+    "userDetail": "User detail",
+    "resetPassword": "Reset password"
   },
   "app": {
     "loading": "Loading…"

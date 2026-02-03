@@ -42,7 +42,7 @@ router.get('/users/:id', (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (Number.isNaN(id)) return res.status(400).json({ error: 'Invalid user ID' });
   const row = db.prepare(
-    'SELECT id, email, display_name, is_admin, created_at FROM users WHERE id = ?'
+    'SELECT id, email, display_name, is_admin, created_at, email_verified_at, blocked, last_login_at FROM users WHERE id = ?'
   ).get(id);
   if (!row) return res.status(404).json({ error: 'User not found' });
   const savedCount = db.prepare('SELECT COUNT(*) AS c FROM user_recipes WHERE user_id = ?').get(id);
@@ -54,6 +54,9 @@ router.get('/users/:id', (req, res) => {
       display_name: row.display_name,
       is_admin: !!row.is_admin,
       created_at: row.created_at,
+      email_verified_at: row.email_verified_at ?? null,
+      is_blocked: !!row.blocked,
+      last_login_at: row.last_login_at ?? null,
       saved_recipes_count: savedCount?.c ?? 0,
       meal_schedules_count: scheduleCount?.c ?? 0,
     },

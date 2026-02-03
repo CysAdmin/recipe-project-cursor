@@ -95,6 +95,7 @@ router.post('/login', (req, res) => {
     });
   }
 
+  db.prepare('UPDATE users SET last_login_at = datetime(\'now\') WHERE id = ?').run(row.id);
   const token = signToken(row.id, row.email);
   res.json({
     token,

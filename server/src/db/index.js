@@ -99,6 +99,13 @@ try {
   if (!e.message.includes('duplicate column name')) throw e;
 }
 
+// Last login (users) — for admin detail view
+try {
+  db.exec('ALTER TABLE users ADD COLUMN last_login_at DATETIME');
+} catch (e) {
+  if (!e.message.includes('duplicate column name')) throw e;
+}
+
 // User rating 1–5 per recipe (user_recipes)
 try {
   db.exec('ALTER TABLE user_recipes ADD COLUMN rating INTEGER');
