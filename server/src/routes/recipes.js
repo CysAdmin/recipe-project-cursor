@@ -288,8 +288,8 @@ router.get('/', async (req, res) => {
 router.get('/external', async (req, res) => {
   const q = (req.query.q ?? '').trim();
   const provider = (req.query.provider ?? '').toLowerCase();
-  if (!q || !['gutekueche', 'chefkoch', 'allrecipes', 'tasty'].includes(provider)) {
-    return res.status(400).json({ error: 'Query and provider (gutekueche|chefkoch|allrecipes|tasty) required' });
+  if (!q || !['gutekueche', 'chefkoch', 'allrecipes', 'tasty', 'seriouseats', 'foodnetworkuk'].includes(provider)) {
+    return res.status(400).json({ error: 'Query and provider (gutekueche|chefkoch|allrecipes|tasty|seriouseats|foodnetworkuk) required' });
   }
   try {
     const external = await searchExternalByProvider(q, provider, { limit: 30 });

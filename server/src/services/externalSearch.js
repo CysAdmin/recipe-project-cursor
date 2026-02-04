@@ -8,6 +8,8 @@ import { searchGutekueche } from './providers/gutekueche.js';
 import { searchChefkoch } from './providers/chefkoch.js';
 import { searchAllrecipes } from './providers/allrecipes.js';
 import { searchTasty } from './providers/tasty.js';
+import { searchSeriouseats } from './providers/seriouseats.js';
+import { searchFoodnetworkuk } from './providers/foodnetworkuk.js';
 
 /**
  * Normalized external recipe hit (same shape for all providers).
@@ -27,14 +29,14 @@ function shuffle(arr) {
   return arr;
 }
 
-const PROVIDERS = { gutekueche: searchGutekueche, chefkoch: searchChefkoch, allrecipes: searchAllrecipes, tasty: searchTasty };
+const PROVIDERS = { gutekueche: searchGutekueche, chefkoch: searchChefkoch, allrecipes: searchAllrecipes, tasty: searchTasty, seriouseats: searchSeriouseats, foodnetworkuk: searchFoodnetworkuk };
 
 /**
  * Search a single external provider. Used so the frontend can request each
  * provider separately and show results as soon as the first one returns.
  *
  * @param {string} query - Search term
- * @param {string} providerName - 'gutekueche' | 'chefkoch' | 'allrecipes' | 'tasty'
+ * @param {string} providerName - 'gutekueche' | 'chefkoch' | 'allrecipes' | 'tasty' | 'seriouseats' | 'foodnetworkuk'
  * @param {{ limit?: number }} options - Optional limit (default 30, max 30)
  * @returns {Promise<ExternalRecipeHit[]>}
  */
@@ -52,7 +54,7 @@ export async function searchExternalByProvider(query, providerName, options = {}
 }
 
 /**
- * Search external recipe sources. All providers (GuteKueche, Chefkoch, Allrecipes, Tasty)
+ * Search external recipe sources. All providers (GuteKueche, Chefkoch, Allrecipes, Tasty, Serious Eats, Food Network UK)
  * are queried; results are merged and shuffled.
  * Prefer using searchExternalByProvider from the frontend so results can
  * be shown as soon as the first provider returns.
