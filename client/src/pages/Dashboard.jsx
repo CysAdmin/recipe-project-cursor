@@ -42,7 +42,7 @@ export default function Dashboard() {
   });
 
   const recentRecipes = (data?.recipes || []).slice(0, 6);
-  const totalRecipes = data?.recipes?.length || 0;
+  const totalRecipes = data?.total ?? data?.recipes?.length ?? 0;
 
   return (
     <div className="flex flex-col gap-8">
