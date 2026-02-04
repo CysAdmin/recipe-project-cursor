@@ -17,6 +17,8 @@ const EXTERNAL_PROVIDERS = [
   { id: 'chefkoch', label: 'Chefkoch' },
   { id: 'allrecipes', label: 'Allrecipes' },
   { id: 'tasty', label: 'Tasty' },
+  { id: 'seriouseats', label: 'Serious Eats' },
+  { id: 'foodnetworkuk', label: 'Food Network UK' },
 ];
 
 function shuffle(arr) {
@@ -92,14 +94,30 @@ export default function Search() {
     staleTime: 60 * 1000,
     placeholderData: keepPreviousData,
   });
+  const externalSe = useQuery({
+    queryKey: ['recipes', 'external', debouncedQ, 'seriouseats'],
+    queryFn: () => recipesApi.externalSearch(debouncedQ, 'seriouseats'),
+    enabled: shouldFetchExternal && selectedProviders.includes('seriouseats'),
+    staleTime: 60 * 1000,
+    placeholderData: keepPreviousData,
+  });
+  const externalFnuk = useQuery({
+    queryKey: ['recipes', 'external', debouncedQ, 'foodnetworkuk'],
+    queryFn: () => recipesApi.externalSearch(debouncedQ, 'foodnetworkuk'),
+    enabled: shouldFetchExternal && selectedProviders.includes('foodnetworkuk'),
+    staleTime: 60 * 1000,
+    placeholderData: keepPreviousData,
+  });
 
   const external = useMemo(() => {
     const a = selectedProviders.includes('gutekueche') ? (externalGk.data?.external ?? []) : [];
     const b = selectedProviders.includes('chefkoch') ? (externalCk.data?.external ?? []) : [];
     const c = selectedProviders.includes('allrecipes') ? (externalAr.data?.external ?? []) : [];
     const d = selectedProviders.includes('tasty') ? (externalTasty.data?.external ?? []) : [];
-    return shuffle([...a, ...b, ...c, ...d]);
-  }, [externalGk.data, externalCk.data, externalAr.data, externalTasty.data, selectedProviders]);
+    const e = selectedProviders.includes('seriouseats') ? (externalSe.data?.external ?? []) : [];
+    const f = selectedProviders.includes('foodnetworkuk') ? (externalFnuk.data?.external ?? []) : [];
+    return shuffle([...a, ...b, ...c, ...d, ...e, ...f]);
+  }, [externalGk.data, externalCk.data, externalAr.data, externalTasty.data, externalSe.data, externalFnuk.data, selectedProviders]);
 
   const externalLoading =
     shouldFetchExternal &&
@@ -107,7 +125,9 @@ export default function Search() {
     ((selectedProviders.includes('gutekueche') && externalGk.isFetching) ||
       (selectedProviders.includes('chefkoch') && externalCk.isFetching) ||
       (selectedProviders.includes('allrecipes') && externalAr.isFetching) ||
-      (selectedProviders.includes('tasty') && externalTasty.isFetching)) &&
+      (selectedProviders.includes('tasty') && externalTasty.isFetching) ||
+      (selectedProviders.includes('seriouseats') && externalSe.isFetching) ||
+      (selectedProviders.includes('foodnetworkuk') && externalFnuk.isFetching)) &&
     external.length === 0;
 
   const saveMutation = useMutation({
