@@ -303,11 +303,11 @@ export default function Search() {
             <div className="mb-6">
               <h2 className="text-lg font-semibold text-slate-800 mb-2">{t('search.externalProviders')}</h2>
               <p className="text-slate-600 text-sm mb-3">{t('search.externalProvidersDesc')}</p>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex overflow-x-auto gap-3 pb-2 snap-x snap-mandatory md:flex-wrap md:overflow-visible md:pb-0 md:snap-none -mx-1 px-1">
                 {EXTERNAL_PROVIDERS.map((p) => (
                   <label
                     key={p.id}
-                    className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-slate-200 cursor-pointer hover:border-slate-300 hover:bg-slate-50 transition-colors"
+                    className="inline-flex items-center gap-2 px-3 py-3 sm:py-2 min-h-[44px] sm:min-h-0 shrink-0 snap-start rounded-lg bg-white border border-slate-200 cursor-pointer hover:border-slate-300 hover:bg-slate-50 transition-colors"
                   >
                     <input
                       type="checkbox"
