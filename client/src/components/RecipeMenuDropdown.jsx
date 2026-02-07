@@ -94,14 +94,14 @@ export default function RecipeMenuDropdown({ recipe, isOpen, onToggle, onClose, 
       </button>
       {isOpen && (
         <div
-          className="absolute right-0 top-full mt-1 min-w-[10rem] py-1 rounded-lg bg-white border border-slate-200 shadow-lg z-20"
+          className="absolute right-0 top-full mt-1 min-w-[10rem] max-w-[calc(100vw-1rem)] py-1 rounded-lg bg-white border border-slate-200 shadow-lg z-20"
           role="menu"
         >
           {recipe.source_url && (
             <button
               type="button"
               onClick={handleOpenOriginal}
-              className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 rounded-t-lg"
+              className="w-full px-4 py-3 sm:py-2 text-left text-sm text-slate-700 hover:bg-slate-100 rounded-t-lg min-h-[44px] sm:min-h-0 flex items-center"
               role="menuitem"
             >
               {t('recipeMenu.openOriginal')}
@@ -110,7 +110,7 @@ export default function RecipeMenuDropdown({ recipe, isOpen, onToggle, onClose, 
           <button
             type="button"
             onClick={handleCopyLink}
-            className={`w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 ${!recipe.source_url ? 'rounded-t-lg' : ''}`}
+            className={`w-full px-4 py-3 sm:py-2 text-left text-sm text-slate-700 hover:bg-slate-100 min-h-[44px] sm:min-h-0 flex items-center ${!recipe.source_url ? 'rounded-t-lg' : ''}`}
             role="menuitem"
           >
             {copySuccess ? t('recipeMenu.copyLinkSuccess') : t('recipeMenu.copyLink')}
@@ -119,7 +119,7 @@ export default function RecipeMenuDropdown({ recipe, isOpen, onToggle, onClose, 
             <button
               type="button"
               onClick={handleAddToCollection}
-              className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
+              className="w-full px-4 py-3 sm:py-2 text-left text-sm text-slate-700 hover:bg-slate-100 min-h-[44px] sm:min-h-0 flex items-center"
               role="menuitem"
             >
               {t('recipeMenu.addToCollection')}
@@ -128,7 +128,7 @@ export default function RecipeMenuDropdown({ recipe, isOpen, onToggle, onClose, 
           <button
             type="button"
             onClick={handleRemove}
-            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 rounded-b-lg"
+            className="w-full px-4 py-3 sm:py-2 text-left text-sm text-red-600 hover:bg-red-50 rounded-b-lg min-h-[44px] sm:min-h-0 flex items-center"
             role="menuitem"
           >
             {t('recipeMenu.remove')}

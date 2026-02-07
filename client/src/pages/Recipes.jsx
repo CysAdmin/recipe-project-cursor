@@ -433,7 +433,7 @@ export default function Recipes() {
 
       {/* Two-column: recipe list (left) | Entscheidungshilfen sidebar (right) */}
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 order-2 lg:order-1">
           {isLoading ? (
             <ul className="space-y-4">
               {[...Array(6)].map((_, i) => (
@@ -525,7 +525,7 @@ export default function Recipes() {
         </div>
 
         {/* Entscheidungshilfen sidebar: ein gemeinsamer sticky Container, damit „Entdecke Rezepte“ nicht darunter scrollt */}
-        <aside className="lg:w-80 shrink-0">
+        <aside className="lg:w-80 shrink-0 order-1 lg:order-2">
           <div className="sticky top-20 space-y-6">
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4">
             <h2 className="font-semibold text-slate-800 mb-4">{t('recipes.todayCook')}</h2>

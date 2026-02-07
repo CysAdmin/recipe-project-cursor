@@ -58,7 +58,7 @@ export default function Landing() {
           <div className="inline-block mb-6 px-4 py-2 rounded-full bg-brand-100 text-brand-700 text-sm font-semibold">
             ✨ {t('landing.badge')}
           </div>
-          <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold text-slate-900 tracking-tight mb-6 leading-tight">
+          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 tracking-tight mb-6 leading-tight">
             {t('landing.headline')}
           </h1>
           <p className="text-slate-600 text-lg sm:text-xl lg:text-2xl leading-relaxed mb-10 max-w-2xl mx-auto">
@@ -68,13 +68,13 @@ export default function Landing() {
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Link
                 to="/register"
-                className="inline-flex items-center justify-center px-8 py-4 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 text-white font-bold text-lg hover:from-brand-600 hover:to-brand-700 transition-all shadow-xl hover:shadow-2xl hover:scale-105"
+                className="inline-flex items-center justify-center min-h-[48px] px-8 py-4 rounded-xl bg-gradient-to-r from-brand-500 to-brand-600 text-white font-bold text-lg hover:from-brand-600 hover:to-brand-700 transition-all shadow-xl hover:shadow-2xl hover:scale-105"
               >
                 {t('landing.getStartedFree')}
               </Link>
               <a
                 href="#features"
-                className="inline-flex items-center justify-center px-8 py-4 rounded-xl border-2 border-slate-300 text-slate-700 font-bold text-lg hover:bg-slate-50 hover:border-slate-400 transition-all"
+                className="inline-flex items-center justify-center min-h-[48px] px-8 py-4 rounded-xl border-2 border-slate-300 text-slate-700 font-bold text-lg hover:bg-slate-50 hover:border-slate-400 transition-all"
               >
                 {t('landing.learnMore')}
               </a>

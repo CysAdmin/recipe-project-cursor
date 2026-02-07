@@ -177,23 +177,23 @@ export default function Layout() {
         </div>
       </header>
 
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-6 pb-24 md:pb-6">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-6 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-6">
         <Outlet />
       </main>
 
       {/* Mobile bottom navigation (only on small screens) */}
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-slate-200"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-slate-200 pb-[env(safe-area-inset-bottom)]"
         aria-label={t('nav.dashboard')}
       >
-        <div className="flex items-center justify-around h-16 max-w-lg mx-auto">
+        <div className="flex items-center justify-around h-16 min-h-[48px] max-w-lg mx-auto">
           {bottomNavItems.map(({ to, end, labelKey, Icon }) => (
             <NavLink
               key={to}
               to={to}
               end={end}
               className={({ isActive }) =>
-                `flex flex-col items-center justify-center gap-0.5 min-w-[64px] py-2 transition-colors ${
+                `flex flex-col items-center justify-center gap-0.5 min-w-[64px] min-h-[48px] py-2 transition-colors ${
                   isActive ? 'text-brand-600' : 'text-slate-500'
                 }`
               }

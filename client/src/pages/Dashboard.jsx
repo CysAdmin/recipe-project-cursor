@@ -45,7 +45,7 @@ export default function Dashboard() {
   const totalRecipes = data?.total ?? data?.recipes?.length ?? 0;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6 sm:gap-8">
       {/* Hero Section */}
       <div className="space-y-3">
         <h1 className="font-display text-3xl sm:text-4xl font-bold text-slate-900">

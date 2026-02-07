@@ -43,7 +43,7 @@ export default function TagFilterPills({ selectedTag, onSelectTag, className = '
   const { t } = useTranslation();
 
   return (
-    <div className={`flex flex-wrap items-center gap-2 ${className}`}>
+    <div className={`flex flex-nowrap overflow-x-auto items-center gap-2 snap-x snap-mandatory sm:flex-wrap sm:overflow-visible sm:snap-none pb-1 sm:pb-0 -mx-1 px-1 sm:mx-0 sm:px-0 ${className}`}>
       {RECIPE_TAG_KEYS.map((key) => {
         const selected = selectedTag === key;
         return (
@@ -51,7 +51,7 @@ export default function TagFilterPills({ selectedTag, onSelectTag, className = '
             key={key}
             type="button"
             onClick={() => onSelectTag(selected ? '' : key)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+            className={`inline-flex items-center gap-1.5 px-3 py-2.5 sm:py-1.5 min-h-[44px] sm:min-h-0 shrink-0 snap-start rounded-full text-sm font-medium transition-colors ${
               selected
                 ? 'bg-brand-600 text-white'
                 : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
@@ -66,7 +66,7 @@ export default function TagFilterPills({ selectedTag, onSelectTag, className = '
         <button
           type="button"
           onClick={() => onSelectTag('')}
-          className="ml-1 text-sm text-blue-600 hover:underline"
+          className="ml-1 shrink-0 text-sm text-blue-600 hover:underline self-center"
         >
           {t('recipes.resetFilters')}
         </button>
@@ -97,7 +97,7 @@ export function RecipeTagPillsEditable({ tags = [], onTagsChange, disabled = fal
             type="button"
             disabled={disabled}
             onClick={() => toggle(key)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors disabled:opacity-50 ${
+            className={`inline-flex items-center gap-1.5 px-3 py-2.5 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-full text-sm font-medium transition-colors disabled:opacity-50 ${
               selected
                 ? 'bg-brand-600 text-white border border-brand-600'
                 : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300'
